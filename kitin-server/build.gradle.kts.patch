@@ -1,6 +1,6 @@
 --- a/folia-server/build.gradle.kts
 +++ b/folia-server/build.gradle.kts
-@@ -35,7 +_,22 @@
+@@ -31,7 +_,22 @@
          }
      }
  
@@ -24,7 +24,7 @@
  
      spigot {
          enabled = true
-@@ -122,10 +_,14 @@
+@@ -120,10 +_,14 @@
      main {
          java { srcDir("../paper-server/src/main/java") }
          resources { srcDir("../paper-server/src/main/resources") }
@@ -39,7 +39,7 @@
      }
  }
  
-@@ -153,7 +_,7 @@
+@@ -151,7 +_,7 @@
  }
  
  dependencies {
