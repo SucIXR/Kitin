@@ -1,26 +1,26 @@
---- a/fork-server/build.gradle.kts
-+++ b/fork-server/build.gradle.kts
+--- a/folia-server/build.gradle.kts
++++ b/folia-server/build.gradle.kts
 @@ -35,7 +_,22 @@
          }
      }
  
--    activeFork = fork
-+    val forky = forks.register("forky") {
-+        forks = fork
+-    activefolia = folia
++    val kitin = folias.register("kitin") {
++        folias = folia
 +        upstream.patchRepo("paperServer") {
-+            upstreamRepo = fork.patchedRepo("paperServer")
-+            patchesDir = rootDirectory.dir("forky-server/paper-patches")
++            upstreamRepo = folia.patchedRepo("paperServer")
++            patchesDir = rootDirectory.dir("kitin-server/paper-patches")
 +            outputDir = rootDirectory.dir("paper-server")
 +        }
-+        upstream.patchDir("forkServer") {
-+            upstreamPath = "fork-server"
++        upstream.patchDir("foliaServer") {
++            upstreamPath = "folia-server"
 +            excludes = setOf("src/minecraft", "paper-patches", "minecraft-patches", "build.gradle.kts", "build.gradle.kts.patch")
-+            patchesDir = rootDirectory.dir("forky-server/fork-patches")
-+            outputDir = rootDirectory.dir("fork-server")
++            patchesDir = rootDirectory.dir("kitin-server/folia-patches")
++            outputDir = rootDirectory.dir("folia-server")
 +        }
 +    }
 +
-+    activeFork = forky
++    activefolia = kitin
  
      spigot {
          enabled = true
@@ -28,14 +28,14 @@
      main {
          java { srcDir("../paper-server/src/main/java") }
          resources { srcDir("../paper-server/src/main/resources") }
-+        java { srcDir("../fork-server/src/main/java") }
-+        resources { srcDir("../fork-server/src/main/resources") }
++        java { srcDir("../folia-server/src/main/java") }
++        resources { srcDir("../folia-server/src/main/resources") }
      }
      test {
          java { srcDir("../paper-server/src/test/java") }
          resources { srcDir("../paper-server/src/test/resources") }
-+        java { srcDir("../fork-server/src/test/java") }
-+        resources { srcDir("../fork-server/src/test/resources") }
++        java { srcDir("../folia-server/src/test/java") }
++        resources { srcDir("../folia-server/src/test/resources") }
      }
  }
  
@@ -43,8 +43,8 @@
  }
  
  dependencies {
--    implementation(project(":fork-api"))
-+    implementation(project(":forky-api"))
+-    implementation(project(":folia-api"))
++    implementation(project(":kitin-api"))
      implementation("ca.spottedleaf:concurrentutil:0.0.3")
      implementation("org.jline:jline-terminal-ffm:3.27.1") // use ffm on java 22+
      implementation("org.jline:jline-terminal-jni:3.27.1") // fall back to jni on java 21

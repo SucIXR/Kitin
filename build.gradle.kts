@@ -2,34 +2,35 @@ import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 
 plugins {
-    id("io.papermc.paperweight.patcher") version "2.0.0-beta.18"
+    java // TODO java launcher tasks
+    id("io.papermc.paperweight.patcher") version "2.0.0-beta.19"
 }
 
 paperweight {
-    upstreams.register("fork") {
-        repo = github("PaperMC", "paperweight-examples")
-        ref = providers.gradleProperty("forkRef")
+    upstreams.register("folia") {
+        repo = github("PaperMC", "Folia")
+        ref = providers.gradleProperty("foliaRef")
 
         patchFile {
-            path = "fork-server/build.gradle.kts"
-            outputFile = file("forky-server/build.gradle.kts")
-            patchFile = file("forky-server/build.gradle.kts.patch")
+            path = "folia-server/build.gradle.kts"
+            outputFile = file("kitin-server/build.gradle.kts")
+            patchFile = file("kitin-server/build.gradle.kts.patch")
         }
         patchFile {
-            path = "fork-api/build.gradle.kts"
-            outputFile = file("forky-api/build.gradle.kts")
-            patchFile = file("forky-api/build.gradle.kts.patch")
+            path = "folia-api/build.gradle.kts"
+            outputFile = file("kitin-api/build.gradle.kts")
+            patchFile = file("kitin-api/build.gradle.kts.patch")
         }
         patchRepo("paperApi") {
             upstreamPath = "paper-api"
-            patchesDir = file("forky-api/paper-patches")
-            outputDir = file("paper-api")
+            patchesDir = file("kitin-api/paper-patches")
+            outputDir = file("kitin-api")
         }
-        patchDir("forkApi") {
-            upstreamPath = "fork-api"
+        patchDir("foliaApi") {
+            upstreamPath = "folia-api"
             excludes = listOf("build.gradle.kts", "build.gradle.kts.patch", "paper-patches")
-            patchesDir = file("forky-api/fork-patches")
-            outputDir = file("fork-api")
+            patchesDir = file("kitin-api/folia-patches")
+            outputDir = file("folia-api")
         }
     }
 }

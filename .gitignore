@@ -6,13 +6,13 @@ build
 
 /run
 
-/forky-server/build.gradle.kts
-/forky-server/src/minecraft
+/kitin-server/build.gradle.kts
+/kitin-server/src/minecraft
 /paper-server
-/fork-server
-/forky-api/build.gradle.kts
+/folia-server
+/kitin-api/build.gradle.kts
 /paper-api
 /paper-api-generator
-/fork-api
+/folia-api
 
 .idea/
