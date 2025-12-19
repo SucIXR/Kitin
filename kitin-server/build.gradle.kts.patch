@@ -1,14 +1,22 @@
 --- a/folia-server/build.gradle.kts
 +++ b/folia-server/build.gradle.kts
-@@ -31,7 +_,22 @@
+@@ -23,6 +_,7 @@
+     gitFilePatches = false
+     
+     val fork = forks.register("folia") {
++        rootDirectory = upstreamsDirectory().map { it.dir("folia") }
+         upstream.patchDir("paperServer") {
+             upstreamPath = "paper-server"
+             excludes = setOf("src/minecraft", "patches", "build.gradle.kts")
+@@ -31,7 +_,21 @@
          }
      }
  
--    activefolia = folia
-+    val kitin = folias.register("kitin") {
-+        folias = folia
+-    activeFork = fork
++    val kitin = forks.register("kitin") {
++        forks = fork
 +        upstream.patchRepo("paperServer") {
-+            upstreamRepo = folia.patchedRepo("paperServer")
++            upstreamRepo = fork.patchedRepo("paperServer")
 +            patchesDir = rootDirectory.dir("kitin-server/paper-patches")
 +            outputDir = rootDirectory.dir("paper-server")
 +        }
@@ -19,14 +27,13 @@
 +            outputDir = rootDirectory.dir("folia-server")
 +        }
 +    }
-+
-+    activefolia = kitin
++    activeFork = kitin
+ 
  
      spigot {
-         enabled = true
 @@ -120,10 +_,14 @@
      main {
-         java { srcDir("../paper-server/src/main/java") }
+         java { srcDir("../paper-server/src/main/java"); srcDir("../paper-server/src/generated/java") }
          resources { srcDir("../paper-server/src/main/resources") }
 +        java { srcDir("../folia-server/src/main/java") }
 +        resources { srcDir("../folia-server/src/main/resources") }
@@ -38,13 +45,33 @@
 +        resources { srcDir("../folia-server/src/test/resources") }
      }
  }
- 
+ val log4jPlugins = sourceSets.create("log4jPlugins") {
 @@ -151,7 +_,7 @@
  }
  
  dependencies {
 -    implementation(project(":folia-api"))
 +    implementation(project(":kitin-api"))
-     implementation("ca.spottedleaf:concurrentutil:0.0.3")
+     implementation("ca.spottedleaf:concurrentutil:0.0.7")
      implementation("org.jline:jline-terminal-ffm:3.27.1") // use ffm on java 22+
      implementation("org.jline:jline-terminal-jni:3.27.1") // fall back to jni on java 21
+@@ -222,14 +_,14 @@
+         val gitBranch = git.exec(providers, "rev-parse", "--abbrev-ref", "HEAD").get().trim()
+         attributes(
+             "Main-Class" to "org.bukkit.craftbukkit.Main",
+-            "Implementation-Title" to "Folia",
++            "Implementation-Title" to "Kitin",
+             "Implementation-Version" to implementationVersion,
+             "Implementation-Vendor" to date,
+-            "Specification-Title" to "Folia",
++            "Specification-Title" to "Kitin",
+             "Specification-Version" to project.version,
+-            "Specification-Vendor" to "Paper Team",
+-            "Brand-Id" to "papermc:folia",
+-            "Brand-Name" to "Folia",
++            "Specification-Vendor" to "Kitin IXRMC",
++            "Brand-Id" to "sucixr:kitin",
++            "Brand-Name" to "Kitin",
+             "Build-Number" to (build ?: ""),
+             "Build-Time" to buildTime.toString(),
+             "Git-Branch" to gitBranch,
