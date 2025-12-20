@@ -39,7 +39,7 @@
 
 ```bash
 # 1. 拉取代码
-git clone [https://github.com/SucIXR/Kitin.git](https://github.com/SucIXR/Kitin.git)
+git clone https://github.com/SucIXR/Kitin.git
 cd Kitin
 
 # 2. 缝合补丁（如果报 Duplicate Class 请怪作者）
