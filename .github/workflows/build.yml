@@ -2,72 +2,88 @@ name: Kitin CI
 
 on:
   push:
-    branches: ["**"]
-  workflow_dispatch:
-
-permissions: write-all
+    branches:
+      - "**"
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    environment: default
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout Git Repository
         uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - name: Set up JDK 25
-        uses: actions/setup-java@v5
-        with:
-          distribution: 'corretto'
-          java-version: '25'
-          cache: 'gradle'
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v5
 
-      - name: Configure Git
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'corretto'
+          java-version: '25'
+
+      - name: Config Git
         run: |
-          git config --global user.email "ci@kitinmc.com"
-          git config --global user.name "Kitin CI"
+          git config --global user.email "no-reply@github.com"
+          git config --global user.name "Github Actions"
+
+      - name: Grant execute permission for gradlew
+        run: |
+          chmod +x gradlew
 
       - name: Apply Patches
-        run: ./gradlew applyAllPatches
-
-      - name: Create Paperclip Jar
-        run: ./gradlew createMojmapPaperclipJar
-
-      - name: Extract Metadata
-        id: meta
         run: |
-          echo "commit_id=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-          echo "build_date=$(date -u +'%Y-%m-%d %H:%M')" >> $GITHUB_ENV
-          JAR_PATH=$(find kitin-server/build/libs/ -name "*-paperclip-*-mojmap.jar" | head -n 1)
-          echo "jar_path=$JAR_PATH" >> $GITHUB_ENV
-          echo "jar_name=$(basename $JAR_PATH)" >> $GITHUB_ENV
+          ./gradlew applyAllPatches
+
+      - name: CreateJar
+        run: |
+          ./gradlew createMojmapPaperclipJar
+
+      - name: Push to API
+        continue-on-error: true
+        run: |
+          ./gradlew --refresh-dependencies generateDevelopmentBundle publish -PpublishDevBundle=true
+        env:
+          MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
-          name: Kitin-Build-JAR
-          path: ${{ env.jar_path }}
+          name: ${{ env.project_id_b }} CI Artifacts
+          path: kitin-server/build/libs/*-paperclip-*-mojmap.jar
+
+      - name : SetENV
+        run: |
+          sh scripts/SetENV.sh
+
+      - name: Get build info
+        id: build-info
+        run: |
+          BUILD_DATE=$(date -u +'%Y-%m-%d %H:%M:%S UTC')
+          echo "build_date=$BUILD_DATE" >> $GITHUB_ENV
 
       - name: Create Release
-        if: github.ref == 'refs/heads/main'
+        if: github.event_name != 'pull_request'
         uses: ncipollo/release-action@v1
         with:
-          tag: build-${{ env.commit_id }}
-          name: Kitin Core - ${{ env.commit_id }}
+          tag: ${{ env.tag }}
+          name: ${{ env.project_id_b }} ${{ env.mcversion }} - ${{ env.commit_id }}
           body: |
-            ### 🚀 Kitin Core
-            - **Build Date**: `${{ env.build_date }}`
-            - **Commit**: [${{ env.commit_id }}](https://github.com/${{ github.repository }}/commit/${{ env.commit_id }})
-            
-            #### 📦 Download
-            
-            > Automatically built by GitHub Actions.
-          artifacts: ${{ env.jar_path }}
-          allowUpdates: true
-          makeLatest: true
+            ### 📦 Version: `${{ env.mcversion }}` | Commit: [${{ env.commit_id }}](https://github.com/${{ github.repository }}/commit/${{ env.commit_id }})
+            [![download](https://img.shields.io/github/downloads/MenthaMC/${{ env.project_id }}/${{ env.tag }}/total?color=red&style=flat-square)](https://github.com/MenthaMC/${{ env.project_id }}/releases/download/${{ env.tag }}/${{ env.jar }})
+
+            > This release is automatically built by GitHub Actions.
+
+            #### 📜 Latest Commit Message:
+            ${{ env.commit_msg }}
+
+            #### 📊 Build Information:
+            - **Build Status**: ✅ Success
+            - **Build Date**: ${{ env.build_date }}
+          artifacts: ${{ env.jar_dir }}
+          generateReleaseNotes: true
+          prerelease: ${{ env.pre }}
+          makeLatest: ${{ env.make_latest }}
           token: ${{ secrets.GITHUB_TOKEN }}
