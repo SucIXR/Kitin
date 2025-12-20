@@ -24,7 +24,7 @@ paperweight {
         patchRepo("paperApi") {
             upstreamPath = "paper-api"
             patchesDir = file("kitin-api/paper-patches")
-            outputDir = file("kitin-api")
+            outputDir = file("paper-api")
         }
         patchDir("foliaApi") {
             upstreamPath = "folia-api"
