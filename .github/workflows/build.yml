@@ -2,8 +2,7 @@ name: Kitin CI
 
 on:
   push:
-    branches:
-      - "**"
+    branches: ["**"]
   workflow_dispatch:
 
 permissions: write-all
@@ -13,19 +12,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Git Repository
-        uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-
       - name: Set up JDK 25
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'corretto'
           java-version: '25'
+          cache: 'gradle'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Configure Git
         run: |
@@ -35,37 +35,39 @@ jobs:
       - name: Apply Patches
         run: ./gradlew applyAllPatches
 
-      - name: Build Paperclip Jar
+      - name: Create Paperclip Jar
         run: ./gradlew createMojmapPaperclipJar
 
-      - name: Set Environment Variables
-        run: sh scripts/SetENV.sh
-
-      - name: Get Build Date
-        run: echo "build_date=$(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_ENV
+      - name: Extract Metadata
+        id: meta
+        run: |
+          echo "commit_id=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          echo "build_date=$(date -u +'%Y-%m-%d %H:%M')" >> $GITHUB_ENV
+          JAR_PATH=$(find kitin-server/build/libs/ -name "*-paperclip-*-mojmap.jar" | head -n 1)
+          echo "jar_path=$JAR_PATH" >> $GITHUB_ENV
+          echo "jar_name=$(basename $JAR_PATH)" >> $GITHUB_ENV
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Kitin-CI-Artifacts
-          path: kitin-server/build/libs/*-paperclip-*-mojmap.jar
+          name: Kitin-Build-JAR
+          path: ${{ env.jar_path }}
 
       - name: Create Release
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main'
         uses: ncipollo/release-action@v1
         with:
-          tag: ${{ env.tag }}
-          name: Kitin ${{ env.mcversion }} - ${{ env.commit_id }}
+          tag: build-${{ env.commit_id }}
+          name: Kitin Core - ${{ env.commit_id }}
           body: |
-            ### 📦 Kitin Core Build
-            - **Minecraft Version**: `${{ env.mcversion }}`
+            ### 🚀 Kitin Core
+            - **Build Date**: `${{ env.build_date }}`
             - **Commit**: [${{ env.commit_id }}](https://github.com/${{ github.repository }}/commit/${{ env.commit_id }})
-            - **Build Date**: ${{ env.build_date }}
             
-            > This release is automatically built by GitHub Actions.
+            #### 📦 Download
             
-            #### 📜 Latest Commit Message:
-            ${{ github.event.head_commit.message }}
-          artifacts: kitin-server/build/libs/*-paperclip-*-mojmap.jar
+            > Automatically built by GitHub Actions.
+          artifacts: ${{ env.jar_path }}
           allowUpdates: true
+          makeLatest: true
           token: ${{ secrets.GITHUB_TOKEN }}
