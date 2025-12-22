@@ -1,0 +1,49 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: SucIXR <sasasa123456@foxmail.com>
+Date: Mon, 22 Dec 2025 19:00:53 +0800
+Subject: [PATCH] Social_Bubble_Physics
+
+
+diff --git a/net/minecraft/world/entity/monster/zombie/ZombifiedPiglin.java b/net/minecraft/world/entity/monster/zombie/ZombifiedPiglin.java
+index d27db3e7a91027f59b1a888b12ec04cf17d0e173..f51d3d8a22f798d2d75c1ba2f528d7c2599465dc 100644
+--- a/net/minecraft/world/entity/monster/zombie/ZombifiedPiglin.java
++++ b/net/minecraft/world/entity/monster/zombie/ZombifiedPiglin.java
+@@ -179,6 +179,16 @@ public class ZombifiedPiglin extends Zombie implements NeutralMob {
+         // CraftBukkit end
+     }
+ 
++    //Kitin start
++    // 1. 物理推挤拦截 (解决 1x1 坑位卡顿的核心)
++    @Override
++    protected void pushEntities() {
++        // 只有在社交气泡判定允许时，才处理实体间的挤压
++        if (me.sucixr.kitin.scheduler.SocialBubbleEngine.getInstance().shouldProcessCollision(this)) {
++            super.pushEntities();
++        }
++    }
++
+     public static boolean checkZombifiedPiglinSpawnRules(
+         EntityType<ZombifiedPiglin> entityType, LevelAccessor level, EntitySpawnReason spawnReason, BlockPos pos, RandomSource random
+     ) {
+diff --git a/net/minecraft/world/entity/npc/villager/Villager.java b/net/minecraft/world/entity/npc/villager/Villager.java
+index 1cadfd2cefedb1a462b35ffb2717af3df648c47c..43bb249d4d370f4ba5a64cef01e794873c138996 100644
+--- a/net/minecraft/world/entity/npc/villager/Villager.java
++++ b/net/minecraft/world/entity/npc/villager/Villager.java
+@@ -269,6 +269,17 @@ public class Villager extends AbstractVillager implements ReputationEventHandler
+         return this.assignProfessionWhenSpawned;
+     }
+ 
++    // --- Kitin Start: 社交气泡物理补丁 ---
++    @Override
++    protected void pushEntities() {
++        // 如果引擎判定当前环境压力大且拥挤，则直接拦截物理挤压计算
++        if (!me.sucixr.kitin.scheduler.SocialBubbleEngine.getInstance().shouldProcessCollision(this)) {
++            return;
++        }
++        super.pushEntities();
++    }
++    // --- Kitin End ---
++
+     // Paper start - EAR 2
+     @Override
+     public void inactiveTick() {
