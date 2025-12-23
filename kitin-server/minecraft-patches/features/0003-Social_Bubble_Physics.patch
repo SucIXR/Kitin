@@ -4,6 +4,27 @@ Date: Mon, 22 Dec 2025 19:00:53 +0800
 Subject: [PATCH] Social_Bubble_Physics
 
 
+diff --git a/net/minecraft/world/entity/monster/piglin/Piglin.java b/net/minecraft/world/entity/monster/piglin/Piglin.java
+index 3c99c69451b4b097e002747f99b4916106f44121..9b3f42d669d130e59c449be4044a69c087bdc937 100644
+--- a/net/minecraft/world/entity/monster/piglin/Piglin.java
++++ b/net/minecraft/world/entity/monster/piglin/Piglin.java
+@@ -326,6 +326,16 @@ public class Piglin extends AbstractPiglin implements CrossbowAttackMob, Invento
+         PiglinAi.updateActivity(this);
+         super.customServerAiStep(level);
+     }
++    //Kitin Start
++    @Override
++    protected void pushEntities() {
++        // 只有当社交气泡/碰撞引擎允许时，才执行原版的推挤物理
++        // 这能极大减少由于挤压产生的微小坐标更新包
++        if (me.sucixr.kitin.scheduler.SocialBubbleEngine.getInstance().shouldProcessCollision(this)) {
++            super.pushEntities();
++        }
++    }
++    //Kitin end
+ 
+     @Override
+     protected int getBaseExperienceReward(ServerLevel level) {
 diff --git a/net/minecraft/world/entity/monster/zombie/ZombifiedPiglin.java b/net/minecraft/world/entity/monster/zombie/ZombifiedPiglin.java
 index d27db3e7a91027f59b1a888b12ec04cf17d0e173..f51d3d8a22f798d2d75c1ba2f528d7c2599465dc 100644
 --- a/net/minecraft/world/entity/monster/zombie/ZombifiedPiglin.java

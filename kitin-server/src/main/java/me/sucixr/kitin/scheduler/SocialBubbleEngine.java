@@ -13,6 +13,12 @@ public class SocialBubbleEngine {
     public static SocialBubbleEngine getInstance() { return INSTANCE; }
 
     public boolean shouldProcessCollision(LivingEntity entity) {
+        // --- Kitin 传送门特殊补丁: 解决 80w 塔掉落缓慢问题 ---
+        // 如果实体正在传送门内，强制开启 100% 物理挤压，确保它们能被“推”出传送门进入掉落井
+        if (entity.level().getBlockState(entity.blockPosition()).is(net.minecraft.world.level.block.Blocks.NETHER_PORTAL)) {
+            return true;
+        }
+        // --- 补丁结束 ---
         // 1. 获取基础压力
         double stress = PerformanceBudgetManager.getInstance().getCurrentStressLevel();
 
