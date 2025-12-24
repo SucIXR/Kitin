@@ -20,22 +20,95 @@ index 755fe00ea86a57aa899c19316d3dd90900d8e973..4b7c0ca50555984bc6bf31fce6f7900c
          final io.papermc.paper.threadedregions.RegionizedWorldData regionizedWorldData = this.getCurrentWorldData(); // Folia - regionised ticking
          final ca.spottedleaf.leafprofiler.RegionizedProfiler.Handle profiler = io.papermc.paper.threadedregions.TickRegionScheduler.getProfiler(); // Folia - profiler
          ProfilerFiller profilerFiller = Profiler.get();
-diff --git a/net/minecraft/world/entity/LivingEntity.java b/net/minecraft/world/entity/LivingEntity.java
-index d5bd641094730571eb65110c84b1df287288be3d..45d4ebf2dade04deb1f62be02205055ea8b48628 100644
---- a/net/minecraft/world/entity/LivingEntity.java
-+++ b/net/minecraft/world/entity/LivingEntity.java
-@@ -3618,6 +3618,14 @@ public abstract class LivingEntity extends Entity implements Attackable, Waypoin
-     }
+diff --git a/net/minecraft/world/entity/monster/piglin/Piglin.java b/net/minecraft/world/entity/monster/piglin/Piglin.java
+index 2497779f96e3b6c7e7aa048c2047c04f06cb7ede..3c99c69451b4b097e002747f99b4916106f44121 100644
+--- a/net/minecraft/world/entity/monster/piglin/Piglin.java
++++ b/net/minecraft/world/entity/monster/piglin/Piglin.java
+@@ -312,6 +312,13 @@ public class Piglin extends AbstractPiglin implements CrossbowAttackMob, Invento
  
-     public void aiStep() {
-+        // --- Kitin 优化注入开始 ---
-+        // 根据服务器压力和玩家距离，决定是否跳过这一 tick 的 AI 处理
+     @Override
+     protected void customServerAiStep(ServerLevel level) {
++        // --- Kitin Start: 接入性能调度器 ---
 +        if (!me.sucixr.kitin.scheduler.PerformanceBudgetManager.getInstance().shouldProcessAI(this)) {
-+            // 如果被拦截，只执行基础的物理移动（重力、水流等），跳过复杂的 AI 决策
-+            this.setNoActionTime(this.getNoActionTime() + 1); // 保持基础状态更新
++            // 如果调度器判定当前压力过大，直接跳过整个 Brain 的 Tick
++            // 这将停止所有的 Sensor 扫描（如寻找玩家、寻找金锭、寻找同类）
 +            return;
 +        }
-+        // --- Kitin 优化注入结束 ---
-         if (this.noJumpDelay > 0) {
-             this.noJumpDelay--;
++        // --- Kitin End ---
+         ProfilerFiller profilerFiller = Profiler.get();
+         profilerFiller.push("piglinBrain");
+         this.getBrain().tick(level, this);
+diff --git a/net/minecraft/world/entity/monster/zombie/Zombie.java b/net/minecraft/world/entity/monster/zombie/Zombie.java
+index feccb1180618ec7a887c45033f0374e3d5d40f0b..84712b22c5a54f18f5a2a15b7fe81d99171cb559 100644
+--- a/net/minecraft/world/entity/monster/zombie/Zombie.java
++++ b/net/minecraft/world/entity/monster/zombie/Zombie.java
+@@ -211,6 +211,17 @@ public class Zombie extends Monster {
+ 
+     @Override
+     public void tick() {
++        // --- Kitin Start: 彻底拦截 AI 步进 ---
++        if (this.level() instanceof ServerLevel && !this.isNoAi()) {
++            // 如果调度器判定该实体不需要处理 AI
++            if (!me.sucixr.kitin.scheduler.PerformanceBudgetManager.getInstance().shouldProcessAI(this)) {
++                // 我们直接调用 LivingEntity 的超级父类 tick，只跑基础位移/物理逻辑
++                // 这会跳过 Mob 层的 AI 决策和 Zombie 层的溺水逻辑
++                super.tick();
++                return;
++            }
++        }
++        // --- Kitin End ---
+         if (this.level() instanceof ServerLevel serverLevel && this.isAlive() && !this.isNoAi()) {
+             if (this.isUnderWaterConverting()) {
+                 this.conversionTime--;
+diff --git a/net/minecraft/world/entity/monster/zombie/ZombifiedPiglin.java b/net/minecraft/world/entity/monster/zombie/ZombifiedPiglin.java
+index 8fcb6cd1cefa6c9e1809944b4720cfdc35325729..d27db3e7a91027f59b1a888b12ec04cf17d0e173 100644
+--- a/net/minecraft/world/entity/monster/zombie/ZombifiedPiglin.java
++++ b/net/minecraft/world/entity/monster/zombie/ZombifiedPiglin.java
+@@ -122,6 +122,12 @@ public class ZombifiedPiglin extends Zombie implements NeutralMob {
+     }
+ 
+     private void maybeAlertOthers() {
++        // --- Kitin Start
++        if (this.level() instanceof ServerLevel &&
++                !me.sucixr.kitin.scheduler.PerformanceBudgetManager.getInstance().shouldProcessAI(this)) {
++            return;
++        }
++        // --- Kitin End ---
+         if (this.ticksUntilNextAlert > 0) {
+             this.ticksUntilNextAlert--;
+         } else {
+diff --git a/net/minecraft/world/entity/npc/villager/Villager.java b/net/minecraft/world/entity/npc/villager/Villager.java
+index 8616a8f5b720eac2bb5b3d78a3b69d40bb0b5547..1cadfd2cefedb1a462b35ffb2717af3df648c47c 100644
+--- a/net/minecraft/world/entity/npc/villager/Villager.java
++++ b/net/minecraft/world/entity/npc/villager/Villager.java
+@@ -295,10 +295,17 @@ public class Villager extends AbstractVillager implements ReputationEventHandler
+     }
+     protected void customServerAiStep(ServerLevel level, final boolean inactive) {
+         // Paper end - EAR 2
+-        ProfilerFiller profilerFiller = Profiler.get();
+-        profilerFiller.push("villagerBrain");
+-        if (!inactive) this.getBrain().tick(level, this); // Paper - EAR 2
+-        profilerFiller.pop();
++        // --- Kitin Start: 注入调度引擎 ---
++        // 如果原本 Paper 认为它是 active (inactive=false)，我们再过一遍概率引擎
++        boolean kitinInactive = inactive || !me.sucixr.kitin.scheduler.PerformanceBudgetManager.getInstance().shouldProcessAI(this);
++        if (!kitinInactive) {
++                this.getBrain().tick(level, this);
++        }
++        // --- Kitin End ---
++//        ProfilerFiller profilerFiller = Profiler.get();
++//        profilerFiller.push("villagerBrain");
++//        if (!inactive) this.getBrain().tick(level, this); // Paper - EAR 2
++//        profilerFiller.pop(); //Kitin off
+         if (this.assignProfessionWhenSpawned) {
+             this.assignProfessionWhenSpawned = false;
          }
+@@ -332,7 +339,7 @@ public class Villager extends AbstractVillager implements ReputationEventHandler
+             this.stopTrading();
+         }
+ 
+-        if (inactive) return; // Paper - EAR 2
++        if (kitinInactive) return; // Paper - EAR 2 //Kitin
+         super.customServerAiStep(level);
+     }
+ 
