@@ -20,45 +20,6 @@ index 755fe00ea86a57aa899c19316d3dd90900d8e973..4b7c0ca50555984bc6bf31fce6f7900c
          final io.papermc.paper.threadedregions.RegionizedWorldData regionizedWorldData = this.getCurrentWorldData(); // Folia - regionised ticking
          final ca.spottedleaf.leafprofiler.RegionizedProfiler.Handle profiler = io.papermc.paper.threadedregions.TickRegionScheduler.getProfiler(); // Folia - profiler
          ProfilerFiller profilerFiller = Profiler.get();
-diff --git a/net/minecraft/world/entity/monster/zombie/Zombie.java b/net/minecraft/world/entity/monster/zombie/Zombie.java
-index feccb1180618ec7a887c45033f0374e3d5d40f0b..84712b22c5a54f18f5a2a15b7fe81d99171cb559 100644
---- a/net/minecraft/world/entity/monster/zombie/Zombie.java
-+++ b/net/minecraft/world/entity/monster/zombie/Zombie.java
-@@ -211,6 +211,17 @@ public class Zombie extends Monster {
- 
-     @Override
-     public void tick() {
-+        // --- Kitin Start: 彻底拦截 AI 步进 ---
-+        if (this.level() instanceof ServerLevel && !this.isNoAi()) {
-+            // 如果调度器判定该实体不需要处理 AI
-+            if (!me.sucixr.kitin.scheduler.PerformanceBudgetManager.getInstance().shouldProcessAI(this)) {
-+                // 我们直接调用 LivingEntity 的超级父类 tick，只跑基础位移/物理逻辑
-+                // 这会跳过 Mob 层的 AI 决策和 Zombie 层的溺水逻辑
-+                super.tick();
-+                return;
-+            }
-+        }
-+        // --- Kitin End ---
-         if (this.level() instanceof ServerLevel serverLevel && this.isAlive() && !this.isNoAi()) {
-             if (this.isUnderWaterConverting()) {
-                 this.conversionTime--;
-diff --git a/net/minecraft/world/entity/monster/zombie/ZombifiedPiglin.java b/net/minecraft/world/entity/monster/zombie/ZombifiedPiglin.java
-index 8fcb6cd1cefa6c9e1809944b4720cfdc35325729..d27db3e7a91027f59b1a888b12ec04cf17d0e173 100644
---- a/net/minecraft/world/entity/monster/zombie/ZombifiedPiglin.java
-+++ b/net/minecraft/world/entity/monster/zombie/ZombifiedPiglin.java
-@@ -122,6 +122,12 @@ public class ZombifiedPiglin extends Zombie implements NeutralMob {
-     }
- 
-     private void maybeAlertOthers() {
-+        // --- Kitin Start
-+        if (this.level() instanceof ServerLevel &&
-+                !me.sucixr.kitin.scheduler.PerformanceBudgetManager.getInstance().shouldProcessAI(this)) {
-+            return;
-+        }
-+        // --- Kitin End ---
-         if (this.ticksUntilNextAlert > 0) {
-             this.ticksUntilNextAlert--;
-         } else {
 diff --git a/net/minecraft/world/entity/npc/villager/Villager.java b/net/minecraft/world/entity/npc/villager/Villager.java
 index 8616a8f5b720eac2bb5b3d78a3b69d40bb0b5547..1cadfd2cefedb1a462b35ffb2717af3df648c47c 100644
 --- a/net/minecraft/world/entity/npc/villager/Villager.java
