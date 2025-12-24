@@ -20,24 +20,6 @@ index 755fe00ea86a57aa899c19316d3dd90900d8e973..4b7c0ca50555984bc6bf31fce6f7900c
          final io.papermc.paper.threadedregions.RegionizedWorldData regionizedWorldData = this.getCurrentWorldData(); // Folia - regionised ticking
          final ca.spottedleaf.leafprofiler.RegionizedProfiler.Handle profiler = io.papermc.paper.threadedregions.TickRegionScheduler.getProfiler(); // Folia - profiler
          ProfilerFiller profilerFiller = Profiler.get();
-diff --git a/net/minecraft/world/entity/monster/piglin/Piglin.java b/net/minecraft/world/entity/monster/piglin/Piglin.java
-index 2497779f96e3b6c7e7aa048c2047c04f06cb7ede..3c99c69451b4b097e002747f99b4916106f44121 100644
---- a/net/minecraft/world/entity/monster/piglin/Piglin.java
-+++ b/net/minecraft/world/entity/monster/piglin/Piglin.java
-@@ -312,6 +312,13 @@ public class Piglin extends AbstractPiglin implements CrossbowAttackMob, Invento
- 
-     @Override
-     protected void customServerAiStep(ServerLevel level) {
-+        // --- Kitin Start: 接入性能调度器 ---
-+        if (!me.sucixr.kitin.scheduler.PerformanceBudgetManager.getInstance().shouldProcessAI(this)) {
-+            // 如果调度器判定当前压力过大，直接跳过整个 Brain 的 Tick
-+            // 这将停止所有的 Sensor 扫描（如寻找玩家、寻找金锭、寻找同类）
-+            return;
-+        }
-+        // --- Kitin End ---
-         ProfilerFiller profilerFiller = Profiler.get();
-         profilerFiller.push("piglinBrain");
-         this.getBrain().tick(level, this);
 diff --git a/net/minecraft/world/entity/monster/zombie/Zombie.java b/net/minecraft/world/entity/monster/zombie/Zombie.java
 index feccb1180618ec7a887c45033f0374e3d5d40f0b..84712b22c5a54f18f5a2a15b7fe81d99171cb559 100644
 --- a/net/minecraft/world/entity/monster/zombie/Zombie.java
