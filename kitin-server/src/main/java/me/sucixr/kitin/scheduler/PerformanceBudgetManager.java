@@ -21,10 +21,10 @@ public class PerformanceBudgetManager {
     }
 
     public boolean shouldProcessAI(Entity entity) {
-        //传送门方块内生物强制保留活性
+        //猪人塔
         if (entity.level().getBlockState(entity.blockPosition()).is(net.minecraft.world.level.block.Blocks.NETHER_PORTAL)) {
             return true;
-        }
+        };
         double stress = this.currentStressLevel;
 
         //正在攻击或逃跑的生物不降频
