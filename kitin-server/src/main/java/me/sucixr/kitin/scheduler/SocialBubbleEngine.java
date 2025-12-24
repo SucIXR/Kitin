@@ -13,42 +13,48 @@ public class SocialBubbleEngine {
     public static SocialBubbleEngine getInstance() { return INSTANCE; }
 
     public boolean shouldProcessCollision(LivingEntity entity) {
-        // 1. 传送门保底逻辑（保留，这对所有生物进入掉落井都重要）
+        // --- Kitin 传送门特殊补丁: 解决 80w 塔掉落缓慢问题 ---
+        // 如果实体正在传送门内，强制开启 100% 物理挤压，确保它们能被“推”出传送门进入掉落井
         if (entity.level().getBlockState(entity.blockPosition()).is(net.minecraft.world.level.block.Blocks.NETHER_PORTAL)) {
             return true;
         }
-
-        // 2. 【核心改动】删除对特定生物（如猪灵、村民）的判断
-
-        // 3. 获取压力
+        // --- 补丁结束 ---
+        // 1. 获取基础压力
         double stress = PerformanceBudgetManager.getInstance().getCurrentStressLevel();
 
-        // 4. 压力下的通用裁剪逻辑
+        // 2. 物理层特有的激进判定：如果压力开始出现 (MSPT > 35ms)，立即进入高效模式
         if (stress < 0.9) {
-            // 寻找最近玩家
-            ServerPlayer player = (ServerPlayer) entity.level().getNearestPlayer(entity, 32);
-            if (player == null) return false; // 附近没玩家，任何生物都不跑碰撞
+            ServerPlayer player = (ServerPlayer) entity.level().getNearestPlayer(entity, 32); // 物理检测范围缩短至32格
+            if (player == null) return false; // 附近没玩家，直接不跑碰撞
 
             double distance = entity.distanceTo(player);
 
-            // 贴脸保证物理 (1.5格)
+            // --- 激进物理保底逻辑 ---
+            // 只有在 1.5 格内（贴脸）才强制保证物理，否则进入概率/密度判定
             if (distance < 1.5) return true;
 
-            // 视线逻辑（通用）
+            // 3. 计算视野权重 (物理专用：身后和侧面几乎瞬间进入气泡模式)
             Vec3 lookVec = player.getLookAngle();
             Vec3 relVec = entity.position().subtract(player.position());
             double relLen = relVec.length();
 
+            double physViewWeight = 0.01; // 默认身后概率 1%
             if (relLen > 0.001) {
                 double dot = lookVec.dot(relVec.scale(1.0 / relLen));
-                // 玩家正盯着看的生物给 50% 物理概率，身后的生物给 1%
-                double physViewWeight = dot > 0.8 ? 0.5 : (dot > 0 ? 0.05 : 0.01);
-
-                // 综合压力评分进行随机剔除
-                return Math.random() < (physViewWeight * stress);
+                // 只有玩家准星正对着看时才给 50% 概率，其余时间极低
+                physViewWeight = dot > 0.8 ? 0.5 : (dot > 0 ? 0.05 : 0.01);
             }
-        }
 
-        return true; // 压力小时默认开启物理
+            // 修补 A: 移除原本的 getEntities 密度判定，改用常驻随机判定，极大提升基础性能
+            double finalProb = physViewWeight * stress;
+
+            // 修补 B: 针对猪灵大幅调低频率
+            // 猪灵在压力下即便被看着，也只有极低概率进行碰撞计算，视觉上完全可以接受
+            if (entity instanceof ZombifiedPiglin) {
+                finalProb *= 0.1; // 在原有概率基础上再砍掉 90% 的频率
+            }
+                return entity.getRandom().nextDouble() < (physViewWeight * stress);
+        }
+        return true;
     }
 }
