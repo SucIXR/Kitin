@@ -30,7 +30,34 @@ public class PerformanceBudgetManager {
 
     public double getCurrentStressLevel() { return this.currentStressLevel; }
 
-    private  double getPlayerNetFactor(ServerPlayer player){
+    public void onTickStart(long currentMspt) {
+        // 核心：归一化处理 (将 MSPT 映射到 0.0 ~ 1.0 之间)
+        double t = (currentMspt - MIN_THRESHOLD) / (MAX_THRESHOLD - MIN_THRESHOLD);
+
+        // 限制范围在 [0, 1]
+        t = Math.max(0.0, Math.min(1.0, t));
+
+        // 使用 Smoothstep 公式实现平滑过渡：3t^2 - 2t^3
+        // 这个公式能保证在起点和终点处的变化率都是 0，不会产生突变
+        double smoothPenalty = t * t * (3 - 2 * t);
+        // 修正：先更新 target，再更新 current
+        this.targetStressLevel = 1.0 - (smoothPenalty * 0.95);
+        this.currentStressLevel += (this.targetStressLevel - this.currentStressLevel) * SMOOTH_FACTOR;
+    }
+
+        public boolean shouldProcessAI(Entity entity) {
+        double stress = this.currentStressLevel;
+
+        // 1. 猪灵激进降频
+        if (stress < 0.95) {
+            if (entity instanceof net.minecraft.world.entity.monster.zombie.ZombifiedPiglin) {
+                if (entity.level().random.nextDouble() > (stress * stress)) return false;
+            }
+        }
+
+        ServerPlayer player = (ServerPlayer) entity.level().getNearestPlayer(entity, 128);
+        if (player == null) return false;
+
         // 2. 网络健康检测 (保持原样，它是对 stress 的二次修正)
         double instantNetHealth = 1.0;
         try {
@@ -56,62 +83,22 @@ public class PerformanceBudgetManager {
         // 网络恢复可以快一点 (0.2)，网络恶化可以慢一点，或者统一使用 0.1
         smoothedNet += (instantNetHealth - smoothedNet) * 0.1;
         playerNetSmoothCache.put(player, smoothedNet);
-        return smoothedNet;
-    }
 
-    // --- 分类 3: 提取同类项（空间上下文计算） ---
-    // 供 AI 和物理引擎共同调用，减少重复计算
-    public EntityData getContext(Entity entity, double radius) {
-        ServerPlayer player = (ServerPlayer) entity.level().getNearestPlayer(entity, radius);
-        if (player == null) return null;
-
+        // 3. 距离与视野
         double distance = entity.distanceTo(player);
+        double distanceProb = 1.0 / (1.0 + Math.pow(distance / SCALE, 2));
+
         Vec3 lookVec = player.getLookAngle();
         Vec3 toEntityVec = entity.position().subtract(player.position()).normalize();
         double dot = lookVec.dot(toEntityVec);
-        double net = getPlayerNetFactor(player);
-
-        return new EntityData(distance, dot, net, player);
-    }
-    public record EntityData(double distance, double dot, double netFactor, ServerPlayer player) {}
-
-    public void onTickStart(long currentMspt) {
-        // 核心：归一化处理 (将 MSPT 映射到 0.0 ~ 1.0 之间)
-        double t = (currentMspt - MIN_THRESHOLD) / (MAX_THRESHOLD - MIN_THRESHOLD);
-
-        // 限制范围在 [0, 1]
-        t = Math.max(0.0, Math.min(1.0, t));
-
-        // 使用 Smoothstep 公式实现平滑过渡：3t^2 - 2t^3
-        // 这个公式能保证在起点和终点处的变化率都是 0，不会产生突变
-        double smoothPenalty = t * t * (3 - 2 * t);
-        // 修正：先更新 target，再更新 current
-        this.targetStressLevel = 1.0 - (smoothPenalty * 0.95);
-        this.currentStressLevel += (this.targetStressLevel - this.currentStressLevel) * SMOOTH_FACTOR;
-    }
-
-    public boolean shouldProcessAI(Entity entity) {
-        double stress = this.currentStressLevel;
-
-        // 1. 猪灵激进降频
-        if (stress < 0.95 && entity instanceof net.minecraft.world.entity.monster.zombie.ZombifiedPiglin) {
-            if (entity.level().random.nextDouble() > (stress * stress)) return false;
-        }
-
-        // 获取上下文数据（半径 128）
-        EntityData ctx = getContext(entity, 128.0);
-        if (ctx == null) return false;
-
-        // 3. 距离与视野
-        double distanceProb = 1.0 / (1.0 + Math.pow(ctx.distance / SCALE, 2));
-        double viewMultiplier = ctx.dot > 0.5 ? 1.0 : (ctx.dot > 0 ? 0.5 : 0.1);
+        double viewMultiplier = dot > 0.5 ? 1.0 : (dot > 0 ? 0.5 : 0.1);
 
         // 综合判定
-        double finalProbability = Math.sqrt(distanceProb * viewMultiplier * stress * ctx.netFactor()) * 0.8 + 0.2;
+        // 确保使用 smoothedNet 才能让 AI 动作不因为一瞬间的丢包而抽搐
+        double finalProbability = distanceProb * viewMultiplier * stress * smoothedNet;
 
-        //double minSafeDistance = (entity instanceof net.minecraft.world.entity.monster.zombie.ZombifiedPiglin) ? 2.0 : 4.0;
-        double minSafeDistance = 2.0;
-        if (ctx.distance < minSafeDistance) return true;
+        double minSafeDistance = (entity instanceof net.minecraft.world.entity.monster.zombie.ZombifiedPiglin) ? 2.0 : 4.0;
+        if (distance < minSafeDistance) return true;
 
         return entity.getRandom().nextDouble() < finalProbability;
     }
