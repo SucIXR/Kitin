@@ -22,7 +22,7 @@ public class PerformanceBudgetManager {
     public void onTickStart(long currentMspt) {
         this.tickStartTime = System.nanoTime();
         // 根据上一刻的 MSPT 动态调整压力系数 (EMA 算法)
-        double targetStress = 1.0 - (Math.max(0, currentMspt - 35.0) / 15.0); //临时修改成5!
+        double targetStress = 1.0 - (Math.max(0, currentMspt - 5.0) / 15.0); //临时修改成5!
         this.currentStressLevel = Math.max(0.05, targetStress);
     }
 
