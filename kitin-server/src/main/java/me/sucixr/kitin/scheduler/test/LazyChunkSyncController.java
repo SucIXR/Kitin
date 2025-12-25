@@ -1,4 +1,4 @@
-package me.sucixr.kitin.scheduler;
+package me.sucixr.kitin.scheduler.test;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;

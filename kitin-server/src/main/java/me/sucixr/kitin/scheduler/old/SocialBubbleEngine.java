@@ -1,4 +1,4 @@
-package me.sucixr.kitin.scheduler;
+package me.sucixr.kitin.scheduler.old;
 
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
