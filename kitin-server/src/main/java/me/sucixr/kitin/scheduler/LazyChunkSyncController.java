@@ -32,7 +32,7 @@ public class LazyChunkSyncController {
         if (maxDist <= 1) {
             // 状态 A：原地晃悠
             // 每秒涨 1 分阻力，上限 4 分
-            if (now - state.lastCheckTime >= 1000) {
+            if (now - state.lastCheckTime >= 5000) {
                 state.resistance = Math.min(4, state.resistance + 1);
                 state.lastCheckTime = now;
             }
