@@ -1,0 +1,28 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: SucIXR <sasasa123456@foxmail.com>
+Date: Fri, 26 Dec 2025 06:38:29 +0800
+Subject: [PATCH] OPT_Network_PlayerThrottling
+
+
+diff --git a/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java b/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
+index 78532e1e4d3eba6c58af93b8ae9cb5c74d1adb56..f22a1e90098409d78c861ce630734c41da1542e0 100644
+--- a/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
++++ b/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
+@@ -937,7 +937,7 @@ public final class RegionizedPlayerChunkLoader {
+ 
+             final int prevChunkX = this.lastChunkX;
+             final int prevChunkZ = this.lastChunkZ;
+-
++            if (!me.sucixr.kitin.scheduler.controller.ChunkLoadController.shouldSkipUpdate(this.player)){//Kitin 1
+             if (
+                 // has view distance stayed the same?
+                 sendViewDistance == this.lastSendDistance
+@@ -953,7 +953,7 @@ public final class RegionizedPlayerChunkLoader {
+             ) {
+                 // nothing we care about changed, so we're not re-calculating
+                 return;
+-            }
++            }}//Kitin 2
+ 
+             // update distance maps
+             this.broadcastMap.update(currentChunkX, currentChunkZ, sendViewDistance + 1);

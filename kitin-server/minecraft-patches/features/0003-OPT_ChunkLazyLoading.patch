@@ -5,18 +5,18 @@ Subject: [PATCH] OPT_ChunkLazyLoading
 
 
 diff --git a/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java b/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
-index d94c0d15f62b67378669d4ce7252d99b8f743fa5..12ee976b73df5c5fd5518111800bbaeff23111e7 100644
+index d94c0d15f62b67378669d4ce7252d99b8f743fa5..78532e1e4d3eba6c58af93b8ae9cb5c74d1adb56 100644
 --- a/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
 +++ b/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
-@@ -912,6 +912,11 @@ public final class RegionizedPlayerChunkLoader {
-             if (this.removed) {
-                 throw new IllegalStateException("Updating removed player chunk loader");
-             }
+@@ -908,6 +908,11 @@ public final class RegionizedPlayerChunkLoader {
+         }
+ 
+         void update() {
 +            // Kitin start
-+            if (me.sucixr.kitin.scheduler.LazyChunkSyncController.getInstance().shouldSkipUpdate(this.player)) {
++            if (me.sucixr.kitin.scheduler.controller.ChunkLoadController.shouldSkipUpdate(this.player)) {
 +                return;
 +            }
 +            // Kitin end
-             final ViewDistances playerDistances = ((ChunkSystemServerPlayer)this.player).moonrise$getViewDistanceHolder().getViewDistances();
-             final ViewDistances worldDistances = ((ChunkSystemServerLevel)this.world).moonrise$getViewDistanceHolder().getViewDistances();
- 
+             TickThread.ensureTickThread(this.player, "Cannot update player asynchronously");
+             if (this.removed) {
+                 throw new IllegalStateException("Updating removed player chunk loader");

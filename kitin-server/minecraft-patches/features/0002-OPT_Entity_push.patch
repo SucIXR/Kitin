@@ -5,7 +5,7 @@ Subject: [PATCH] OPT_Entity_push
 
 
 diff --git a/net/minecraft/world/entity/Entity.java b/net/minecraft/world/entity/Entity.java
-index 02e5eff81568aff2fa9dc21e1225126bff517c79..97f35ddb38c8588cc3c539c3aca6e5839e54c3d3 100644
+index 02e5eff81568aff2fa9dc21e1225126bff517c79..fca2d0cb9491ecad33b00f47fd81eec41ae669f7 100644
 --- a/net/minecraft/world/entity/Entity.java
 +++ b/net/minecraft/world/entity/Entity.java
 @@ -2313,30 +2313,35 @@ public abstract class Entity implements SyncedDataHolder, DebugValueSource, Name
@@ -36,7 +36,7 @@ index 02e5eff81568aff2fa9dc21e1225126bff517c79..97f35ddb38c8588cc3c539c3aca6e583
 -                        entity.push(d, 0.0, d1);
 -                    }
 +                //Kitin start
-+                if (me.sucixr.kitin.scheduler.SocialBubbleEngine.getInstance().shouldSkipHardCollision(this,entity)) {
++                if (me.sucixr.kitin.scheduler.physics.SocialBubbleEngine.getInstance().shouldSkipHardCollision(this,entity)) {
 +                    return;
                  }
 +                //Kitin end
