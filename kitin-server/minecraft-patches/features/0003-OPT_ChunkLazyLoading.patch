@@ -1,0 +1,22 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: SucIXR <sasasa123456@foxmail.com>
+Date: Thu, 25 Dec 2025 13:23:09 +0800
+Subject: [PATCH] OPT_ChunkLazyLoading
+
+
+diff --git a/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java b/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
+index d94c0d15f62b67378669d4ce7252d99b8f743fa5..12ee976b73df5c5fd5518111800bbaeff23111e7 100644
+--- a/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
++++ b/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
+@@ -912,6 +912,11 @@ public final class RegionizedPlayerChunkLoader {
+             if (this.removed) {
+                 throw new IllegalStateException("Updating removed player chunk loader");
+             }
++            // Kitin start
++            if (me.sucixr.kitin.scheduler.LazyChunkSyncController.getInstance().shouldSkipUpdate(this.player)) {
++                return;
++            }
++            // Kitin end
+             final ViewDistances playerDistances = ((ChunkSystemServerPlayer)this.player).moonrise$getViewDistanceHolder().getViewDistances();
+             final ViewDistances worldDistances = ((ChunkSystemServerLevel)this.world).moonrise$getViewDistanceHolder().getViewDistances();
+ 
