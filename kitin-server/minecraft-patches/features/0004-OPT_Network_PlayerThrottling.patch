@@ -5,15 +5,15 @@ Subject: [PATCH] OPT_Network_PlayerThrottling
 
 
 diff --git a/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java b/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
-index 723b74e5af627acdc8e1436024d723a67c10df1d..fe2fbec5cd84b81fca794f594c989f4aa3439157 100644
+index 723b74e5af627acdc8e1436024d723a67c10df1d..5c1b4c402057b3b16ef6100c1dfd8caada2910f6 100644
 --- a/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
 +++ b/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
-@@ -571,7 +571,12 @@ public final class RegionizedPlayerChunkLoader {
-         private double getMaxChunkGenRate() {
-             final double configRate = PlatformHooks.get().configPlayerMaxGenRate();
+@@ -577,7 +577,12 @@ public final class RegionizedPlayerChunkLoader {
+         private double getMaxChunkSendRate() {
+             final double configRate = PlatformHooks.get().configPlayerMaxSendRate();
  
 -            return configRate <= 0.0 || configRate > (double)MAX_RATE ? (double)MAX_RATE : Math.max(1.0, configRate);
-+            double baseRate = configRate <= 0.0 || configRate > (double)MAX_RATE ? (double)MAX_RATE : Math.max(1.0, configRate);//Kitin
++            double baseRate= configRate <= 0.0 || configRate > (double)MAX_RATE ? (double)MAX_RATE : Math.max(1.0, configRate); //Kitin
 +            //Kitin start
 +            return me.sucixr.kitin.scheduler.policy.ChunkSendPolicy
 +                    .getInstance()
@@ -21,4 +21,4 @@ index 723b74e5af627acdc8e1436024d723a67c10df1d..fe2fbec5cd84b81fca794f594c989f4a
 +            //Kitin end
          }
  
-         private double getMaxChunkSendRate() {
+         private long getMaxChunkLoads() {
