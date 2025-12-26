@@ -1,28 +1,24 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: SucIXR <sasasa123456@foxmail.com>
-Date: Fri, 26 Dec 2025 06:38:29 +0800
+Date: Fri, 26 Dec 2025 16:36:46 +0800
 Subject: [PATCH] OPT_Network_PlayerThrottling
 
 
 diff --git a/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java b/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
-index 78532e1e4d3eba6c58af93b8ae9cb5c74d1adb56..f22a1e90098409d78c861ce630734c41da1542e0 100644
+index 723b74e5af627acdc8e1436024d723a67c10df1d..fe2fbec5cd84b81fca794f594c989f4aa3439157 100644
 --- a/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
 +++ b/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
-@@ -937,7 +937,7 @@ public final class RegionizedPlayerChunkLoader {
+@@ -571,7 +571,12 @@ public final class RegionizedPlayerChunkLoader {
+         private double getMaxChunkGenRate() {
+             final double configRate = PlatformHooks.get().configPlayerMaxGenRate();
  
-             final int prevChunkX = this.lastChunkX;
-             final int prevChunkZ = this.lastChunkZ;
--
-+            if (!me.sucixr.kitin.scheduler.controller.ChunkLoadController.shouldSkipUpdate(this.player)){//Kitin 1
-             if (
-                 // has view distance stayed the same?
-                 sendViewDistance == this.lastSendDistance
-@@ -953,7 +953,7 @@ public final class RegionizedPlayerChunkLoader {
-             ) {
-                 // nothing we care about changed, so we're not re-calculating
-                 return;
--            }
-+            }}//Kitin 2
+-            return configRate <= 0.0 || configRate > (double)MAX_RATE ? (double)MAX_RATE : Math.max(1.0, configRate);
++            double baseRate = configRate <= 0.0 || configRate > (double)MAX_RATE ? (double)MAX_RATE : Math.max(1.0, configRate);//Kitin
++            //Kitin start
++            return me.sucixr.kitin.scheduler.policy.ChunkSendPolicy
++                    .getInstance()
++                    .limitSendRate(player, baseRate);
++            //Kitin end
+         }
  
-             // update distance maps
-             this.broadcastMap.update(currentChunkX, currentChunkZ, sendViewDistance + 1);
+         private double getMaxChunkSendRate() {
