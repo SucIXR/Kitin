@@ -1,0 +1,25 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: SucIXR <sasasa123456@foxmail.com>
+Date: Sat, 27 Dec 2025 18:42:42 +0800
+Subject: [PATCH] 
+ OPT_Network_Reduce-redundant-packets-Boat-and-AbstractMinecart
+
+
+diff --git a/net/minecraft/server/level/ServerEntity.java b/net/minecraft/server/level/ServerEntity.java
+index 3a817c92147bb78c60238f3ddc1644b721aed7a2..16515d165b467b5ded408b7c2ded3c63d9cbf00e 100644
+--- a/net/minecraft/server/level/ServerEntity.java
++++ b/net/minecraft/server/level/ServerEntity.java
+@@ -97,7 +97,12 @@ public class ServerEntity {
+     public void sendChanges() {
+         // Paper start - optimise collisions
+         if (((ca.spottedleaf.moonrise.patches.chunk_system.entity.ChunkSystemEntity)this.entity).moonrise$isHardColliding()) {
+-            this.teleportDelay = 9999;
++            //this.teleportDelay = 9999; Kitin off
++            // Kitin start - throttle forced position sync for vehicles
++            this.teleportDelay =
++                    me.sucixr.kitin.scheduler.policy.EntitySyncPolicy.getInstance()
++                            .adjustTeleportDelayForHardCollision(this.entity, this.tickCount, this.teleportDelay);
++            // Kitin end
+         }
+         // Paper end - optimise collisions
+         this.entity.updateDataBeforeSync();

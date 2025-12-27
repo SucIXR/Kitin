@@ -22,3 +22,21 @@ index 723b74e5af627acdc8e1436024d723a67c10df1d..5c1b4c402057b3b16ef6100c1dfd8caa
          }
  
          private long getMaxChunkLoads() {
+diff --git a/net/minecraft/server/level/ChunkMap.java b/net/minecraft/server/level/ChunkMap.java
+index 6292d9ae1e4b7b586f0806e01b86fc2092f1c153..f63a7d7986e4bdf91a42f3e32dad2c4a09b2b9df 100644
+--- a/net/minecraft/server/level/ChunkMap.java
++++ b/net/minecraft/server/level/ChunkMap.java
+@@ -1347,6 +1347,13 @@ public class ChunkMap extends SimpleRegionStorage implements ChunkHolder.PlayerP
+                 // Paper end - remove allocation of Vec3D here
+                 int playerViewDistance = ChunkMap.this.getPlayerViewDistance(player);
+                 double d = Math.min(this.getEffectiveRange(), playerViewDistance * 16);
++
++                // Kitin start - per-player entity tracking range scaling (network)
++                d = me.sucixr.kitin.scheduler.policy.EntitySendPolicy
++                        .getInstance()
++                        .adjustTrackingRange(player, d);
++                // Kitin end
++
+                 double d1 = vec3_dx * vec3_dx + vec3_dz * vec3_dz; // Paper
+                 double d2 = d * d;
+                 // Paper start - Configurable entity tracking range by Y
