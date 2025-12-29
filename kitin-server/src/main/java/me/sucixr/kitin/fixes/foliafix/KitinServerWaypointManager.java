@@ -217,7 +217,7 @@ public final class KitinServerWaypointManager extends ServerWaypointManager {
         // 然后做低频更新（比如每 2 ticks 一次）
         final PlayerEntry entry = this.entries.computeIfAbsent(player.getUUID(), k -> new PlayerEntry());
         final long tick = this.world.getGameTime();
-        if ((tick - entry.lastProcessedGameTick) < 2L) {
+        if ((tick - entry.lastProcessedGameTick) < 5L) { //改成5之后带宽占用爆降2/3!mspt略微降低，而且看不出区别
             return;
         }
         entry.lastProcessedGameTick = tick;
