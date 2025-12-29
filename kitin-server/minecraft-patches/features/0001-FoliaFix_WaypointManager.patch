@@ -25,3 +25,56 @@ index 455e4f95efc0c27e09d41d4a4deff5ab913433ee..755fe00ea86a57aa899c19316d3dd909
          this.environmentAttributes = EnvironmentAttributeSystem.builder().addDefaultLayers(this).build();
          //this.updateSkyBrightness(); // Folia - region threading - delay until first tick
          // Paper start - rewrite chunk system
+diff --git a/net/minecraft/server/level/ServerPlayer.java b/net/minecraft/server/level/ServerPlayer.java
+index 3c5cde60a89d6f9c07547e67e32c2b7857dc70e4..9b70056682c9b122dbe542474d31bf16d3fe2ae2 100644
+--- a/net/minecraft/server/level/ServerPlayer.java
++++ b/net/minecraft/server/level/ServerPlayer.java
+@@ -875,6 +875,9 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+ 
+     @Override
+     public void tick() {
++        // Kitin start
++        this.kitin$drainQueuedTasks();
++        // Kitin end
+         // CraftBukkit start
+         if (this.joining) {
+             this.joining = false;
+@@ -3639,5 +3642,37 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+     public org.bukkit.craftbukkit.entity.CraftPlayer getBukkitEntity() {
+         return (org.bukkit.craftbukkit.entity.CraftPlayer) super.getBukkitEntity();
+     }
+-    // CraftBukkit end
++    // CraftBukkit
++
++    // Kitin start - player mailbox for region-safe callbacks
++    private final java.util.concurrent.ConcurrentLinkedQueue<Runnable> kitin$queuedTasks =
++            new java.util.concurrent.ConcurrentLinkedQueue<>();
++
++    public void kitin$scheduleToOrRun(final Runnable task) {
++        // 只要当前线程就是这个 player 的 tick thread，就直接跑
++        if (ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(this)) {
++            task.run();
++            return;
++        }
++        // 否则丢进邮箱，等 player 自己 tick 时处理
++        this.kitin$queuedTasks.add(task);
++    }
++
++    private void kitin$drainQueuedTasks() {
++        // 防止恶意/意外塞爆：每 tick 限量执行
++        for (int i = 0; i < 1024; i++) {
++            final Runnable r = this.kitin$queuedTasks.poll();
++            if (r == null) {
++                return;
++            }
++            try {
++                r.run();
++            } catch (Throwable t) {
++                // 这里用你项目里现有的 logger 方式即可
++                // 不要用 MinecraftServer.getLogger()（你已经踩过那个坑）
++                com.mojang.logging.LogUtils.getLogger().error("[Kitin] queued task error", t);
++            }
++        }
++    }
++    // Kitin end
+ }
