@@ -1,14 +1,10 @@
 package me.sucixr.kitin.scheduler.probe;
 
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.level.Level;
-
 import java.util.UUID;
 import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 
 public final class GlobalPositionProbe {
 
@@ -30,8 +26,8 @@ public final class GlobalPositionProbe {
             });
 
     private GlobalPositionProbe() {
-        // 50ms 发布一次（可以改 100ms 更省）
-        publisher.scheduleAtFixedRate(this::publish, 50, 50, TimeUnit.MILLISECONDS);
+        //频率，ms计
+        publisher.scheduleAtFixedRate(this::publish, 200, 200, TimeUnit.MILLISECONDS);
     }
 
     /** tick 线程调用：O(1) 更新该玩家快照 */
@@ -49,43 +45,6 @@ public final class GlobalPositionProbe {
         // 注意：这里不要加锁 live，也不要阻塞 tick 线程
         final PlayerSnapshot[] arr = live.values().toArray(PlayerSnapshot[]::new);
         published.set(new PublishedIndex(arr));
-    }
-
-    /**
-     * tick 线程调用：只读 published，不拿锁，不做重活
-     * rangeSqr 用 double，避免 sqrt。
-     */
-    public void forEachNearby(
-            final ServerPlayer receiver,
-            final double rangeSqr,
-            final Consumer<PlayerSnapshot> consumer
-    ) {
-        final PublishedIndex idx = published.get();
-        final PlayerSnapshot[] arr = idx.snapshots;
-        if (arr.length == 0) return;
-
-        final double rx = receiver.getX();
-        final double ry = receiver.getY();
-        final double rz = receiver.getZ();
-        final ResourceKey<Level> dim = receiver.level().dimension();
-
-        for (final PlayerSnapshot s : arr) {
-            if (s == null) continue;
-            if (!dim.equals(s.dimension())) continue;
-            if (s.uuid().equals(receiver.getUUID())) continue;
-
-            // 可选：只让“正在发射定位”的目标参与
-            if (!s.transmittingWaypoints()) continue;
-
-            final double dx = rx - s.x();
-            final double dy = ry - s.y();
-            final double dz = rz - s.z();
-            final double d2 = dx*dx + dy*dy + dz*dz;
-
-            if (d2 <= rangeSqr) {
-                consumer.accept(s);
-            }
-        }
     }
 
     private static final class PublishedIndex {

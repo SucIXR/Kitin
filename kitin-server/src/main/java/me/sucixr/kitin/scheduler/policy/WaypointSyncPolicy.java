@@ -1,41 +1,44 @@
 package me.sucixr.kitin.scheduler.policy;
 
-import me.sucixr.kitin.scheduler.probe.PlayerSnapshot;
-import me.sucixr.kitin.scheduler.probe.NetworkConditionProbe;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.waypoints.WaypointTransmitter;
 
 public final class WaypointSyncPolicy {
 
     private static final WaypointSyncPolicy INSTANCE = new WaypointSyncPolicy();
     public static WaypointSyncPolicy getInstance() { return INSTANCE; }
 
-    /**
-     * 距离越远、网络越差 -> 更新越慢（省带宽）
-     * 不做“距离上限”，只做“更新频率”控制。
-     */
-    public int updateIntervalTicks(ServerPlayer receiver, double distSq) {
-        // 距离分档（你可以按自己口味调）
-        int base;
-        if (distSq <= (32.0 * 32.0)) base = 1;          // 很近：每tick更新
-        else if (distSq <= (128.0 * 128.0)) base = 2;   // 中近：2tick
-        else if (distSq <= (512.0 * 512.0)) base = 5;   // 中远：5tick
-        else base = 10;                                 // 很远：10tick
+    private static final double SCALE = 512 * 512;
 
-        // 网络分档：越差越慢
-        final NetworkConditionProbe.NetworkTier tier =
-                NetworkConditionProbe.getInstance().sample(receiver);
+    public boolean shouldDisconnect(ServerPlayer receiver, WaypointTransmitter tx,
+                                    boolean featureEnabled, double maxRange) {
 
-        return switch (tier) {
-            case GOOD -> base;
-            case FAIR -> Math.min(20, base * 2);
-            case POOR -> Math.min(40, base * 4);
-            case CRITICAL -> 60; // 极端：每 3 秒一次
-        };
+        if (!featureEnabled || maxRange <= 0.0) return true;
+
+        if (tx instanceof Entity e) {
+            if (e.level() != receiver.level()) return true;
+
+            final double dx = receiver.getX() - e.getX();
+            final double dz = receiver.getZ() - e.getZ();
+
+            return (dx * dx + dz * dz) > (maxRange * maxRange);
+        }
+
+        return false;
     }
 
-    public boolean shouldConsiderTarget(ServerPlayer receiver, PlayerSnapshot target) {
-        // 只要同维度 + 对方确实在“发射 waypoint”
-        if (!receiver.level().dimension().equals(target.dimension())) return false;
-        return target.transmittingWaypoints();
+    public boolean shouldSkipUpdate(ServerPlayer receiver, WaypointTransmitter tx) {
+        if (!(tx instanceof Entity e)) return false;
+
+        final double dx = receiver.getX() - e.getX();
+        final double dz = receiver.getZ() - e.getZ();
+        final double distSq = dx*dx + dz*dz;
+        int interval = 5 + (int)(distSq / SCALE);
+        long currentTick = receiver.level().getGameTime();
+        if(interval>100){
+            interval = 100;
+        }
+        return (currentTick + e.getId()) % interval != 0;
     }
 }
