@@ -73,9 +73,9 @@ public final class KitinServerWaypointManager extends ServerWaypointManager {
         final WaypointTransmitter.Connection existing = entry.connections.get(tx);
 
         if (existing != null && !existing.isBroken()) {
-            if (WaypointSyncPolicy.getInstance().shouldSkipUpdate(receiver, tx)) {
-                return;
-            }
+//            if (WaypointSyncPolicy.getInstance().shouldSkipUpdate(receiver, tx)) {
+//                return;
+//            }
 
             existing.update();
             return;
@@ -100,10 +100,10 @@ public final class KitinServerWaypointManager extends ServerWaypointManager {
         me.sucixr.kitin.scheduler.probe.GlobalPositionProbe.getInstance().pushSnapshot(player);
 
         final PlayerEntry entry = this.entries.computeIfAbsent(player.getUUID(), k -> new PlayerEntry());
-//        final long tick = this.world.getGameTime();
-//        if ((tick - entry.lastProcessedGameTick) < 5L) {
-//            return;
-//        } 固定频率，不要了，有动态降频策略了
+        final long tick = this.world.getGameTime();
+        if ((tick - entry.lastProcessedGameTick) < 5L) {
+            return;
+        } //还原固定降频
     }
 
     private void disconnectOnReceiverThread(final ServerPlayer receiver, final WaypointTransmitter tx) {

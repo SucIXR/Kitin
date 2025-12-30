@@ -27,7 +27,7 @@ public final class GlobalPositionProbe {
 
     private GlobalPositionProbe() {
         //频率，ms计
-        publisher.scheduleAtFixedRate(this::publish, 200, 200, TimeUnit.MILLISECONDS);
+        publisher.scheduleAtFixedRate(this::publish, 250, 250, TimeUnit.MILLISECONDS);//与固定频率同步
     }
 
     /** tick 线程调用：O(1) 更新该玩家快照 */

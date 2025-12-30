@@ -22,23 +22,24 @@ public final class WaypointSyncPolicy {
             final double dx = receiver.getX() - e.getX();
             final double dz = receiver.getZ() - e.getZ();
 
-            return (dx * dx + dz * dz) > (maxRange * maxRange);
+            return (dx * dx + dz * dz) > (maxRange * maxRange);//不会真有人要非常短的定位条范围吧
         }
 
         return false;
     }
 
-    public boolean shouldSkipUpdate(ServerPlayer receiver, WaypointTransmitter tx) {
-        if (!(tx instanceof Entity e)) return false;
-
-        final double dx = receiver.getX() - e.getX();
-        final double dz = receiver.getZ() - e.getZ();
-        final double distSq = dx*dx + dz*dz;
-        int interval = 5 + (int)(distSq / SCALE);
-        long currentTick = receiver.level().getGameTime();
-        if(interval>100){
-            interval = 100;
-        }
-        return (currentTick + e.getId()) % interval != 0;
-    }
+//    public boolean shouldSkipUpdate(ServerPlayer receiver, WaypointTransmitter tx) {
+//        if (!(tx instanceof Entity e)) return false;
+//
+////        final double dx = receiver.getX() - e.getX();
+////        final double dz = receiver.getZ() - e.getZ();
+////        final double distSq = dx*dx + dz*dz;
+////        int interval = 5 + (int)(distSq / SCALE);
+//        long currentTick = receiver.level().getGameTime();
+////        if(interval>100){
+////            interval = 100;
+////        } 太JB卡了，删了！带宽也没见降低
+//        int interval = 5;
+//        return (currentTick + e.getId()) % interval != 0;
+//    }
 }
