@@ -58,33 +58,30 @@ public final class KitinServerWaypointManager extends ServerWaypointManager {
             final WaypointTransmitter tx
     ) {
         final PlayerEntry entry = this.entries.computeIfAbsent(receiver.getUUID(), k -> new PlayerEntry());
+        final WaypointTransmitter.Connection existing = entry.connections.get(tx);
+        int offset = (tx instanceof Entity e) ? e.getId() : tx.hashCode();
+        int interval = WaypointSyncPolicy.getInstance().getUpdateIntervalOrDisconnect(
+                receiver, tx, this.locatorBarEnabled(), this.getReceiveRange(receiver));
+        if (existing != null){
+            if ((scheduledGameTick + Math.abs(offset)) % interval != 0) {
+                return;//错峰
+            }
+        }
 
-        if (scheduledGameTick < entry.lastProcessedGameTick) return;
         entry.lastProcessedGameTick = scheduledGameTick;
 
-        if (WaypointSyncPolicy.getInstance().shouldDisconnect(
-                receiver, tx, this.locatorBarEnabled(), this.getReceiveRange(receiver))) {
-
-            final WaypointTransmitter.Connection existing = entry.connections.remove(tx);
-            if (existing != null) existing.disconnect();
-            return;
-        }
-
-        final WaypointTransmitter.Connection existing = entry.connections.get(tx);
+        if(interval == -1){
+            if (existing != null) {
+                existing.disconnect();
+                entry.connections.remove(tx);
+            }
+        }//连接断开，移除
 
         if (existing != null && !existing.isBroken()) {
-//            if (WaypointSyncPolicy.getInstance().shouldSkipUpdate(receiver, tx)) {
-//                return;
-//            }
-
             existing.update();
             return;
-        }
+        }//连接正常，更新
 
-        if (existing != null) {
-            existing.disconnect();
-            entry.connections.remove(tx);
-        }
 
         tx.makeWaypointConnectionWith(receiver).ifPresent(conn -> {
             entry.connections.put(tx, conn);
@@ -101,9 +98,15 @@ public final class KitinServerWaypointManager extends ServerWaypointManager {
 
         final PlayerEntry entry = this.entries.computeIfAbsent(player.getUUID(), k -> new PlayerEntry());
         final long tick = this.world.getGameTime();
-        if ((tick - entry.lastProcessedGameTick) < 5L) {
+        if ((tick - entry.lastProcessedGameTick) < 911L) {//静止不动
             return;
-        } //还原固定降频
+        }
+        scheduleToOrRun(player, () -> {
+            for (WaypointTransmitter tx : this.transmitters) {
+                if (tx == player) continue;
+                this.updateConnectionOnReceiverThread(tick, player, tx);
+            }
+        });
     }
 
     private void disconnectOnReceiverThread(final ServerPlayer receiver, final WaypointTransmitter tx) {
