@@ -1,0 +1,55 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: SucIXR <sasasa123456@foxmail.com>
+Date: Thu, 1 Jan 2026 05:17:26 +0800
+Subject: [PATCH] FoliaFix_Pearl-Chunk-Loading
+
+
+diff --git a/net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.java b/net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.java
+index 7d8c528a76e6a95d27368bc459d654c6ef66dd8f..14034da7f0ec0ceec74e4fcdfaef12889941fa65 100644
+--- a/net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.java
++++ b/net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.java
+@@ -174,7 +174,13 @@ public class ThrownEnderpearl extends ThrowableItemProjectile {
+                 if (!ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(this)) {
+                     throw new IllegalStateException("Must be on tick thread for ticking entity: " + this);
+                 }
+-                Entity entity = this.getOwnerRaw();
++                //Kitin start - fix Pearl Chunk Loading
++                Entity entity = null;
++                if (this.owner != null) {
++                    UUID ownerUUID = this.owner.getUUID();
++                    entity = serverLevel.getServer().getPlayerList().getPlayer(ownerUUID);
++                }
++                //Kitin end
+                 if (entity != null) {
+                     attemptTeleport(entity, (ServerLevel)this.level(), this.position());
+                 }
+@@ -255,9 +261,10 @@ public class ThrownEnderpearl extends ThrowableItemProjectile {
+         if (this.level() instanceof ServerLevel serverLevel) {
+             int var7 = SectionPos.blockToSectionCoord(this.position().x());
+             int sectionPosZ = SectionPos.blockToSectionCoord(this.position().z());
+-            Entity entity = this.owner != null ? findOwnerIncludingDeadPlayer(serverLevel, this.owner.getUUID()) : null;
++            Entity entity = this.owner != null ? serverLevel.getServer().getPlayerList().getPlayer(this.owner.getUUID()) : null; //Kitin fix Pearl Chunk Loading
+             if (entity instanceof ServerPlayer serverPlayer
+                 && !entity.isAlive()
++                && serverPlayer.getHealth() <= 0.0F //Kitin fix Pearl Chunk Loading
+                 && !serverPlayer.wonGame
+                 && serverPlayer.level().getGameRules().get(GameRules.ENDER_PEARLS_VANISH_ON_DEATH)) {
+                 this.discard(org.bukkit.event.entity.EntityRemoveEvent.Cause.DESPAWN); // CraftBukkit - add Bukkit remove cause
+@@ -272,9 +279,14 @@ public class ThrownEnderpearl extends ThrowableItemProjectile {
+                             || var7 != SectionPos.blockToSectionCoord(blockPos.getX())
+                             || sectionPosZ != SectionPos.blockToSectionCoord(blockPos.getZ())
+                     )
+-                    && entity instanceof ServerPlayer serverPlayer1) {
+-                    this.ticketTimer = serverPlayer1.registerAndUpdateEnderPearlTicket(this);
+-                }
++                    //Kitin start - fix Pearl Chunk Loading
++                )
++                    //&& entity instanceof ServerPlayer serverPlayer1) {
++                    serverLevel.resetEmptyTime(); // 防止维度卸载
++                    net.minecraft.server.level.ServerPlayer.placeEnderPearlTicket(serverLevel, this.chunkPosition());
++                    this.ticketTimer = net.minecraft.server.level.TicketType.ENDER_PEARL.timeout();
++                //}
++                //Kitin end
+             }
+         } else {
+             super.tick();
