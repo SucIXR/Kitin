@@ -45,7 +45,7 @@ index 9b70056682c9b122dbe542474d31bf16d3fe2ae2..58f48cb8c7f9b9bf4fec4eee74d25bd5
  
      public void loadAndSpawnEnderPearls(ValueInput input) {
 diff --git a/net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.java b/net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.java
-index 7d8c528a76e6a95d27368bc459d654c6ef66dd8f..68ca56e8562c85866b681111c0893fa0a17093db 100644
+index 7d8c528a76e6a95d27368bc459d654c6ef66dd8f..d6f8fd5c5010b4a8e17124cf1fe49749d5e08589 100644
 --- a/net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.java
 +++ b/net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.java
 @@ -174,7 +174,13 @@ public class ThrownEnderpearl extends ThrowableItemProjectile {
@@ -63,12 +63,13 @@ index 7d8c528a76e6a95d27368bc459d654c6ef66dd8f..68ca56e8562c85866b681111c0893fa0
                  if (entity != null) {
                      attemptTeleport(entity, (ServerLevel)this.level(), this.position());
                  }
-@@ -253,11 +259,18 @@ public class ThrownEnderpearl extends ThrowableItemProjectile {
+@@ -253,11 +259,19 @@ public class ThrownEnderpearl extends ThrowableItemProjectile {
      @Override
      public void tick() {
          if (this.level() instanceof ServerLevel serverLevel) {
 +            // Kitin start - Pearl Chunk Loading
-+        if (me.sucixr.kitin.scheduler.data.PearlSnapshot.tickPearl(this)) {
++            final java.util.UUID ownerId = this.owner != null ? this.owner.getUUID() : null;
++            if (me.sucixr.kitin.scheduler.data.PearlSnapshot.tickPearl(this,ownerId)) {
 +                this.discard(org.bukkit.event.entity.EntityRemoveEvent.Cause.DESPAWN);
 +                return;
 +            }
@@ -83,7 +84,7 @@ index 7d8c528a76e6a95d27368bc459d654c6ef66dd8f..68ca56e8562c85866b681111c0893fa0
                  && !serverPlayer.wonGame
                  && serverPlayer.level().getGameRules().get(GameRules.ENDER_PEARLS_VANISH_ON_DEATH)) {
                  this.discard(org.bukkit.event.entity.EntityRemoveEvent.Cause.DESPAWN); // CraftBukkit - add Bukkit remove cause
-@@ -272,9 +285,14 @@ public class ThrownEnderpearl extends ThrowableItemProjectile {
+@@ -272,9 +286,14 @@ public class ThrownEnderpearl extends ThrowableItemProjectile {
                              || var7 != SectionPos.blockToSectionCoord(blockPos.getX())
                              || sectionPosZ != SectionPos.blockToSectionCoord(blockPos.getZ())
                      )

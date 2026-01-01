@@ -21,9 +21,7 @@ public class PearlSnapshot {
             float xRot) {}
 
     public static final java.util.Map<java.util.UUID,SimplePearlData> PEARL_DATA_MAP = new java.util.concurrent.ConcurrentHashMap<>();
-    public static boolean tickPearl(ThrownEnderpearl pearl){
-        final net.minecraft.world.entity.Entity owner = pearl.getOwner();
-        final UUID ownerId = owner != null ? owner.getUUID() : null;
+    public static boolean tickPearl(ThrownEnderpearl pearl,UUID ownerId){
         if (ownerId != null) {
             boolean isOnline = pearl.level().getServer().getPlayerList().getPlayer(ownerId) != null;
             if (!isOnline) {
