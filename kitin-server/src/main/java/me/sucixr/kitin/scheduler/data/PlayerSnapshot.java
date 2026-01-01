@@ -1,4 +1,4 @@
-package me.sucixr.kitin.scheduler.probe;
+package me.sucixr.kitin.scheduler.data;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.resources.ResourceKey;
@@ -25,11 +25,10 @@ public final class PlayerSnapshot {
     }
 
     public static PlayerSnapshot capture(final ServerPlayer p) {
-        // 你确认的 1.21.11：p.level().dimension()
+
         final ResourceKey<Level> dim = p.level().dimension();
 
-        // 这里按你本地可编译的方法名来
-        final boolean tx = p.isTransmittingWaypoint(); // <- 你说的写法
+        final boolean tx = p.isTransmittingWaypoint();
 
         return new PlayerSnapshot(
                 p.getUUID(),
@@ -45,6 +44,5 @@ public final class PlayerSnapshot {
     public double z() { return z; }
     public ResourceKey<Level> dimension() { return dimension; }
 
-    // 对外统一用这个名字
     public boolean transmittingWaypoints() { return transmittingWaypoints; }
 }

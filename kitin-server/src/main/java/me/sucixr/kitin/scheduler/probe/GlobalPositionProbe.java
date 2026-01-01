@@ -1,5 +1,6 @@
 package me.sucixr.kitin.scheduler.probe;
 
+import me.sucixr.kitin.scheduler.data.PlayerSnapshot;
 import net.minecraft.server.level.ServerPlayer;
 import java.util.UUID;
 import java.util.Map;

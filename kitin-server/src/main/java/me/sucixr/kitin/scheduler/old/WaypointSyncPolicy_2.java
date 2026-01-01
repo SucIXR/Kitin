@@ -1,7 +1,7 @@
 package me.sucixr.kitin.scheduler.old;
 
 import me.sucixr.kitin.scheduler.probe.NetworkConditionProbe;
-import me.sucixr.kitin.scheduler.probe.PlayerSnapshot;
+import me.sucixr.kitin.scheduler.data.PlayerSnapshot;
 import net.minecraft.server.level.ServerPlayer;
 
 public final class WaypointSyncPolicy_2 {
