@@ -8,7 +8,7 @@ public class SocialBubbleEngine {
     public boolean shouldSkipHardCollision(Entity a, Entity b) {
         applySoftRepulsion(a, b);
         applySoftRepulsion(b, a);
-        return false;
+        return true;
     }
     private void applySoftRepulsion(Entity entity, Entity other) {
         if (entity.isVehicle() || !entity.isPushable()) {
