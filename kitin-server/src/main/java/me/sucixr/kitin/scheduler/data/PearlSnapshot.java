@@ -29,7 +29,6 @@ public class PearlSnapshot {
                 PEARL_DATA_MAP.remove(ownerId);
                 return true;
             }
-            pearl.level().dimension().identifier().toString();
             if (!pearl.isRemoved()) {
                 PEARL_DATA_MAP.put(ownerId, new SimplePearlData(
                         pearl.getUUID(),
