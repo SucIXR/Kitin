@@ -69,7 +69,14 @@ public final class KitinServerWaypointManager extends ServerWaypointManager {
         }
 
         entry.lastProcessedGameTick = scheduledGameTick;
-
+        //Fix start 修复珍珠通过传送门导致协议错误问题，如果实体在服务端已经死了，绝对别发包
+        if (tx instanceof Entity e) {
+            if (e.isRemoved()) {
+                this.disconnectOnReceiverThread(receiver, tx);//把连接断开,这个可选,不确定加上好还是不加好
+                return;
+            }
+        }
+        //Fix end
         if(interval == -1){
             if (existing != null) {
                 existing.disconnect();
