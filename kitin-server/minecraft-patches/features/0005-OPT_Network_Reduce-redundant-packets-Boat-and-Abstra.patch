@@ -6,7 +6,7 @@ Subject: [PATCH]
 
 
 diff --git a/net/minecraft/server/level/ServerEntity.java b/net/minecraft/server/level/ServerEntity.java
-index 3a817c92147bb78c60238f3ddc1644b721aed7a2..16515d165b467b5ded408b7c2ded3c63d9cbf00e 100644
+index 3a817c92147bb78c60238f3ddc1644b721aed7a2..4b58170bc7550b211cd6ec5ee7854c8dc2b78777 100644
 --- a/net/minecraft/server/level/ServerEntity.java
 +++ b/net/minecraft/server/level/ServerEntity.java
 @@ -97,7 +97,12 @@ public class ServerEntity {
@@ -23,3 +23,12 @@ index 3a817c92147bb78c60238f3ddc1644b721aed7a2..16515d165b467b5ded408b7c2ded3c63
          }
          // Paper end - optimise collisions
          this.entity.updateDataBeforeSync();
+@@ -175,7 +180,7 @@ public class ServerEntity {
+                     || flag5
+                     || this.teleportDelay > 400
+                     || this.wasRiding
+-                    || this.wasOnGround != this.entity.onGround()) {
++                    || (this.wasOnGround != this.entity.onGround()&& !(this.entity instanceof AbstractMinecart || this.entity instanceof net.minecraft.world.entity.item.PrimedTnt))) { //Kitin 优化世吞矿车TNT发包
+                     this.wasOnGround = this.entity.onGround();
+                     this.teleportDelay = 0;
+                     packet = ClientboundEntityPositionSyncPacket.of(this.entity);
