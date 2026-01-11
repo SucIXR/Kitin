@@ -11,7 +11,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.LongAdder;
 
 import org.slf4j.Logger;
-
+//使用方法:net.minecraft.server.level.ServerEntity.java,查找packet = ClientboundEntityPositionSyncPacket.of(this.entity);这段后面:
+//me.sucixr.kitin.scheduler.debug.EntityPosSyncDebug.record(this.level, this.entity); // Kitin debug: record position sync spam source
 public final class EntityPosSyncDebug {
     private static final Logger LOGGER = LogUtils.getLogger();
 
