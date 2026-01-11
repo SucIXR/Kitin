@@ -34,6 +34,14 @@ public final class EntitySyncPolicy {
             return 9999;
         }
 
+        // 3. [关键修复] 即便矿车不动，也发包的问题
+        // 如果矿车几乎没动 (比如挤在农场里，或者停在终点)，就不要强制同步了！
+        // 让它保持原有的 teleportDelay，这样它会自然计数到 400 (20秒) 才发一次包。
+        // SqrLength < 0.0001 代表速度极其微小
+        if (entity.getDeltaMovement().lengthSqr() < 0.0001) {
+            return currentTeleportDelay; // <--- 重点：原样返回，不重置为0，也不设为9999
+        }
+
         // 空载具：只允许每隔 N tick 才触发一次强制 PositionSync
         // 关键点：返回 401 让后面的逻辑满足 “teleportDelay > 400”
         if ((tickCount % HARD_COLLISION_SYNC_INTERVAL_TICKS) == 0) {
