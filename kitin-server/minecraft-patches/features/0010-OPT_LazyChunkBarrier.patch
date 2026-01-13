@@ -1,0 +1,25 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: SucIXR <sasasa123456@foxmail.com>
+Date: Tue, 13 Jan 2026 20:36:17 +0800
+Subject: [PATCH] OPT_LazyChunkBarrier
+
+
+diff --git a/net/minecraft/world/entity/item/ItemEntity.java b/net/minecraft/world/entity/item/ItemEntity.java
+index 7d8748fd4bdd523a7cf37ef86729da4277416f9a..f3f53a27543cdc8562e706e9e423c54d94b35dd5 100644
+--- a/net/minecraft/world/entity/item/ItemEntity.java
++++ b/net/minecraft/world/entity/item/ItemEntity.java
+@@ -60,6 +60,14 @@ public class ItemEntity extends Entity implements TraceableEntity {
+         this.setYRot(this.random.nextFloat() * 360.0F);
+     }
+ 
++    //Kitin start - LazyChunkBarrier
++    @Override
++    public void setPos(double x, double y, double z) {
++        super.setPos(x, y, z);
++        me.sucixr.kitin.scheduler.policy.LazyChunkBarrierPolicy.onCheckMovement(this);
++    }
++    //Kitin end
++
+     public ItemEntity(Level level, double posX, double posY, double posZ, ItemStack stack) {
+         // Paper start - Don't use level random in entity constructors (to make them thread-safe)
+         this(EntityType.ITEM, level);
