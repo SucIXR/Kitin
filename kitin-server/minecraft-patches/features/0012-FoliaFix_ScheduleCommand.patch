@@ -1,0 +1,37 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: SucIXR <sasasa123456@foxmail.com>
+Date: Wed, 14 Jan 2026 17:29:39 +0800
+Subject: [PATCH] FoliaFix_ScheduleCommand
+
+
+diff --git a/io/papermc/paper/threadedregions/RegionizedServer.java b/io/papermc/paper/threadedregions/RegionizedServer.java
+index b3bc39ebe8d2f48d976de9cd4fcae46095523514..2f27ae58af26bd0b112bb7a97f137a2a27778d2f 100644
+--- a/io/papermc/paper/threadedregions/RegionizedServer.java
++++ b/io/papermc/paper/threadedregions/RegionizedServer.java
+@@ -342,6 +342,13 @@ public final class RegionizedServer {
+         // commands
+         ((DedicatedServer)MinecraftServer.getServer()).handleConsoleInputs();
+ 
++        //Kitin start - fix TimerQueue FoliaFix_ScheduleCommand use it
++        ServerLevel overworld = MinecraftServer.getServer().overworld();
++        if (overworld != null) {
++            overworld.serverLevelData.overworldData().getScheduledEvents().tick(MinecraftServer.getServer(), overworld.getGameTime());
++        }
++        //Kitin end
++
+         // needs
+         // player ping sample
+         // world global tick
+diff --git a/net/minecraft/commands/Commands.java b/net/minecraft/commands/Commands.java
+index 26dc5beee346400d0a3293da978b3141f9184316..77037040bee23934dd3c98eeba045536bfe6d2b5 100644
+--- a/net/minecraft/commands/Commands.java
++++ b/net/minecraft/commands/Commands.java
+@@ -236,7 +236,7 @@ public class Commands {
+         RideCommand.register(this.dispatcher);
+         RotateCommand.register(this.dispatcher);
+         SayCommand.register(this.dispatcher);
+-        //ScheduleCommand.register(this.dispatcher); // Folia - region threading
++        ScheduleCommand.register(this.dispatcher); // Folia - region threading //Kitin re
+         //ScoreboardCommand.register(this.dispatcher, context); // Folia - region threading
+         SeedCommand.register(this.dispatcher, selection != Commands.CommandSelection.INTEGRATED);
+         VersionCommand.register(this.dispatcher, selection != Commands.CommandSelection.INTEGRATED);

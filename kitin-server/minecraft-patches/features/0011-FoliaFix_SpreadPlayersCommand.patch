@@ -1,0 +1,113 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: SucIXR <sasasa123456@foxmail.com>
+Date: Wed, 14 Jan 2026 13:25:46 +0800
+Subject: [PATCH] FoliaFix_SpreadPlayersCommand
+
+
+diff --git a/net/minecraft/commands/Commands.java b/net/minecraft/commands/Commands.java
+index c859197d643fd96ea2a5ef51837abc457e27f002..26dc5beee346400d0a3293da978b3141f9184316 100644
+--- a/net/minecraft/commands/Commands.java
++++ b/net/minecraft/commands/Commands.java
+@@ -244,7 +244,7 @@ public class Commands {
+         SetSpawnCommand.register(this.dispatcher);
+         SetWorldSpawnCommand.register(this.dispatcher);
+         //SpectateCommand.register(this.dispatcher); // Folia - region threading - TODO later
+-        //SpreadPlayersCommand.register(this.dispatcher); // Folia - region threading - TODO later
++        SpreadPlayersCommand.register(this.dispatcher); // Folia - region threading - TODO later //Kitin re
+         StopSoundCommand.register(this.dispatcher);
+         StopwatchCommand.register(this.dispatcher);
+         SummonCommand.register(this.dispatcher, context);
+diff --git a/net/minecraft/server/commands/SpreadPlayersCommand.java b/net/minecraft/server/commands/SpreadPlayersCommand.java
+index d96b5f4ea264b7c3bf20bf7fc253566fdf830fc8..2147af13f3b46f9103bc60420e7088c594fb96a3 100644
+--- a/net/minecraft/server/commands/SpreadPlayersCommand.java
++++ b/net/minecraft/server/commands/SpreadPlayersCommand.java
+@@ -31,6 +31,10 @@ import net.minecraft.world.level.block.state.BlockState;
+ import net.minecraft.world.phys.Vec2;
+ import net.minecraft.world.scores.Team;
+ 
++import net.minecraft.world.phys.Vec3;//Kitin
++import net.minecraft.core.SectionPos; //Kitin
++import net.minecraft.world.level.chunk.status.ChunkStatus;//Kitin
++
+ public class SpreadPlayersCommand {
+     private static final int MAX_ITERATION_COUNT = 10000;
+     private static final Dynamic4CommandExceptionType ERROR_FAILED_TO_SPREAD_TEAMS = new Dynamic4CommandExceptionType(
+@@ -234,7 +238,7 @@ public class SpreadPlayersCommand {
+         Map<Team, SpreadPlayersCommand.Position> map = Maps.newHashMap();
+ 
+         for (Entity entity : targets) {
+-            SpreadPlayersCommand.Position position;
++            final SpreadPlayersCommand.Position position;//Kitin FoliaFix_SpreadPlayersCommand
+             if (respectTeams) {
+                 Team team = entity instanceof Player ? entity.getTeam() : null;
+                 if (!map.containsKey(team)) {
+@@ -246,17 +250,28 @@ public class SpreadPlayersCommand {
+                 position = positions[i++];
+             }
+ 
+-            entity.teleportTo(
++            //Kitin start - FoliaFix_SpreadPlayersCommand
++            final double targetX = Mth.floor(position.x) + 0.5;
++            final double targetZ = Mth.floor(position.z) + 0.5;
++            final int LogicalHeight = level.getLogicalHeight();
++            entity.getBukkitEntity().taskScheduler.schedule((Entity scheduledEntity) -> {
++            entity.teleportAsync(
+                 level,
+-                Mth.floor(position.x) + 0.5,
+-                position.getSpawnY(level, maxHeight),
+-                Mth.floor(position.z) + 0.5,
+-                Set.of(),
++                new Vec3(targetX , LogicalHeight , targetZ),
++                //Set.of(),
+                 entity.getYRot(),
+                 entity.getXRot(),
+-                true
+-                , org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.COMMAND // CraftBukkit - handle teleport reason
++                Vec3.ZERO
++                //true
++                , org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.COMMAND, // CraftBukkit - handle teleport reason
++                Entity.TELEPORT_FLAG_LOAD_CHUNK | Entity.TELEPORT_FLAG_TELEPORT_PASSENGERS,
++                (teleportedEntity) -> {
++                    int groundY = position.getSpawnY(level, maxHeight);
++                    teleportedEntity.teleportTo(targetX, groundY, targetZ);
++                }
+             );
++            }, null, 0L);
++            //Kitin end
+             double d1 = Double.MAX_VALUE;
+ 
+             for (SpreadPlayersCommand.Position position1 : positions) {
+@@ -331,6 +346,16 @@ public class SpreadPlayersCommand {
+         }
+ 
+         public int getSpawnY(BlockGetter level, int y) {
++            //Kitin start - FoliaFix_SpreadPlayersCommand
++            if (level instanceof ServerLevel serverLevel) {
++                int sectionX = SectionPos.blockToSectionCoord(this.x);
++                int sectionZ = SectionPos.blockToSectionCoord(this.z);
++                if (serverLevel.getChunk(sectionX, sectionZ, ChunkStatus.FULL, false) == null) {
++                    return serverLevel.getLogicalHeight();// getMaxBuildHeight();
++                }
++            }
++            //Kitin end
++
+             BlockPos.MutableBlockPos mutableBlockPos = new BlockPos.MutableBlockPos(this.x, (double)(y + 1), this.z);
+             boolean isAir = level.getBlockState(mutableBlockPos).isAir();
+             mutableBlockPos.move(Direction.DOWN);
+@@ -351,6 +376,16 @@ public class SpreadPlayersCommand {
+         }
+ 
+         public boolean isSafe(BlockGetter level, int y) {
++            // Kitin start - FoliaFix_SpreadPlayersCommand
++            if (level instanceof ServerLevel serverLevel) {
++                int sectionX = SectionPos.blockToSectionCoord(this.x);
++                int sectionZ = SectionPos.blockToSectionCoord(this.z);
++                if (serverLevel.getChunk(sectionX, sectionZ, ChunkStatus.FULL, false) == null) {
++                    return true;
++                }
++            }
++            // Kitin end
++
+             BlockPos blockPos = BlockPos.containing(this.x, this.getSpawnY(level, y) - 1, this.z);
+             BlockState blockState = level.getBlockState(blockPos);
+             return blockPos.getY() < y && !blockState.liquid() && !blockState.is(BlockTags.FIRE);
