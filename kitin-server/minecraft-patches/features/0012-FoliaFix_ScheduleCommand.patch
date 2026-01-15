@@ -5,10 +5,32 @@ Subject: [PATCH] FoliaFix_ScheduleCommand
 
 
 diff --git a/io/papermc/paper/threadedregions/RegionizedServer.java b/io/papermc/paper/threadedregions/RegionizedServer.java
-index b3bc39ebe8d2f48d976de9cd4fcae46095523514..2f27ae58af26bd0b112bb7a97f137a2a27778d2f 100644
+index b3bc39ebe8d2f48d976de9cd4fcae46095523514..f26ef12713517f40d601f6d9c6c401a1d15a12ac 100644
 --- a/io/papermc/paper/threadedregions/RegionizedServer.java
 +++ b/io/papermc/paper/threadedregions/RegionizedServer.java
-@@ -342,6 +342,13 @@ public final class RegionizedServer {
+@@ -32,6 +32,8 @@ import java.util.function.BooleanSupplier;
+ 
+ public final class RegionizedServer {
+ 
++    public static volatile boolean IS_GLOBAL_TICKING = false; // Kitin FoliaFix_ScheduleCommand
++
+     private static final Logger LOGGER = LogUtils.getLogger();
+     private static final RegionizedServer INSTANCE = new RegionizedServer();
+ 
+@@ -331,6 +333,12 @@ public final class RegionizedServer {
+         }
+         this.randomWalk();
+          */
++
++        // Kitin start - FoliaFix_ScheduleCommand
++        IS_GLOBAL_TICKING = true;
++        try {
++        // Kitin end
++
+         ++this.tickCount;
+         // expire invalid click command callbacks
+         io.papermc.paper.adventure.providers.ClickCallbackProviderImpl.ADVENTURE_CLICK_MANAGER.handleQueue((int)this.tickCount); // Paper // Folia - region threading - moved to global tick
+@@ -342,6 +350,17 @@ public final class RegionizedServer {
          // commands
          ((DedicatedServer)MinecraftServer.getServer()).handleConsoleInputs();
  
@@ -19,9 +41,25 @@ index b3bc39ebe8d2f48d976de9cd4fcae46095523514..2f27ae58af26bd0b112bb7a97f137a2a
 +        }
 +        //Kitin end
 +
++        // Kitin start - FoliaFix_ScheduleCommand
++        MinecraftServer.getServer().getFunctions().tick();
++        // Kitin end
++
          // needs
          // player ping sample
          // world global tick
+@@ -360,6 +379,11 @@ public final class RegionizedServer {
+ 
+         // player list
+         MinecraftServer.getServer().getPlayerList().tick();
++        // Kitin start - FoliaFix_ScheduleCommand
++        } finally {
++            IS_GLOBAL_TICKING = false;
++        }
++        // Kitin end
+     }
+ 
+     private void tickPlayerSample() {
 diff --git a/net/minecraft/commands/Commands.java b/net/minecraft/commands/Commands.java
 index 26dc5beee346400d0a3293da978b3141f9184316..77037040bee23934dd3c98eeba045536bfe6d2b5 100644
 --- a/net/minecraft/commands/Commands.java
@@ -35,3 +73,70 @@ index 26dc5beee346400d0a3293da978b3141f9184316..77037040bee23934dd3c98eeba045536
          //ScoreboardCommand.register(this.dispatcher, context); // Folia - region threading
          SeedCommand.register(this.dispatcher, selection != Commands.CommandSelection.INTEGRATED);
          VersionCommand.register(this.dispatcher, selection != Commands.CommandSelection.INTEGRATED);
+diff --git a/net/minecraft/server/ServerFunctionManager.java b/net/minecraft/server/ServerFunctionManager.java
+index 747e51132cfddc0c1d619dca81a4dd34605475bd..1591ba3046e731efb4d0d309ec23462ab454b525 100644
+--- a/net/minecraft/server/ServerFunctionManager.java
++++ b/net/minecraft/server/ServerFunctionManager.java
+@@ -66,10 +66,23 @@ public class ServerFunctionManager {
+ 
+         try {
+             InstantiatedFunction<CommandSourceStack> instantiatedFunction = function.instantiate(null, this.getDispatcher());
++            try{ // Kitin - FoliaFix_ScheduleCommand
+             Commands.executeCommandInContext(
+                 source,
+                 contextConsumer -> ExecutionContext.queueInitialFunctionCall(contextConsumer, instantiatedFunction, source, CommandResultCallback.EMPTY)
+             );
++            // Kitin start - FoliaFix_ScheduleCommand
++            }catch (RuntimeException e) {
++                // 如果捕获到在 Level.java 里抛出的特殊异常
++                if ("KITIN_SILENT_ABORT".equals(e.getMessage())) {
++                    // 直接吞掉！
++                    // 任务已经中止了（防闪烁），日志也不打印（防刷屏）。
++                    return;
++                }
++                // 其他异常照常抛出
++                throw e;
++            }
++            // Kitin end
+         } catch (FunctionInstantiationException var9) {
+         } catch (Exception var10) {
+             LOGGER.warn("Failed to execute function {}", function.id(), var10);
+diff --git a/net/minecraft/world/level/Level.java b/net/minecraft/world/level/Level.java
+index 937f7f51e047d6f71ce89db0c8697ea558334bbc..ad5fe5e11bc3febeb9a0436a5a5eb0c35b73dc5f 100644
+--- a/net/minecraft/world/level/Level.java
++++ b/net/minecraft/world/level/Level.java
+@@ -1336,8 +1336,9 @@ public abstract class Level implements LevelAccessor, AutoCloseable, ca.spottedl
+     @Override
+     public BlockState getBlockState(BlockPos pos) {
+         // CraftBukkit start - tree generation
+-        if (this.getCurrentWorldData().captureTreeGeneration) { // Folia - region threading
+-            CraftBlockState previous = this.getCurrentWorldData().capturedBlockStates.get(pos); // Paper // Folia - region threading
++        var worldData = this.getCurrentWorldData(); // Kitin - FoliaFix_ScheduleCommand
++        if (worldData != null && worldData.captureTreeGeneration) { // Folia - region threading // Kitin - FoliaFix_ScheduleCommand
++            CraftBlockState previous = worldData.capturedBlockStates.get(pos); // Paper // Folia - region threading
+             if (previous != null) {
+                 return previous.getHandle();
+             }
+@@ -1760,6 +1761,22 @@ public abstract class Level implements LevelAccessor, AutoCloseable, ca.spottedl
+     public <T extends Entity> void getEntities(final EntityTypeTest<Entity, T> entityTypeTest,
+                                                final AABB boundingBox, final Predicate<? super T> predicate,
+                                                final List<? super T> into, final int maxCount) {
++        // Kitin start - FoliaFix_ScheduleCommand
++        // 请注意，此修复并非完美修复
++        // 如果当前正在进行 Global Tick (由 schedule 触发)，并且试图查询实体，
++        // 我们直接抛出一个 RuntimeException。
++        // 1. 抛出异常 = 命令立即停止 = 此时"灭灯逻辑"还没跑 = 不会闪烁！
++        // 2. 这里的 check 在 ensureTickThread 之前 = 不会打印红字报错！
++        //方案阶段,处理方式,火把状态,后台状态,失败原因
++        //阶段 1,原版 Folia,不亮,无报错,全局线程被彻底禁用，没法干活。
++        //阶段 2,仅注入区域线程,亮,大量报错,绿轨干活了，但红轨撞墙了（被 Folia 拦截）。
++        //阶段 3,修改 Level 返回空,闪烁,无报错,红轨以为没玩家，主动把灯关了。
++        //阶段 4,最终方案 (静默熔断),常亮,无报错,绿轨干活，红轨在捣乱前被我们“暗杀”了。
++        if (io.papermc.paper.threadedregions.RegionizedServer.IS_GLOBAL_TICKING) {
++            throw new RuntimeException("KITIN_SILENT_ABORT");
++        }
++        // Kitin end
++
+         ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread(this, boundingBox, "Cannot getEntities asynchronously"); // Folia - region threading
+         Profiler.get().incrementCounter("getEntities");
+ 
