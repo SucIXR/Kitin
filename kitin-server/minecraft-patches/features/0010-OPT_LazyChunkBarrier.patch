@@ -5,7 +5,7 @@ Subject: [PATCH] OPT_LazyChunkBarrier
 
 
 diff --git a/net/minecraft/world/entity/item/ItemEntity.java b/net/minecraft/world/entity/item/ItemEntity.java
-index 7d8748fd4bdd523a7cf37ef86729da4277416f9a..f3f53a27543cdc8562e706e9e423c54d94b35dd5 100644
+index 7d8748fd4bdd523a7cf37ef86729da4277416f9a..36071c2c46b27eef322d5c5228f2dd2368fa23ea 100644
 --- a/net/minecraft/world/entity/item/ItemEntity.java
 +++ b/net/minecraft/world/entity/item/ItemEntity.java
 @@ -60,6 +60,14 @@ public class ItemEntity extends Entity implements TraceableEntity {
@@ -16,7 +16,7 @@ index 7d8748fd4bdd523a7cf37ef86729da4277416f9a..f3f53a27543cdc8562e706e9e423c54d
 +    @Override
 +    public void setPos(double x, double y, double z) {
 +        super.setPos(x, y, z);
-+        me.sucixr.kitin.scheduler.policy.LazyChunkBarrierPolicy.onCheckMovement(this);
++        me.sucixr.kitin.safety.chunkbarrier.LazyChunkBarrierPolicy.onCheckMovement(this);
 +    }
 +    //Kitin end
 +

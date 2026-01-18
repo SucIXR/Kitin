@@ -5,28 +5,20 @@ Subject: [PATCH] FoliaFix_WaypointManager
 
 
 diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
-index 455e4f95efc0c27e09d41d4a4deff5ab913433ee..755fe00ea86a57aa899c19316d3dd90900d8e973 100644
+index 7aa9a76f1063dbfef5f4c02746e0a679caac3cb5..34e66488f32ed5630cd8e475618c37d350985d55 100644
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
-@@ -61,6 +61,7 @@ import net.minecraft.resources.ResourceKey;
- import net.minecraft.server.MinecraftServer;
- import net.minecraft.server.ServerScoreboard;
- import net.minecraft.server.players.SleepStatus;
-+import me.sucixr.kitin.fixes.foliafix.KitinServerWaypointManager;
- import net.minecraft.server.waypoints.ServerWaypointManager;
- import net.minecraft.sounds.SoundEvent;
- import net.minecraft.sounds.SoundSource;
-@@ -649,7 +650,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+@@ -649,7 +649,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
          this.sleepStatus = new SleepStatus();
          this.gameEventDispatcher = new GameEventDispatcher(this);
          this.randomSequences = Objects.requireNonNullElseGet(randomSequences, () -> this.getDataStorage().computeIfAbsent(RandomSequences.TYPE));
 -        this.waypointManager = new ServerWaypointManager();
-+        this.waypointManager = new KitinServerWaypointManager(this);
++        this.waypointManager = new me.sucixr.kitin.fixes.foliafix.waypoint.KitinServerWaypointManager(this);
          this.environmentAttributes = EnvironmentAttributeSystem.builder().addDefaultLayers(this).build();
          //this.updateSkyBrightness(); // Folia - region threading - delay until first tick
          // Paper start - rewrite chunk system
 diff --git a/net/minecraft/server/level/ServerPlayer.java b/net/minecraft/server/level/ServerPlayer.java
-index 3c5cde60a89d6f9c07547e67e32c2b7857dc70e4..9b70056682c9b122dbe542474d31bf16d3fe2ae2 100644
+index 5d4b1542143a2a6467e1bfa9d21ffe58facede8a..9b0e4e0d0555dcaf1c4323dec7057235588877a0 100644
 --- a/net/minecraft/server/level/ServerPlayer.java
 +++ b/net/minecraft/server/level/ServerPlayer.java
 @@ -875,6 +875,9 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
