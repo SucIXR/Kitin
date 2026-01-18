@@ -5,7 +5,7 @@ Subject: [PATCH] OPT_Network_PlayerThrottling
 
 
 diff --git a/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java b/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
-index 723b74e5af627acdc8e1436024d723a67c10df1d..5c1b4c402057b3b16ef6100c1dfd8caada2910f6 100644
+index ca023f9afeb4b8697664e2f5460d402c324084f8..a36e9a35d8305406051d89bd3f9d703f07ffae59 100644
 --- a/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
 +++ b/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
 @@ -577,7 +577,12 @@ public final class RegionizedPlayerChunkLoader {
@@ -15,7 +15,7 @@ index 723b74e5af627acdc8e1436024d723a67c10df1d..5c1b4c402057b3b16ef6100c1dfd8caa
 -            return configRate <= 0.0 || configRate > (double)MAX_RATE ? (double)MAX_RATE : Math.max(1.0, configRate);
 +            double baseRate= configRate <= 0.0 || configRate > (double)MAX_RATE ? (double)MAX_RATE : Math.max(1.0, configRate); //Kitin
 +            //Kitin start
-+            return me.sucixr.kitin.scheduler.policy.ChunkSendPolicy
++            return me.sucixr.kitin.network.misc.ChunkSendPolicy
 +                    .getInstance()
 +                    .limitSendRate(player, baseRate);
 +            //Kitin end
@@ -23,7 +23,7 @@ index 723b74e5af627acdc8e1436024d723a67c10df1d..5c1b4c402057b3b16ef6100c1dfd8caa
  
          private long getMaxChunkLoads() {
 diff --git a/net/minecraft/server/level/ChunkMap.java b/net/minecraft/server/level/ChunkMap.java
-index 6292d9ae1e4b7b586f0806e01b86fc2092f1c153..f63a7d7986e4bdf91a42f3e32dad2c4a09b2b9df 100644
+index 6292d9ae1e4b7b586f0806e01b86fc2092f1c153..84020a5e136fa50619c2aec1cd6d621ad2171f5d 100644
 --- a/net/minecraft/server/level/ChunkMap.java
 +++ b/net/minecraft/server/level/ChunkMap.java
 @@ -1347,6 +1347,13 @@ public class ChunkMap extends SimpleRegionStorage implements ChunkHolder.PlayerP
@@ -32,7 +32,7 @@ index 6292d9ae1e4b7b586f0806e01b86fc2092f1c153..f63a7d7986e4bdf91a42f3e32dad2c4a
                  double d = Math.min(this.getEffectiveRange(), playerViewDistance * 16);
 +
 +                // Kitin start - per-player entity tracking range scaling (network)
-+                d = me.sucixr.kitin.scheduler.policy.EntitySendPolicy
++                d = me.sucixr.kitin.network.misc.EntitySendPolicy
 +                        .getInstance()
 +                        .adjustTrackingRange(player, d);
 +                // Kitin end

@@ -5,7 +5,7 @@ Subject: [PATCH] FoliaFix_Pearl-Chunk-Loading
 
 
 diff --git a/net/minecraft/server/level/ServerPlayer.java b/net/minecraft/server/level/ServerPlayer.java
-index 9b70056682c9b122dbe542474d31bf16d3fe2ae2..58f48cb8c7f9b9bf4fec4eee74d25bd5ef7db61c 100644
+index 9b0e4e0d0555dcaf1c4323dec7057235588877a0..41afe755b10a80ca2f0e2062341e05f7bd574e12 100644
 --- a/net/minecraft/server/level/ServerPlayer.java
 +++ b/net/minecraft/server/level/ServerPlayer.java
 @@ -757,20 +757,21 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
@@ -26,7 +26,7 @@ index 9b70056682c9b122dbe542474d31bf16d3fe2ae2..58f48cb8c7f9b9bf4fec4eee74d25bd5
 -                }
 -            }
 -        }
-+        me.sucixr.kitin.fixes.foliafix.PearlChunkLoading.saveEnderPearls(this, output);
++        me.sucixr.kitin.fixes.foliafix.pearl.PearlChunkLoading.saveEnderPearls(this, output);
 +//        if (!this.enderPearls.isEmpty()) {
 +//            ValueOutput.ValueOutputList valueOutputList = output.childrenList("ender_pearls");
 +//
@@ -45,7 +45,7 @@ index 9b70056682c9b122dbe542474d31bf16d3fe2ae2..58f48cb8c7f9b9bf4fec4eee74d25bd5
  
      public void loadAndSpawnEnderPearls(ValueInput input) {
 diff --git a/net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.java b/net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.java
-index 7d8c528a76e6a95d27368bc459d654c6ef66dd8f..5e77b22ad395c219f8073d1ef134d58d145fdc50 100644
+index 7d8c528a76e6a95d27368bc459d654c6ef66dd8f..4222e5ade4c028dd586f371c37f3e194fccb463a 100644
 --- a/net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.java
 +++ b/net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.java
 @@ -174,9 +174,20 @@ public class ThrownEnderpearl extends ThrowableItemProjectile {
@@ -64,7 +64,7 @@ index 7d8c528a76e6a95d27368bc459d654c6ef66dd8f..5e77b22ad395c219f8073d1ef134d58d
                      attemptTeleport(entity, (ServerLevel)this.level(), this.position());
 +                    //Kitin start - fix Pearl Chunk Loading
 +                    if (this.owner != null) {
-+                        me.sucixr.kitin.scheduler.data.PearlSnapshot.PEARL_DATA_MAP.remove(this.owner.getUUID());
++                        me.sucixr.kitin.fixes.foliafix.pearl.PearlSnapshot.PEARL_DATA_MAP.remove(this.owner.getUUID());
 +                    }
 +                    //Kitin end
                  }
@@ -76,7 +76,7 @@ index 7d8c528a76e6a95d27368bc459d654c6ef66dd8f..5e77b22ad395c219f8073d1ef134d58d
          if (this.level() instanceof ServerLevel serverLevel) {
 +            // Kitin start - Pearl Chunk Loading
 +            final java.util.UUID ownerId = this.owner != null ? this.owner.getUUID() : null;
-+            if (me.sucixr.kitin.scheduler.data.PearlSnapshot.tickPearl(this,ownerId)) {
++            if (me.sucixr.kitin.fixes.foliafix.pearl.PearlSnapshot.tickPearl(this,ownerId)) {
 +                this.discard(org.bukkit.event.entity.EntityRemoveEvent.Cause.DESPAWN);
 +                return;
 +            }
@@ -116,7 +116,7 @@ index 7d8c528a76e6a95d27368bc459d654c6ef66dd8f..5e77b22ad395c219f8073d1ef134d58d
              this.deregisterFromCurrentOwner();
 +            //Kitin start - fix Pearl Chunk Loading
 +            if (this.owner != null) {
-+                me.sucixr.kitin.scheduler.data.PearlSnapshot.PEARL_DATA_MAP.remove(this.owner.getUUID());
++                me.sucixr.kitin.fixes.foliafix.pearl.PearlSnapshot.PEARL_DATA_MAP.remove(this.owner.getUUID());
 +            }
 +            //Kitin end
          }

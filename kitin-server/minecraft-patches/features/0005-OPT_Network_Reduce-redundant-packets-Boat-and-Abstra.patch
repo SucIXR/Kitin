@@ -6,7 +6,7 @@ Subject: [PATCH]
 
 
 diff --git a/net/minecraft/server/level/ServerEntity.java b/net/minecraft/server/level/ServerEntity.java
-index 3a817c92147bb78c60238f3ddc1644b721aed7a2..4b58170bc7550b211cd6ec5ee7854c8dc2b78777 100644
+index 3a817c92147bb78c60238f3ddc1644b721aed7a2..4eeaee3871f1647de351032d32329c3fead2bd56 100644
 --- a/net/minecraft/server/level/ServerEntity.java
 +++ b/net/minecraft/server/level/ServerEntity.java
 @@ -97,7 +97,12 @@ public class ServerEntity {
@@ -17,7 +17,7 @@ index 3a817c92147bb78c60238f3ddc1644b721aed7a2..4b58170bc7550b211cd6ec5ee7854c8d
 +            //this.teleportDelay = 9999; Kitin off
 +            // Kitin start - throttle forced position sync for vehicles
 +            this.teleportDelay =
-+                    me.sucixr.kitin.scheduler.policy.EntitySyncPolicy.getInstance()
++                    me.sucixr.kitin.network.misc.EntitySyncPolicy.getInstance()
 +                            .adjustTeleportDelayForHardCollision(this.entity, this.tickCount, this.teleportDelay);
 +            // Kitin end
          }

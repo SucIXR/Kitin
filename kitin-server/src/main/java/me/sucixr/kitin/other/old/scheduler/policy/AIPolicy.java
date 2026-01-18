@@ -1,6 +1,6 @@
 package me.sucixr.kitin.other.old.scheduler.policy;
 
-import me.sucixr.kitin.other.old.scheduler.probe.ServerStressProbe;
+import me.sucixr.kitin.network.misc.ServerStressProbe;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;

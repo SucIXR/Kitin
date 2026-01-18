@@ -5,7 +5,7 @@ Subject: [PATCH] OPT_ChunkLazyLoading
 
 
 diff --git a/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java b/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
-index d94c0d15f62b67378669d4ce7252d99b8f743fa5..723b74e5af627acdc8e1436024d723a67c10df1d 100644
+index d94c0d15f62b67378669d4ce7252d99b8f743fa5..ca023f9afeb4b8697664e2f5460d402c324084f8 100644
 --- a/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
 +++ b/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
 @@ -908,6 +908,12 @@ public final class RegionizedPlayerChunkLoader {
@@ -14,7 +14,7 @@ index d94c0d15f62b67378669d4ce7252d99b8f743fa5..723b74e5af627acdc8e1436024d723a6
          void update() {
 +            // Kitin start - lazy chunk update gate (with init guard)
 +            if (this.lastSendDistance != Integer.MIN_VALUE // 或者 lastChunkX != MIN_VALUE 也行
-+                    && me.sucixr.kitin.scheduler.controller.ChunkLoadController.shouldSkipUpdate(this.player)) {
++                    && me.sucixr.kitin.network.misc.ChunkLoadController.shouldSkipUpdate(this.player)) {
 +                return;
 +            }
 +            // Kitin end
