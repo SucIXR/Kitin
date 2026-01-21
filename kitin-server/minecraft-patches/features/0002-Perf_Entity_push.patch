@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: SucIXR <sasasa123456@foxmail.com>
 Date: Thu, 25 Dec 2025 11:24:56 +0800
-Subject: [PATCH] OPT_Entity_push
+Subject: [PATCH] Perf_Entity_push
 
 
 diff --git a/net/minecraft/world/entity/Entity.java b/net/minecraft/world/entity/Entity.java

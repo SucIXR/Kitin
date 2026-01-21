@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: SucIXR <sasasa123456@foxmail.com>
 Date: Fri, 26 Dec 2025 16:36:46 +0800
-Subject: [PATCH] OPT_Network_PlayerThrottling
+Subject: [PATCH] Network_PlayerThrottling
 
 
 diff --git a/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java b/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java

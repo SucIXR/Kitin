@@ -1,0 +1,41 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: SucIXR <sasasa123456@foxmail.com>
+Date: Wed, 21 Jan 2026 15:38:54 +0800
+Subject: [PATCH] Other_add-Debug
+
+
+diff --git a/net/minecraft/server/level/ServerEntity.java b/net/minecraft/server/level/ServerEntity.java
+index 5524dfaa58f32d30a630c44bd3d101856b3e327b..f7154ae667e7c10f67881bc7fed2102359c701ef 100644
+--- a/net/minecraft/server/level/ServerEntity.java
++++ b/net/minecraft/server/level/ServerEntity.java
+@@ -184,18 +184,22 @@ public class ServerEntity {
+                     this.wasOnGround = this.entity.onGround();
+                     this.teleportDelay = 0;
+                     packet = ClientboundEntityPositionSyncPacket.of(this.entity);
++                    me.sucixr.kitin.other.debug.EntityPacketDebug.record(this.entity, "Sync", 60); // Kitin Debug  注入点 A: 强制同步包
+                     flag3 = true;
+                     flag4 = true;
+                 } else if ((!flag2 || !flag) && !(this.entity instanceof AbstractArrow)) {
+                     if (flag2) {
++                        me.sucixr.kitin.other.debug.EntityPacketDebug.record(this.entity, "Pos", 15); // Kitin Debug 注入点 B: 纯位移包
+                         packet = new ClientboundMoveEntityPacket.Pos(this.entity.getId(), (short)l, (short)l1, (short)l2, this.entity.onGround());
+                         flag3 = true;
+                     } else if (flag) {
++                        me.sucixr.kitin.other.debug.EntityPacketDebug.record(this.entity, "Rot", 10); // Kitin Debug 注入点 C: 纯旋转包
+                         packet = new ClientboundMoveEntityPacket.Rot(this.entity.getId(), b, b1, this.entity.onGround());
+                         flag4 = true;
+                     }
+                 } else {
+                     packet = new ClientboundMoveEntityPacket.PosRot(this.entity.getId(), (short)l, (short)l1, (short)l2, b, b1, this.entity.onGround());
++                    me.sucixr.kitin.other.debug.EntityPacketDebug.record(this.entity, "PosRot", 20); // Kitin Debug 注入点 D: 位移+旋转包
+                     flag3 = true;
+                     flag4 = true;
+                 }
+@@ -230,6 +234,7 @@ public class ServerEntity {
+                                 this.synchronizer.sendToTrackingPlayers(new ClientboundSetEntityMotionPacket(this.entity.getId(), this.lastSentMovement));
+                             }
+                             // Kitin end
++                            if (!skipMotion) me.sucixr.kitin.other.debug.EntityPacketDebug.record(this.entity, "Motion", 26); // Kitin Debug 注入点 E: 速度包
+                         }
+                     }
+                 }

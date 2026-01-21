@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: SucIXR <sasasa123456@foxmail.com>
 Date: Sat, 27 Dec 2025 18:42:42 +0800
-Subject: [PATCH] 
- OPT_Network_Reduce-redundant-packets-Boat-and-AbstractMinecart
+Subject: [PATCH] Network_Reduce-redundant-packets-Boat-and-AbstractMinecart
 
 
 diff --git a/net/minecraft/server/level/ServerEntity.java b/net/minecraft/server/level/ServerEntity.java
