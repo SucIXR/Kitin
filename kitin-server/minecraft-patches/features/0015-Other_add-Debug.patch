@@ -5,7 +5,7 @@ Subject: [PATCH] Other_add-Debug
 
 
 diff --git a/net/minecraft/server/level/ServerEntity.java b/net/minecraft/server/level/ServerEntity.java
-index 5524dfaa58f32d30a630c44bd3d101856b3e327b..f7154ae667e7c10f67881bc7fed2102359c701ef 100644
+index 8e569c6d5f4eb0bd50c712ca45285135f12e79ce..c3076b3840d79048d81f0d16ee4624e6e731c9f8 100644
 --- a/net/minecraft/server/level/ServerEntity.java
 +++ b/net/minecraft/server/level/ServerEntity.java
 @@ -184,18 +184,22 @@ public class ServerEntity {
@@ -31,7 +31,7 @@ index 5524dfaa58f32d30a630c44bd3d101856b3e327b..f7154ae667e7c10f67881bc7fed21023
                      flag3 = true;
                      flag4 = true;
                  }
-@@ -230,6 +234,7 @@ public class ServerEntity {
+@@ -231,6 +235,7 @@ public class ServerEntity {
                                  this.synchronizer.sendToTrackingPlayers(new ClientboundSetEntityMotionPacket(this.entity.getId(), this.lastSentMovement));
                              }
                              // Kitin end

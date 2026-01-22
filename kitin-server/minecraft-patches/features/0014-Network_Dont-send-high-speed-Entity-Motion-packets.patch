@@ -1,0 +1,42 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: SucIXR <sasasa123456@foxmail.com>
+Date: Wed, 21 Jan 2026 15:37:36 +0800
+Subject: [PATCH] Network_Dont-send-high-speed-Entity-Motion-packets
+
+
+diff --git a/net/minecraft/server/level/ServerEntity.java b/net/minecraft/server/level/ServerEntity.java
+index 4eeaee3871f1647de351032d32329c3fead2bd56..8e569c6d5f4eb0bd50c712ca45285135f12e79ce 100644
+--- a/net/minecraft/server/level/ServerEntity.java
++++ b/net/minecraft/server/level/ServerEntity.java
+@@ -203,7 +203,8 @@ public class ServerEntity {
+                 if (this.entity.needsSync || this.trackDelta || this.entity instanceof LivingEntity && ((LivingEntity)this.entity).isFallFlying()) {
+                     Vec3 deltaMovement = this.entity.getDeltaMovement();
+                     double d = deltaMovement.distanceToSqr(this.lastSentMovement);
+-                    if (d > 1.0E-7 || d > 0.0 && deltaMovement.lengthSqr() == 0.0) {
++                    double currentSpeedSqr = deltaMovement.lengthSqr(); // Kitin Network_Dont-send-high-speed-entity-packets
++                    if (d > 1.0E-7 || d > 0.0 && currentSpeedSqr == 0.0) { // Kitin Network_Dont-send-high-speed-entity-packets
+                         this.lastSentMovement = deltaMovement;
+                         if (this.entity instanceof AbstractHurtingProjectile abstractHurtingProjectile) {
+                             this.synchronizer
+@@ -216,7 +217,20 @@ public class ServerEntity {
+                                     )
+                                 );
+                         } else {
+-                            this.synchronizer.sendToTrackingPlayers(new ClientboundSetEntityMotionPacket(this.entity.getId(), this.lastSentMovement));
++                            // Kitin start - Network_Dont-send-high-speed-entity-packets
++                            boolean skipMotion = false;
++                            double maxSpeedSqr = 65536.0; // viewDistance * 16.0 * 10
++                            if (this.entity instanceof net.minecraft.world.entity.item.ItemEntity
++                                    || this.entity instanceof net.minecraft.world.entity.ExperienceOrb) {
++                                boolean isImpact = d > 0.0025;
++                                if (currentSpeedSqr > 0.01 && !isImpact) skipMotion = true;
++                            }else{
++                                if (!Double.isFinite(currentSpeedSqr) || currentSpeedSqr > maxSpeedSqr) skipMotion = true;
++                            }
++                            if (!skipMotion) {
++                                this.synchronizer.sendToTrackingPlayers(new ClientboundSetEntityMotionPacket(this.entity.getId(), this.lastSentMovement));
++                            }
++                            // Kitin end
+                         }
+                     }
+                 }
