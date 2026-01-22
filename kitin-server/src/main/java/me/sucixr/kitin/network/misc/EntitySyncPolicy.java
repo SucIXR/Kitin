@@ -1,7 +1,8 @@
 package me.sucixr.kitin.network.misc;
 
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.vehicle.boat.Boat;
+import net.minecraft.world.entity.monster.Shulker;
+import net.minecraft.world.entity.vehicle.boat.AbstractBoat;
 import net.minecraft.world.entity.vehicle.minecart.AbstractMinecart;
 
 public final class EntitySyncPolicy {
@@ -22,10 +23,12 @@ public final class EntitySyncPolicy {
     public int adjustTeleportDelayForHardCollision(final Entity entity,
                                                    final int tickCount,
                                                    final int currentTeleportDelay) {
-        // 只针对“刷包大户”：船/矿车
-        final boolean isVehicle = (entity instanceof Boat) || (entity instanceof AbstractMinecart);
+
+        final boolean isVehicle =
+                (entity instanceof AbstractBoat)
+                || (entity instanceof AbstractMinecart)
+                || (entity instanceof Shulker);
         if (!isVehicle) {
-            // 其他实体保持原行为（不动上游逻辑）
             return 9999;
         }
 
@@ -38,7 +41,7 @@ public final class EntitySyncPolicy {
         // 如果矿车几乎没动 (比如挤在农场里，或者停在终点)，就不要强制同步了！
         // 让它保持原有的 teleportDelay，这样它会自然计数到 400 (20秒) 才发一次包。
         // SqrLength < 0.0001 代表速度极其微小
-        if (entity.getDeltaMovement().lengthSqr() < 0.0001) {
+        if (entity.getDeltaMovement().lengthSqr() < 0.0025) {
             return currentTeleportDelay; // <--- 重点：原样返回，不重置为0，也不设为9999
         }
 
