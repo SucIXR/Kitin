@@ -1,0 +1,222 @@
+Subject: [PATCH] ChunkPacketDebug
+---
+Index: net/minecraft/network/CompressionEncoder.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/net/minecraft/network/CompressionEncoder.java b/net/minecraft/network/CompressionEncoder.java
+--- a/net/minecraft/network/CompressionEncoder.java	(revision 3cbe372177c8f9b5788aba62a5ac1f1eba3a3a49)
++++ b/net/minecraft/network/CompressionEncoder.java	(date 1769094186021)
+@@ -52,6 +52,10 @@
+                 }
+ 
+                 this.deflater.reset();
++                    // [Kitin Debug] 注入点 1: 捕获 Java Deflater 压缩流量
++                    if (byteBuf.readableBytes() > 0) {
++                        me.sucixr.kitin.other.debug.ChunkPacketDebug.recordTraffic(i, byteBuf.readableBytes());
++                    }
+                     // Paper start - Use Velocity cipher
+                     return;
+                 }
+@@ -65,6 +69,10 @@
+                 }
+             }
+         }
++        // [Kitin Debug] 注入点 2: 捕获 Velocity 压缩或未压缩流量
++        if (byteBuf.readableBytes() > 0) {
++            me.sucixr.kitin.other.debug.ChunkPacketDebug.recordTraffic(i, byteBuf.readableBytes());
++        }
+     }
+ 
+     public int getThreshold() {
+Index: net/minecraft/network/protocol/game/ClientboundLevelChunkPacketData.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/net/minecraft/network/protocol/game/ClientboundLevelChunkPacketData.java b/net/minecraft/network/protocol/game/ClientboundLevelChunkPacketData.java
+--- a/net/minecraft/network/protocol/game/ClientboundLevelChunkPacketData.java	(revision 3cbe372177c8f9b5788aba62a5ac1f1eba3a3a49)
++++ b/net/minecraft/network/protocol/game/ClientboundLevelChunkPacketData.java	(date 1769090792093)
+@@ -3,12 +3,17 @@
+ import com.google.common.collect.Lists;
+ import io.netty.buffer.ByteBuf;
+ import io.netty.buffer.Unpooled;
++
++import java.util.ArrayList;
+ import java.util.EnumMap;
+ import java.util.List;
+ import java.util.Map;
+ import java.util.Map.Entry;
+ import java.util.function.Consumer;
+ import java.util.stream.Collectors;
++
++import io.papermc.paper.annotation.DoNotUse;
++import io.papermc.paper.antixray.ChunkPacketInfo;
+ import net.minecraft.core.BlockPos;
+ import net.minecraft.core.SectionPos;
+ import net.minecraft.core.registries.Registries;
+@@ -17,8 +22,10 @@
+ import net.minecraft.network.RegistryFriendlyByteBuf;
+ import net.minecraft.network.codec.ByteBufCodecs;
+ import net.minecraft.network.codec.StreamCodec;
++import net.minecraft.network.protocol.Packet;
+ import net.minecraft.world.level.block.entity.BlockEntity;
+ import net.minecraft.world.level.block.entity.BlockEntityType;
++import net.minecraft.world.level.block.state.BlockState;
+ import net.minecraft.world.level.chunk.LevelChunk;
+ import net.minecraft.world.level.chunk.LevelChunkSection;
+ import net.minecraft.world.level.levelgen.Heightmap;
+@@ -31,22 +38,22 @@
+     private static final int TWO_MEGABYTES = 2097152;
+     private final Map<Heightmap.Types, long[]> heightmaps;
+     private final byte[] buffer;
+-    private final List<ClientboundLevelChunkPacketData.BlockEntityInfo> blockEntitiesData;
++    private final List<BlockEntityInfo> blockEntitiesData;
+     // Paper start - Handle oversized block entities in chunks
+-    private final java.util.List<net.minecraft.network.protocol.Packet<?>> extraPackets = new java.util.ArrayList<>();
++    private final List<Packet<?>> extraPackets = new ArrayList<>();
+     private static final int BLOCK_ENTITY_LIMIT = Integer.getInteger("Paper.excessiveTELimit", 750);
+ 
+-    public List<net.minecraft.network.protocol.Packet<?>> getExtraPackets() {
++    public List<Packet<?>> getExtraPackets() {
+         return this.extraPackets;
+     }
+     // Paper end - Handle oversized block entities in chunks
+ 
+     // Paper start - Anti-Xray - Add chunk packet info
+-    @Deprecated @io.papermc.paper.annotation.DoNotUse
++    @Deprecated @DoNotUse
+     public ClientboundLevelChunkPacketData(LevelChunk levelChunk) {
+         this(levelChunk, null);
+     }
+-    public ClientboundLevelChunkPacketData(LevelChunk levelChunk, io.papermc.paper.antixray.ChunkPacketInfo<net.minecraft.world.level.block.state.BlockState> chunkPacketInfo) {
++    public ClientboundLevelChunkPacketData(LevelChunk levelChunk, ChunkPacketInfo<BlockState> chunkPacketInfo) {
+         // Paper end - Anti-Xray - Add chunk packet info
+         this.heightmaps = levelChunk.getHeightmaps()
+             .stream()
+@@ -64,14 +71,14 @@
+         for (Entry<BlockPos, BlockEntity> entry : levelChunk.getBlockEntities().entrySet()) {
+             // Paper start - Handle oversized block entities in chunks
+             if (++totalTileEntities > BLOCK_ENTITY_LIMIT) {
+-                net.minecraft.network.protocol.Packet<ClientGamePacketListener> packet = entry.getValue().getUpdatePacket();
++                Packet<ClientGamePacketListener> packet = entry.getValue().getUpdatePacket();
+                 if (packet != null) {
+                     this.extraPackets.add(packet);
+                     continue;
+                 }
+             }
+             // Paper end - Handle oversized block entities in chunks
+-            this.blockEntitiesData.add(ClientboundLevelChunkPacketData.BlockEntityInfo.create(entry.getValue()));
++            this.blockEntitiesData.add(BlockEntityInfo.create(entry.getValue()));
+         }
+     }
+ 
+@@ -83,7 +90,7 @@
+         } else {
+             this.buffer = new byte[varInt];
+             buffer.readBytes(this.buffer);
+-            this.blockEntitiesData = ClientboundLevelChunkPacketData.BlockEntityInfo.LIST_STREAM_CODEC.decode(buffer);
++            this.blockEntitiesData = BlockEntityInfo.LIST_STREAM_CODEC.decode(buffer);
+         }
+     }
+ 
+@@ -91,7 +98,7 @@
+         HEIGHTMAPS_STREAM_CODEC.encode(buffer, this.heightmaps);
+         buffer.writeVarInt(this.buffer.length);
+         buffer.writeBytes(this.buffer);
+-        ClientboundLevelChunkPacketData.BlockEntityInfo.LIST_STREAM_CODEC.encode(buffer, this.blockEntitiesData);
++        BlockEntityInfo.LIST_STREAM_CODEC.encode(buffer, this.blockEntitiesData);
+     }
+ 
+     private static int calculateChunkSize(LevelChunk chunk) {
+@@ -111,11 +118,11 @@
+     }
+ 
+     // Paper start - Anti-Xray - Add chunk packet info
+-    @Deprecated @io.papermc.paper.annotation.DoNotUse
++    @Deprecated @DoNotUse
+     public static void extractChunkData(FriendlyByteBuf buffer, LevelChunk chunk) {
+         ClientboundLevelChunkPacketData.extractChunkData(buffer, chunk, null);
+     }
+-    public static void extractChunkData(FriendlyByteBuf buffer, LevelChunk chunk, io.papermc.paper.antixray.ChunkPacketInfo<net.minecraft.world.level.block.state.BlockState> chunkPacketInfo) {
++    public static void extractChunkData(FriendlyByteBuf buffer, LevelChunk chunk, ChunkPacketInfo<BlockState> chunkPacketInfo) {
+         int chunkSectionIndex = 0;
+         for (LevelChunkSection levelChunkSection : chunk.getSections()) {
+             levelChunkSection.write(buffer, chunkPacketInfo, chunkSectionIndex);
+@@ -128,16 +135,16 @@
+         }
+     }
+ 
+-    public Consumer<ClientboundLevelChunkPacketData.BlockEntityTagOutput> getBlockEntitiesTagsConsumer(int chunkX, int chunkZ) {
++    public Consumer<BlockEntityTagOutput> getBlockEntitiesTagsConsumer(int chunkX, int chunkZ) {
+         return blockEntityTagOutput -> this.getBlockEntitiesTags(blockEntityTagOutput, chunkX, chunkZ);
+     }
+ 
+-    private void getBlockEntitiesTags(ClientboundLevelChunkPacketData.BlockEntityTagOutput output, int chunkX, int chunkZ) {
++    private void getBlockEntitiesTags(BlockEntityTagOutput output, int chunkX, int chunkZ) {
+         int i = 16 * chunkX;
+         int i1 = 16 * chunkZ;
+         BlockPos.MutableBlockPos mutableBlockPos = new BlockPos.MutableBlockPos();
+ 
+-        for (ClientboundLevelChunkPacketData.BlockEntityInfo blockEntityInfo : this.blockEntitiesData) {
++        for (BlockEntityInfo blockEntityInfo : this.blockEntitiesData) {
+             int i2 = i + SectionPos.sectionRelative(blockEntityInfo.packedXZ >> 4);
+             int i3 = i1 + SectionPos.sectionRelative(blockEntityInfo.packedXZ);
+             mutableBlockPos.set(i2, blockEntityInfo.y, i3);
+@@ -153,11 +160,15 @@
+         return this.heightmaps;
+     }
+ 
+-    static class BlockEntityInfo {
+-        public static final StreamCodec<RegistryFriendlyByteBuf, ClientboundLevelChunkPacketData.BlockEntityInfo> STREAM_CODEC = StreamCodec.ofMember(
+-            ClientboundLevelChunkPacketData.BlockEntityInfo::write, ClientboundLevelChunkPacketData.BlockEntityInfo::new
++    public List<BlockEntityInfo> getBlockEntitiesData() {
++        return blockEntitiesData;
++    }
++
++    public static class BlockEntityInfo {
++        public static final StreamCodec<RegistryFriendlyByteBuf, BlockEntityInfo> STREAM_CODEC = StreamCodec.ofMember(
++            BlockEntityInfo::write, BlockEntityInfo::new
+         );
+-        public static final StreamCodec<RegistryFriendlyByteBuf, List<ClientboundLevelChunkPacketData.BlockEntityInfo>> LIST_STREAM_CODEC = STREAM_CODEC.apply(
++        public static final StreamCodec<RegistryFriendlyByteBuf, List<BlockEntityInfo>> LIST_STREAM_CODEC = STREAM_CODEC.apply(
+             ByteBufCodecs.list()
+         );
+         final int packedXZ;
+@@ -186,12 +197,16 @@
+             buffer.writeNbt(this.tag);
+         }
+ 
+-        static ClientboundLevelChunkPacketData.BlockEntityInfo create(BlockEntity blockEntity) {
++        static BlockEntityInfo create(BlockEntity blockEntity) {
+             CompoundTag updateTag = blockEntity.getUpdateTag(blockEntity.getLevel().registryAccess());
+             BlockPos blockPos = blockEntity.getBlockPos();
+             int i = SectionPos.sectionRelative(blockPos.getX()) << 4 | SectionPos.sectionRelative(blockPos.getZ());
+             blockEntity.sanitizeSentNbt(updateTag); // Paper - Sanitize sent data
+-            return new ClientboundLevelChunkPacketData.BlockEntityInfo(i, blockPos.getY(), blockEntity.getType(), updateTag.isEmpty() ? null : updateTag);
++            return new BlockEntityInfo(i, blockPos.getY(), blockEntity.getType(), updateTag.isEmpty() ? null : updateTag);
++        }
++
++        public CompoundTag getTag() {
++            return tag;
+         }
+     }
+ 
+Index: net/minecraft/network/protocol/game/ClientboundLevelChunkWithLightPacket.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/net/minecraft/network/protocol/game/ClientboundLevelChunkWithLightPacket.java b/net/minecraft/network/protocol/game/ClientboundLevelChunkWithLightPacket.java
+--- a/net/minecraft/network/protocol/game/ClientboundLevelChunkWithLightPacket.java	(revision 3cbe372177c8f9b5788aba62a5ac1f1eba3a3a49)
++++ b/net/minecraft/network/protocol/game/ClientboundLevelChunkWithLightPacket.java	(date 1769091124084)
+@@ -43,6 +43,8 @@
+         this.chunkData = new ClientboundLevelChunkPacketData(chunk, chunkPacketInfo); // Paper - Anti-Xray
+         this.lightData = new ClientboundLightUpdatePacketData(pos, lightEngine, skyLight, blockLight);
+         chunk.getLevel().chunkPacketBlockController.modifyBlocks(this, chunkPacketInfo); // Paper - Anti-Xray - Modify blocks
++        // [Kitin Debug] 注入探针
++        me.sucixr.kitin.other.debug.ChunkPacketDebug.record(this);
+     }
+ 
+     private ClientboundLevelChunkWithLightPacket(RegistryFriendlyByteBuf buffer) {
