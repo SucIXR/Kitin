@@ -24,10 +24,17 @@ public final class EntitySyncPolicy {
                                                    final int tickCount,
                                                    final int currentTeleportDelay) {
 
-        final boolean isVehicle =
-                (entity instanceof AbstractBoat)
-                || (entity instanceof AbstractMinecart)
-                || (entity instanceof Shulker);
+        boolean isVehicle = false;
+        if (me.sucixr.kitin.config.KitinConfig.optimizeAllMinecarts && entity instanceof AbstractMinecart) {
+            isVehicle = true;
+        }
+        else if (me.sucixr.kitin.config.KitinConfig.optimizeAllBoats && entity instanceof AbstractBoat) {
+            isVehicle = true;
+        }
+        else if (me.sucixr.kitin.config.KitinConfig.optimizedSyncEntities.contains(entity.getType())) {
+            isVehicle = true;
+        }
+
         if (!isVehicle) {
             return 9999;
         }

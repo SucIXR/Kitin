@@ -5,65 +5,21 @@ Subject: [PATCH] Perf_Entity-push
 
 
 diff --git a/net/minecraft/world/entity/Entity.java b/net/minecraft/world/entity/Entity.java
-index 3df00628e64f55f86095f4b7d35a116515e49628..abbc9e8419206a9e4c513132c418fa3faecd1589 100644
+index 3df00628e64f55f86095f4b7d35a116515e49628..eb8cb6382de2bd95fdacfd87814df6120707bce1 100644
 --- a/net/minecraft/world/entity/Entity.java
 +++ b/net/minecraft/world/entity/Entity.java
-@@ -2313,30 +2313,35 @@ public abstract class Entity implements SyncedDataHolder, DebugValueSource, Name
+@@ -2313,6 +2313,14 @@ public abstract class Entity implements SyncedDataHolder, DebugValueSource, Name
          if (!this.isPassengerOfSameVehicle(entity)) {
              if (!entity.noPhysics && !this.noPhysics) {
                  if (this.level.paperConfig().collisions.onlyPlayersCollide && !(entity instanceof ServerPlayer || this instanceof ServerPlayer)) return; // Paper - Collision option for requiring a player participant
--                double d = entity.getX() - this.getX();
--                double d1 = entity.getZ() - this.getZ();
--                double max = Mth.absMax(d, d1);
--                if (max >= 0.01F) {
--                    max = Math.sqrt(max);
--                    d /= max;
--                    d1 /= max;
--                    double d2 = 1.0 / max;
--                    if (d2 > 1.0) {
--                        d2 = 1.0;
--                    }
--
--                    d *= d2;
--                    d1 *= d2;
--                    d *= 0.05F;
--                    d1 *= 0.05F;
--                    if (!this.isVehicle() && this.isPushable()) {
--                        this.push(-d, 0.0, -d1);
--                    }
--
--                    if (!entity.isVehicle() && entity.isPushable()) {
--                        entity.push(d, 0.0, d1);
--                    }
 +                //Kitin start
-+                if (me.sucixr.kitin.performance.physics.SocialBubbleEngine.getInstance().shouldSkipHardCollision(this,entity)) {
++                if (me.sucixr.kitin.config.KitinConfig.useSimplerEntityPush) {
++                    if (me.sucixr.kitin.performance.physics.SocialBubbleEngine.getInstance().shouldSkipHardCollision(this,entity)) {
++                        return;
++                    }
 +                    return;
-                 }
++                }
 +                //Kitin end
-+//                double d = entity.getX() - this.getX();
-+//                double d1 = entity.getZ() - this.getZ();
-+//                double max = Mth.absMax(d, d1);
-+//                if (max >= 0.01F) {
-+//                    max = Math.sqrt(max);
-+//                    d /= max;
-+//                    d1 /= max;
-+//                    double d2 = 1.0 / max;
-+//                    if (d2 > 1.0) {
-+//                        d2 = 1.0;
-+//                    }
-+//
-+//                    d *= d2;
-+//                    d1 *= d2;
-+//                    d *= 0.05F;
-+//                    d1 *= 0.05F;
-+//                    if (!this.isVehicle() && this.isPushable()) {
-+//                        this.push(-d, 0.0, -d1);
-+//                    }
-+//
-+//                    if (!entity.isVehicle() && entity.isPushable()) {
-+//                        entity.push(d, 0.0, d1);
-+//                    }
-+//                } Kitin end
-             }
-         }
-     }
+                 double d = entity.getX() - this.getX();
+                 double d1 = entity.getZ() - this.getZ();
+                 double max = Mth.absMax(d, d1);

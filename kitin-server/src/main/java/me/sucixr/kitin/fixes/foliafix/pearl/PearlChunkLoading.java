@@ -29,6 +29,9 @@ import static me.sucixr.kitin.fixes.foliafix.pearl.PearlSnapshot.PEARL_DATA_MAP;
 
 public class PearlChunkLoading {
     public static void saveEnderPearls(ServerPlayer player, ValueOutput output) {
+        if (me.sucixr.kitin.config.KitinConfig.pearlFixNotSave) {
+            return;
+        }
         PearlSnapshot.SimplePearlData data = PEARL_DATA_MAP.remove(player.getUUID());
 
         if (data != null) {

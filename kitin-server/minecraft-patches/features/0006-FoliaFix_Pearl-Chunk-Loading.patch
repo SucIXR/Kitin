@@ -5,47 +5,31 @@ Subject: [PATCH] FoliaFix_Pearl-Chunk-Loading
 
 
 diff --git a/net/minecraft/server/level/ServerPlayer.java b/net/minecraft/server/level/ServerPlayer.java
-index 9b0e4e0d0555dcaf1c4323dec7057235588877a0..41afe755b10a80ca2f0e2062341e05f7bd574e12 100644
+index 9b0e4e0d0555dcaf1c4323dec7057235588877a0..fda4387cd19d23c1cef796a39d76f4f51cf8ca28 100644
 --- a/net/minecraft/server/level/ServerPlayer.java
 +++ b/net/minecraft/server/level/ServerPlayer.java
-@@ -757,20 +757,21 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+@@ -757,6 +757,10 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
      }
  
      private void saveEnderPearls(ValueOutput output) {
--        if (!this.enderPearls.isEmpty()) {
--            ValueOutput.ValueOutputList valueOutputList = output.childrenList("ender_pearls");
--
--            for (ThrownEnderpearl thrownEnderpearl : this.enderPearls) {
--                if (thrownEnderpearl.level().paperConfig().misc.legacyEnderPearlBehavior) continue; // Paper - Allow using old ender pearl behavior
--                if (thrownEnderpearl.isRemoved()) {
--                    LOGGER.warn("Trying to save removed ender pearl, skipping");
--                } else {
--                    ValueOutput valueOutput = valueOutputList.addChild();
--                    thrownEnderpearl.save(valueOutput);
--                    valueOutput.store("ender_pearl_dimension", Level.RESOURCE_KEY_CODEC, thrownEnderpearl.level().dimension());
--                }
--            }
++        // Kitin start - fix Pearl Chunk Loading
++        if (me.sucixr.kitin.config.KitinConfig.pearlFixEnabled)me.sucixr.kitin.fixes.foliafix.pearl.PearlChunkLoading.saveEnderPearls(this, output);
++        else {
++        // Kitin end
+         if (!this.enderPearls.isEmpty()) {
+             ValueOutput.ValueOutputList valueOutputList = output.childrenList("ender_pearls");
+ 
+@@ -770,7 +774,7 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+                     valueOutput.store("ender_pearl_dimension", Level.RESOURCE_KEY_CODEC, thrownEnderpearl.level().dimension());
+                 }
+             }
 -        }
-+        me.sucixr.kitin.fixes.foliafix.pearl.PearlChunkLoading.saveEnderPearls(this, output);
-+//        if (!this.enderPearls.isEmpty()) {
-+//            ValueOutput.ValueOutputList valueOutputList = output.childrenList("ender_pearls");
-+//
-+//            for (ThrownEnderpearl thrownEnderpearl : this.enderPearls) {
-+//                if (thrownEnderpearl.level().paperConfig().misc.legacyEnderPearlBehavior) continue; // Paper - Allow using old ender pearl behavior
-+//                if (thrownEnderpearl.isRemoved()) {
-+//                    LOGGER.warn("Trying to save removed ender pearl, skipping");
-+//                } else {
-+//                    ValueOutput valueOutput = valueOutputList.addChild();
-+//                    thrownEnderpearl.save(valueOutput);
-+//                    valueOutput.store("ender_pearl_dimension", Level.RESOURCE_KEY_CODEC, thrownEnderpearl.level().dimension());
-+//                }
-+//            }
-+//        } Kitin off
++        }} //Kitin
      }
  
      public void loadAndSpawnEnderPearls(ValueInput input) {
 diff --git a/net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.java b/net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.java
-index 7d8c528a76e6a95d27368bc459d654c6ef66dd8f..4222e5ade4c028dd586f371c37f3e194fccb463a 100644
+index 7d8c528a76e6a95d27368bc459d654c6ef66dd8f..dacf07f34c63b23f4bc14e7eb1f54a7692286fb7 100644
 --- a/net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.java
 +++ b/net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.java
 @@ -174,9 +174,20 @@ public class ThrownEnderpearl extends ThrowableItemProjectile {
@@ -70,15 +54,17 @@ index 7d8c528a76e6a95d27368bc459d654c6ef66dd8f..4222e5ade4c028dd586f371c37f3e194
                  }
                  this.discard(org.bukkit.event.entity.EntityRemoveEvent.Cause.HIT);
                  return;
-@@ -253,11 +264,19 @@ public class ThrownEnderpearl extends ThrowableItemProjectile {
+@@ -253,11 +264,21 @@ public class ThrownEnderpearl extends ThrowableItemProjectile {
      @Override
      public void tick() {
          if (this.level() instanceof ServerLevel serverLevel) {
 +            // Kitin start - Pearl Chunk Loading
-+            final java.util.UUID ownerId = this.owner != null ? this.owner.getUUID() : null;
-+            if (me.sucixr.kitin.fixes.foliafix.pearl.PearlSnapshot.tickPearl(this,ownerId)) {
-+                this.discard(org.bukkit.event.entity.EntityRemoveEvent.Cause.DESPAWN);
-+                return;
++            if (me.sucixr.kitin.config.KitinConfig.pearlFixEnabled) {
++                final java.util.UUID ownerId = this.owner != null ? this.owner.getUUID() : null;
++                if (me.sucixr.kitin.fixes.foliafix.pearl.PearlSnapshot.tickPearl(this, ownerId)) {
++                    this.discard(org.bukkit.event.entity.EntityRemoveEvent.Cause.DESPAWN);
++                    return;
++                }
 +            }
 +            // Kitin end
              int var7 = SectionPos.blockToSectionCoord(this.position().x());
@@ -91,7 +77,7 @@ index 7d8c528a76e6a95d27368bc459d654c6ef66dd8f..4222e5ade4c028dd586f371c37f3e194
                  && !serverPlayer.wonGame
                  && serverPlayer.level().getGameRules().get(GameRules.ENDER_PEARLS_VANISH_ON_DEATH)) {
                  this.discard(org.bukkit.event.entity.EntityRemoveEvent.Cause.DESPAWN); // CraftBukkit - add Bukkit remove cause
-@@ -272,9 +291,15 @@ public class ThrownEnderpearl extends ThrowableItemProjectile {
+@@ -272,9 +293,17 @@ public class ThrownEnderpearl extends ThrowableItemProjectile {
                              || var7 != SectionPos.blockToSectionCoord(blockPos.getX())
                              || sectionPosZ != SectionPos.blockToSectionCoord(blockPos.getZ())
                      )
@@ -101,16 +87,18 @@ index 7d8c528a76e6a95d27368bc459d654c6ef66dd8f..4222e5ade4c028dd586f371c37f3e194
 +                    //Kitin start - fix Pearl Chunk Loading
 +                )
 +                    //&& entity instanceof ServerPlayer serverPlayer1) {
-+                    if (!this.isRemoved()){
++                    if (me.sucixr.kitin.config.KitinConfig.pearlFixEnabled && !this.isRemoved()){
 +                        serverLevel.resetEmptyTime(); // 防止维度卸载
 +                        net.minecraft.server.level.ServerPlayer.placeEnderPearlTicket(serverLevel, this.chunkPosition());
 +                        this.ticketTimer = net.minecraft.server.level.TicketType.ENDER_PEARL.timeout();
++                    } else if (entity instanceof ServerPlayer serverPlayer1) {
++                        this.ticketTimer = serverPlayer1.registerAndUpdateEnderPearlTicket(this);
 +                    }
 +                //Kitin end
              }
          } else {
              super.tick();
-@@ -322,6 +347,11 @@ public class ThrownEnderpearl extends ThrowableItemProjectile {
+@@ -322,6 +351,11 @@ public class ThrownEnderpearl extends ThrowableItemProjectile {
      public void onRemoval(Entity.RemovalReason reason) {
          if (reason != Entity.RemovalReason.UNLOADED_WITH_PLAYER) {
              this.deregisterFromCurrentOwner();

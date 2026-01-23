@@ -5,7 +5,7 @@ Subject: [PATCH] SpigotFix_Primed-and-fix-TNT
 
 
 diff --git a/net/minecraft/world/entity/item/PrimedTnt.java b/net/minecraft/world/entity/item/PrimedTnt.java
-index fd1db18764be58bc5ed5983b98e669c76f7ff427..a5a7cc2763b3fdab9391a81d10a0feb883cd735e 100644
+index fd1db18764be58bc5ed5983b98e669c76f7ff427..cee670f7ccd315c5d55e71e88feff8ba2cb62e96 100644
 --- a/net/minecraft/world/entity/item/PrimedTnt.java
 +++ b/net/minecraft/world/entity/item/PrimedTnt.java
 @@ -99,11 +99,12 @@ public class PrimedTnt extends Entity implements TraceableEntity {
@@ -14,12 +14,12 @@ index fd1db18764be58bc5ed5983b98e669c76f7ff427..a5a7cc2763b3fdab9391a81d10a0feb8
      public void tick() {
 -        if (this.level().spigotConfig.maxTntTicksPerTick > 0 && ++this.level().getCurrentWorldData().currentPrimedTnt > this.level().spigotConfig.maxTntTicksPerTick) { return; } // Spigot // Folia - region threading
 +        boolean isOverloaded = false;//Kitin - TNT OPT
-+        if (this.level().spigotConfig.maxTntTicksPerTick > 0 && ++this.level().getCurrentWorldData().currentPrimedTnt > this.level().spigotConfig.maxTntTicksPerTick) { isOverloaded = true; } // Spigot // Folia - region threading //Kitin
++        if (this.level().spigotConfig.maxTntTicksPerTick > 0 && ++this.level().getCurrentWorldData().currentPrimedTnt > this.level().spigotConfig.maxTntTicksPerTick) { if (me.sucixr.kitin.config.KitinConfig.disableMaxTntPerTickAndOptimize) isOverloaded = true; else return;} // Spigot // Folia - region threading //Kitin
          //this.handlePortal(); // Folia - region threading
          this.applyGravity();
          this.move(MoverType.SELF, this.getDeltaMovement());
 -        this.applyEffectsFromBlocks();
-+        if (!isOverloaded) {this.applyEffectsFromBlocks();}//Kitin TNT不计算环境，水流岩浆，气泡柱等
++        if (!me.sucixr.kitin.config.KitinConfig.disableMaxTntPerTickAndOptimize ||!isOverloaded) this.applyEffectsFromBlocks();//Kitin TNT不计算环境，水流岩浆，气泡柱等
          // Paper start - Configurable TNT height nerf
          if (this.level().paperConfig().fixes.tntEntityHeightNerf.test(v -> this.getY() > v)) {
              this.discard(EntityRemoveEvent.Cause.OUT_OF_WORLD);
@@ -33,7 +33,7 @@ index fd1db18764be58bc5ed5983b98e669c76f7ff427..a5a7cc2763b3fdab9391a81d10a0feb8
          if (i <= 0) {
              // CraftBukkit start - Need to reverse the order of the explosion and the entity death so we have a location for the event
 -            //this.discard();
-+            this.discard();//Kitin re
++            if(me.sucixr.kitin.config.KitinConfig.disableMaxTntPerTickAndOptimize) this.discard();//Kitin re
              if (!this.level().isClientSide()) {
                  this.explode();
              }
@@ -43,7 +43,7 @@ index fd1db18764be58bc5ed5983b98e669c76f7ff427..a5a7cc2763b3fdab9391a81d10a0feb8
              this.updateInWaterStateAndDoFluidPushing();
 -            if (this.level().isClientSide()) {
 +            //if (!isOverloaded) {this.updateInWaterStateAndDoFluidPushing();} //Kitin TNT水流推力计算去除,暂时注释，部分复制机需要水
-+            if (!isOverloaded && this.level().isClientSide()) {//Kitin TNT爆炸粒子去除
++            if (!me.sucixr.kitin.config.KitinConfig.disableMaxTntPerTickAndOptimize || !isOverloaded && this.level().isClientSide()) {//Kitin TNT爆炸粒子去除
                  this.level().addParticle(ParticleTypes.SMOKE, this.getX(), this.getY() + 0.5, this.getZ(), 0.0, 0.0, 0.0);
              }
          }

@@ -13,6 +13,11 @@ public final class ChunkLoadPolicy {
      * 是否跳过这次 chunk loader update
      */
     public boolean shouldSkipChunkUpdate(ServerPlayer player) {
+        // 如果玩家视距小于 7，缓冲区太小，强制不跳过更新，防止跑出边界
+        if (player.getBukkitEntity().getViewDistance() < 7) {
+            return false;
+        }
+
         PlayerMovementProbe.State state =
                 PlayerMovementProbe.getInstance().sample(player);
 
