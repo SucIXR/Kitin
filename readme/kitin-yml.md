@@ -38,7 +38,7 @@ This page explains the configuration options found in `config/kitin.yml`.
 - **说明:** - Paper虽然优化了实体Sync包的发包频率，但是当实体受到碰撞或者伤害时，会强制发包，导致大带宽占用。
     - 列表内的实体在受到伤害或碰撞时，将不再强制立即发送同步数据包。
     - 能显著减少生电机器（如猪人塔，潜影贝农场）运行时的网络拥堵，且看不出实体状态差异。
-    - **特殊值:** `#AbstractMinecart` (所有矿车), `#AbstractBoat` (所有船)。
+    - **特殊值:** `$AbstractMinecart` (所有矿车), `$AbstractBoat` (所有船)。
 
 ---
 

@@ -33,7 +33,7 @@ public class KitinConfig {
     private static final String HEADER = "Kitin Server Configuration\n" +
             "Folia fork maintained by SucIXR\n" +
             "Github: https://github.com/SucIXR/Kitin\n" +
-            "具体配置文件含义详见项目文件/readme/kitin-yml.md" +
+            "具体配置文件含义详见项目文件/readme/kitin-yml.md\n" +
             "Configuration file meaning please refer to the project file/readme/kitin-yml.md";
 
     private static File CONFIG_FILE;
