@@ -17,6 +17,10 @@ public class SafeSandDuper {
         if (!GlobalConfiguration.get().unsupportedSettings.allowUnsafeEndPortalTeleportation ||
                 !(entity instanceof FallingBlockEntity fb)) return false;
 
+        if (me.sucixr.kitin.config.KitinConfig.sandDuperBlacklist.contains(fb.getBlockState().getBlock())) {
+            return false;
+        }
+
         boolean destinationIsEnd = entity.level().dimension() == Level.OVERWORLD;
         if (!(entity.level() instanceof ServerLevel serverLevel)) {
             return false;
