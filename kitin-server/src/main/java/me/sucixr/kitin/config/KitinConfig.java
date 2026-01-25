@@ -168,13 +168,13 @@ public class KitinConfig {
 
     public static boolean disableMaxTntPerTickAndOptimize = false;
     public static boolean pearlFixEnabled = true;
-    public static boolean pearlFixNotSave = false;
+    public static int pearlFixMaxSave = -1;
     public static Set<Block> sandDuperBlacklist = new HashSet<>();
     private static void fixesSettings() {
         disableMaxTntPerTickAndOptimize = getBoolean("fixes.disable-max-tnt-per-tick-and-optimize", disableMaxTntPerTickAndOptimize);
         //
-        pearlFixEnabled = getBoolean("fixes.pearl-chunk-loading.enabled", true);
-        pearlFixNotSave = getBoolean("fixes.pearl-chunk-loading.no-save-after-player-offline", false);
+        pearlFixEnabled = getBoolean("fixes.ender-pearl-chunk-loading.enabled", true);
+        pearlFixMaxSave = getInt("fixes.ender-pearl-chunk-loading.player-max-save-ender-pearl", -1);
         //
         sandDuperBlacklist.clear();
         List<String> defaultBlocks = new ArrayList<>();

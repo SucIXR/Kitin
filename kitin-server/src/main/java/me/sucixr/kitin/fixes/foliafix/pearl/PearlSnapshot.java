@@ -16,28 +16,33 @@ public class PearlSnapshot {
             double motY,
             double motZ,
             float yRot,
-            float xRot) {}
+            float xRot,
+            long creationTime
+    ) {}
 
-    public static final java.util.Map<java.util.UUID,SimplePearlData> PEARL_DATA_MAP = new java.util.concurrent.ConcurrentHashMap<>();
+    public static final java.util.Map<java.util.UUID, java.util.Map<java.util.UUID, SimplePearlData>> PEARL_DATA_MAP = new java.util.concurrent.ConcurrentHashMap<>();
     public static boolean tickPearl(ThrownEnderpearl pearl,UUID ownerId){
         if (ownerId != null) {
+            var playerPearls = PEARL_DATA_MAP.computeIfAbsent(ownerId, k -> new java.util.concurrent.ConcurrentHashMap<>());
+            SimplePearlData oldData = playerPearls.get(pearl.getUUID());
+            long timestamp = (oldData != null) ? oldData.creationTime() : System.currentTimeMillis();
             boolean isOnline = pearl.level().getServer().getPlayerList().getPlayer(ownerId) != null;
             if (!isOnline) {
                 pearl.discard(org.bukkit.event.entity.EntityRemoveEvent.Cause.DESPAWN);
                 PEARL_DATA_MAP.remove(ownerId);
                 return true;
             }
-            if (!pearl.isRemoved()) {
-                PEARL_DATA_MAP.put(ownerId, new SimplePearlData(
+            PEARL_DATA_MAP.computeIfAbsent(ownerId, k -> new java.util.concurrent.ConcurrentHashMap<>())
+                    .put(pearl.getUUID(), new SimplePearlData(
                         pearl.getUUID(),
                         ownerId,
                         pearl.level().dimension().identifier().toString(),
                         pearl.getX(), pearl.getY(), pearl.getZ(),
                         pearl.getDeltaMovement().x, pearl.getDeltaMovement().y, pearl.getDeltaMovement().z,
-                        pearl.getYRot(), pearl.getXRot()
+                        pearl.getYRot(), pearl.getXRot(),
+                        timestamp
                 ));
             }
-        }
         return false;
     }
 

@@ -10,10 +10,13 @@ This page explains the configuration options found in `config/kitin.yml`.
 - **说明:** - 设为 `true` 时，服务器将不再限制每Tick引爆的TNT数量,而是优化超限的TNT。
     - 这可以让世吞等高TNT发包的机器能够正常运行。
 
-### `pearl-chunk-loading.no-save-after-player-offline`
-- **默认值:** `false`
-- **说明:** - 需要先开启"pearl-chunk-loading.enable"才生效。设为 `true` 时，玩家抛出的末影珍珠数据将**不会**保存到 NBT。
-    - **效果:** 玩家下线后，所有珍珠会直接消失。这可以防止玩家的珍珠数量不断增加导致的数据膨胀。如果一直在线，那珍珠加载效果将保留。
+### `ender-pearl-chunk-loading.player-max-save-ender-pearl`
+- **默认值:** `-1`
+- **说明:** - 需要先开启"ender-pearl-chunk-loading.enable"才生效。
+    - 设为 `-1` 时，玩家抛出的末影珍珠数据将保存到 NBT
+    - 设为 `0` 时，玩家抛出的末影珍珠数据将**不会**保存到 NBT
+    - 设为正整数时，玩家抛出的末影珍珠数据将只会将最后的指定数量保存到 NBT
+    - **效果:** 这可以防止玩家的珍珠数量不断增加导致的数据膨胀。如果一直在线，那珍珠加载效果将保留。
 
 ### `sand-duper.blacklistblocks`
 - **类型:** 列表 (List)
