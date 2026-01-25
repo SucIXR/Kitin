@@ -1,0 +1,34 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: SucIXR <sasasa123456@foxmail.com>
+Date: Mon, 26 Jan 2026 00:06:43 +0800
+Subject: [PATCH] Perf_VillagerSmartHibernation
+
+
+diff --git a/net/minecraft/world/entity/npc/villager/Villager.java b/net/minecraft/world/entity/npc/villager/Villager.java
+index 8616a8f5b720eac2bb5b3d78a3b69d40bb0b5547..45e3988355b9461a47850fdd4e78ff32b4eee68a 100644
+--- a/net/minecraft/world/entity/npc/villager/Villager.java
++++ b/net/minecraft/world/entity/npc/villager/Villager.java
+@@ -169,6 +169,7 @@ public class Villager extends AbstractVillager implements ReputationEventHandler
+         SensorType.SECONDARY_POIS,
+         SensorType.GOLEM_DETECTED
+     );
++    public net.minecraft.world.level.block.state.BlockState[] kitin$prisonSnapshot = null; // Kitin - VillagerSmartHibernation
+     public static final Map<MemoryModuleType<GlobalPos>, BiPredicate<Villager, Holder<PoiType>>> POI_MEMORIES = ImmutableMap.of(
+         MemoryModuleType.HOME,
+         (villager, poiType) -> poiType.is(PoiTypes.HOME),
+@@ -295,6 +296,7 @@ public class Villager extends AbstractVillager implements ReputationEventHandler
+     }
+     protected void customServerAiStep(ServerLevel level, final boolean inactive) {
+         // Paper end - EAR 2
++        if (me.sucixr.kitin.performance.entity.villager.VillagerSmartHibernation.checkFreezeTick(this, level)) return; // Kitin - VillagerSmartHibernation
+         ProfilerFiller profilerFiller = Profiler.get();
+         profilerFiller.push("villagerBrain");
+         if (!inactive) this.getBrain().tick(level, this); // Paper - EAR 2
+@@ -334,6 +336,7 @@ public class Villager extends AbstractVillager implements ReputationEventHandler
+ 
+         if (inactive) return; // Paper - EAR 2
+         super.customServerAiStep(level);
++        me.sucixr.kitin.performance.entity.villager.VillagerSmartHibernation.attemptCapture(this, level); // Kitin - VillagerSmartHibernation
+     }
+ 
+     @Override
