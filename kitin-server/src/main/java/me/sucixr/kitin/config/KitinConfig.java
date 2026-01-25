@@ -171,10 +171,10 @@ public class KitinConfig {
     public static int pearlFixMaxSave = -1;
     public static Set<Block> sandDuperBlacklist = new HashSet<>();
     private static void fixesSettings() {
-        disableMaxTntPerTickAndOptimize = getBoolean("fixes.disable-max-tnt-per-tick-and-optimize", disableMaxTntPerTickAndOptimize);
-        //
         pearlFixEnabled = getBoolean("fixes.ender-pearl-chunk-loading.enabled", true);
         pearlFixMaxSave = getInt("fixes.ender-pearl-chunk-loading.player-max-save-ender-pearl", -1);
+        //
+        disableMaxTntPerTickAndOptimize = getBoolean("fixes.disable-max-tnt-per-tick-and-optimize", disableMaxTntPerTickAndOptimize);
         //
         sandDuperBlacklist.clear();
         List<String> defaultBlocks = new ArrayList<>();
@@ -186,11 +186,14 @@ public class KitinConfig {
 
     //----------------------------------------
 
+    public static boolean chunkLazyLoading = true;
     public static int globalMaxChunkSendRate = -1;
     public static boolean optimizeAllBoats = false;
     public static boolean optimizeAllMinecarts = false;
     public static Set<EntityType<?>> optimizedSyncEntities = new HashSet<>();
     private static void networkSettings() {
+        chunkLazyLoading = getBoolean("network.chunk-lazy-loading",true);
+        //
         globalMaxChunkSendRate = getInt("network.global-max-chunk-send-rate", globalMaxChunkSendRate);
         me.sucixr.kitin.network.qos.GlobalChunkLimiter.setLimit(globalMaxChunkSendRate);
         //
