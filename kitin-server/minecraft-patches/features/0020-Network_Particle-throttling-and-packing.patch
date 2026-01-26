@@ -1,0 +1,51 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: SucIXR <sasasa123456@foxmail.com>
+Date: Tue, 27 Jan 2026 01:52:33 +0800
+Subject: [PATCH] Network_Particle-throttling-and-packing
+
+
+diff --git a/net/minecraft/server/network/ServerGamePacketListenerImpl.java b/net/minecraft/server/network/ServerGamePacketListenerImpl.java
+index f94b1c00cf52f9391c503e860160c8f780406888..8916b751b5e99d75ef1c021645df74a95fc2e719 100644
+--- a/net/minecraft/server/network/ServerGamePacketListenerImpl.java
++++ b/net/minecraft/server/network/ServerGamePacketListenerImpl.java
+@@ -27,6 +27,7 @@ import java.util.function.BiFunction;
+ import java.util.function.Consumer;
+ import java.util.stream.Collectors;
+ import java.util.stream.Stream;
++import me.sucixr.kitin.network.misc.ParticleOptimizer;
+ import net.minecraft.ChatFormatting;
+ import net.minecraft.advancements.AdvancementHolder;
+ import net.minecraft.advancements.CriteriaTriggers;
+@@ -328,6 +329,16 @@ public class ServerGamePacketListenerImpl
+     public final Long disconnectTicketId = Long.valueOf(DISCONNECT_TICKET_ID_GENERATOR.getAndIncrement());
+     // Folia end - region threading
+ 
++    // Kitin start - ParticleOptimizer
++    private final ParticleOptimizer kitin$particleOptimizer;
++    @Override
++    public void send(Packet<?> packet) {
++        if (this.kitin$particleOptimizer.handleSend(packet, this)) {
++            return;
++        }
++        super.send(packet);
++    }
++
+     public ServerGamePacketListenerImpl(MinecraftServer server, Connection connection, ServerPlayer player, CommonListenerCookie cookie) {
+         super(server, connection, cookie);
+         this.restartClientLoadTimerAfterRespawn();
+@@ -339,6 +350,7 @@ public class ServerGamePacketListenerImpl
+         this.chatMessageChain = new FutureChain(server.chatExecutor); // CraftBukkit - async chat
+         this.tickEndEvent = new io.papermc.paper.event.packet.ClientTickEndEvent(player.getBukkitEntity()); // Paper - add client tick end event
+         this.playerGameConnection =  new io.papermc.paper.connection.PaperPlayerGameConnection(this); // Paper
++        this.kitin$particleOptimizer = new ParticleOptimizer(player); // Kitin - ParticleOptimizer
+     }
+ 
+     // Paper start - configuration phase API
+@@ -356,6 +368,7 @@ public class ServerGamePacketListenerImpl
+     @Override
+     public void tick() {
+         // Folia start - region threading
++        this.kitin$particleOptimizer.tick(this); // Kitin - ParticleOptimizer
+         this.keepConnectionAlive();
+         if (this.processedDisconnect || this.player.wonGame) {
+             return;
