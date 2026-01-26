@@ -7,6 +7,7 @@ import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 
 public class VillagerSmartHibernation {
 
@@ -63,22 +64,32 @@ public class VillagerSmartHibernation {
         }
     }
 
+    private static BlockPos getPrisonCenter(Villager villager, ServerLevel level) {
+        BlockPos pos = villager.blockPosition();
+        if (!level.getBlockState(pos).getCollisionShape(level, pos).isEmpty()) {
+            pos = pos.above();
+        }
+        return pos;
+    }
+
     private static boolean hasThreatNearby(Villager villager, ServerLevel level) {
+        BlockPos center = getPrisonCenter(villager, level);
+        int x = center.getX();
+        int y = center.getY();
+        int z = center.getZ();
         return !level.getEntitiesOfClass(
                 LivingEntity.class,
-                villager.getBoundingBox().inflate(8.0D, 0.8D, 8.0D),
+                new AABB(
+                        x - 8.0, y + 1.0, z - 8.0,
+                        x + 9.0, y + 1.5, z + 9.0 // max (注意: x+9 是因为 BlockPos 是左下角，要覆盖到 x+8 的方块边界)
+                ),
                 entity -> entity instanceof Enemy && entity.isAlive()
         ).isEmpty();
     }
 
     private static boolean checkPrisonIntegrity(Villager villager, ServerLevel level) {
-        BlockPos pos = villager.blockPosition();
+        BlockPos pos = getPrisonCenter(villager, level);
         BlockState[] snapshot = villager.kitin$prisonSnapshot;
-
-        // 耕地等比正常方块低一格
-        if (!level.getBlockState(pos).getCollisionShape(level, pos).isEmpty()) {
-            pos = pos.above();
-        }
 
         if (level.getBlockState(pos.above()) != snapshot[0]) return false;
         if (level.getBlockState(pos.north()) != snapshot[1]) return false;
@@ -89,12 +100,7 @@ public class VillagerSmartHibernation {
     }
 
     private static void tryCapturePrison(Villager villager, ServerLevel level) {
-        BlockPos pos = villager.blockPosition();
-
-        // 耕地等比正常方块低一格
-        if (!level.getBlockState(pos).getCollisionShape(level, pos).isEmpty()) {
-            pos = pos.above();
-        }
+        BlockPos pos = getPrisonCenter(villager, level);
 
         BlockState n = level.getBlockState(pos.north());
         BlockState s = level.getBlockState(pos.south());
