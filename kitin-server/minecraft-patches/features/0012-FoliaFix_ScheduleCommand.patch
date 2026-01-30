@@ -102,7 +102,7 @@ index 747e51132cfddc0c1d619dca81a4dd34605475bd..1591ba3046e731efb4d0d309ec23462a
          } catch (Exception var10) {
              LOGGER.warn("Failed to execute function {}", function.id(), var10);
 diff --git a/net/minecraft/world/level/Level.java b/net/minecraft/world/level/Level.java
-index 937f7f51e047d6f71ce89db0c8697ea558334bbc..ad5fe5e11bc3febeb9a0436a5a5eb0c35b73dc5f 100644
+index 937f7f51e047d6f71ce89db0c8697ea558334bbc..6d520bdda020e3271a9496786eb03899697ce6e8 100644
 --- a/net/minecraft/world/level/Level.java
 +++ b/net/minecraft/world/level/Level.java
 @@ -1336,8 +1336,9 @@ public abstract class Level implements LevelAccessor, AutoCloseable, ca.spottedl
@@ -117,7 +117,7 @@ index 937f7f51e047d6f71ce89db0c8697ea558334bbc..ad5fe5e11bc3febeb9a0436a5a5eb0c3
              if (previous != null) {
                  return previous.getHandle();
              }
-@@ -1760,6 +1761,22 @@ public abstract class Level implements LevelAccessor, AutoCloseable, ca.spottedl
+@@ -1760,6 +1761,23 @@ public abstract class Level implements LevelAccessor, AutoCloseable, ca.spottedl
      public <T extends Entity> void getEntities(final EntityTypeTest<Entity, T> entityTypeTest,
                                                 final AABB boundingBox, final Predicate<? super T> predicate,
                                                 final List<? super T> into, final int maxCount) {
@@ -133,7 +133,8 @@ index 937f7f51e047d6f71ce89db0c8697ea558334bbc..ad5fe5e11bc3febeb9a0436a5a5eb0c3
 +        //阶段 3,修改 Level 返回空,闪烁,无报错,红轨以为没玩家，主动把灯关了。
 +        //阶段 4,最终方案 (静默熔断),常亮,无报错,绿轨干活，红轨在捣乱前被我们“暗杀”了。
 +        if (io.papermc.paper.threadedregions.RegionizedServer.IS_GLOBAL_TICKING) {
-+            throw new RuntimeException("KITIN_SILENT_ABORT");
++            //throw new RuntimeException("KITIN_SILENT_ABORT");
++            return; //无意义报错，这个是修动态光源数据包用的
 +        }
 +        // Kitin end
 +
