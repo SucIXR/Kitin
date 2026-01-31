@@ -5,7 +5,7 @@ Subject: [PATCH] FoliaFix_ScheduleCommand
 
 
 diff --git a/io/papermc/paper/threadedregions/RegionizedServer.java b/io/papermc/paper/threadedregions/RegionizedServer.java
-index b3bc39ebe8d2f48d976de9cd4fcae46095523514..f26ef12713517f40d601f6d9c6c401a1d15a12ac 100644
+index 17108636a5728efe98a064001e00e3ca098b1f51..f63bb81004deffb8c4b1ac3ce7b6507852ad0ae2 100644
 --- a/io/papermc/paper/threadedregions/RegionizedServer.java
 +++ b/io/papermc/paper/threadedregions/RegionizedServer.java
 @@ -32,6 +32,8 @@ import java.util.function.BooleanSupplier;
@@ -102,10 +102,10 @@ index 747e51132cfddc0c1d619dca81a4dd34605475bd..1591ba3046e731efb4d0d309ec23462a
          } catch (Exception var10) {
              LOGGER.warn("Failed to execute function {}", function.id(), var10);
 diff --git a/net/minecraft/world/level/Level.java b/net/minecraft/world/level/Level.java
-index 937f7f51e047d6f71ce89db0c8697ea558334bbc..6d520bdda020e3271a9496786eb03899697ce6e8 100644
+index 2c3d36a9d4bf361c516fe1fe6e29d225002b303c..fe2bc49ed3cb098bafdf251399e5ad479dfe3900 100644
 --- a/net/minecraft/world/level/Level.java
 +++ b/net/minecraft/world/level/Level.java
-@@ -1336,8 +1336,9 @@ public abstract class Level implements LevelAccessor, AutoCloseable, ca.spottedl
+@@ -1335,8 +1335,9 @@ public abstract class Level implements LevelAccessor, AutoCloseable, ca.spottedl
      @Override
      public BlockState getBlockState(BlockPos pos) {
          // CraftBukkit start - tree generation
@@ -117,7 +117,7 @@ index 937f7f51e047d6f71ce89db0c8697ea558334bbc..6d520bdda020e3271a9496786eb03899
              if (previous != null) {
                  return previous.getHandle();
              }
-@@ -1760,6 +1761,23 @@ public abstract class Level implements LevelAccessor, AutoCloseable, ca.spottedl
+@@ -1759,6 +1760,23 @@ public abstract class Level implements LevelAccessor, AutoCloseable, ca.spottedl
      public <T extends Entity> void getEntities(final EntityTypeTest<Entity, T> entityTypeTest,
                                                 final AABB boundingBox, final Predicate<? super T> predicate,
                                                 final List<? super T> into, final int maxCount) {

@@ -1,0 +1,377 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: SucIXR <sasasa123456@foxmail.com>
+Date: Sun, 1 Feb 2026 02:43:13 +0800
+Subject: [PATCH] FoliaFix_Spark
+
+
+diff --git a/src/main/java/io/papermc/paper/SparksFly.java b/src/main/java/io/papermc/paper/SparksFly.java
+index b332645ed65928100f580221d8a9948bc77e362e..dcecf8f02f204cc2251dce4fcf501dc0e85e5acc 100644
+--- a/src/main/java/io/papermc/paper/SparksFly.java
++++ b/src/main/java/io/papermc/paper/SparksFly.java
+@@ -1,29 +1,39 @@
+ package io.papermc.paper;
+ 
++import com.google.common.collect.ImmutableSet;
+ import io.papermc.paper.configuration.GlobalConfiguration;
+-import io.papermc.paper.plugin.entrypoint.classloader.group.PaperPluginClassLoaderStorage;
+-import io.papermc.paper.plugin.provider.classloader.ConfiguredPluginClassLoader;
+-import io.papermc.paper.plugin.provider.classloader.PaperClassLoaderStorage;
++import io.papermc.paper.threadedregions.RegionizedServer;
+ import io.papermc.paper.util.MCUtil;
++import java.nio.file.Path;
++import java.nio.file.Paths;
++import java.util.Arrays;
+ import java.util.Collection;
+ import java.util.List;
+-import java.util.concurrent.ConcurrentLinkedQueue;
+ import java.util.logging.Level;
+ import java.util.logging.Logger;
+-import me.lucko.spark.paper.api.Compatibility;
+-import me.lucko.spark.paper.api.PaperClassLookup;
+-import me.lucko.spark.paper.api.PaperScheduler;
+-import me.lucko.spark.paper.api.PaperSparkModule;
++import java.util.stream.Stream;
++import me.lucko.spark.folia.*;
++import me.lucko.spark.paper.common.SparkPlatform;
++import me.lucko.spark.paper.common.SparkPlugin;
++import me.lucko.spark.paper.common.monitor.ping.PlayerPingProvider;
++import me.lucko.spark.paper.common.monitor.tick.TickStatistics;
++import me.lucko.spark.paper.common.platform.PlatformInfo;
++import me.lucko.spark.paper.common.platform.serverconfig.ServerConfigProvider;
++import me.lucko.spark.paper.common.platform.world.WorldInfoProvider;
++import me.lucko.spark.paper.common.sampler.ThreadDumper;
++import me.lucko.spark.paper.common.sampler.source.ClassSourceLookup;
++import me.lucko.spark.paper.common.sampler.source.SourceMetadata;
+ import net.kyori.adventure.text.Component;
+ import net.kyori.adventure.text.format.TextColor;
+-import net.minecraft.util.ExceptionCollector;
++import net.minecraft.server.MinecraftServer;
+ import org.bukkit.Server;
+ import org.bukkit.command.Command;
+ import org.bukkit.command.CommandSender;
+ import org.bukkit.craftbukkit.CraftServer;
++import org.bukkit.plugin.Plugin;
+ 
+ // It's like electricity.
+-public final class SparksFly {
++public final class SparksFly implements SparkPlugin { // Kitin
+     public static final String ID = "spark";
+     public static final String COMMAND_NAME = "spark";
+ 
+@@ -32,91 +42,106 @@ public final class SparksFly {
+     private static final int SPARK_YELLOW = 0xffc93a;
+ 
+     private final Logger logger;
+-    private final PaperSparkModule spark;
++    private final SparkPlatform spark; // Kitin
+     // Folia - region threading
+ 
++    // Kitin start
++    private final MinecraftServer server;
++    private final Server bukkitServer;
++    private final ThreadDumper gameThreadDumper;
++    // Kitin end
++
+     private boolean enabled;
+     private boolean disabledInConfigurationWarningLogged;
+ 
+     public SparksFly(final Server server) {
+         // Folia - region threading
+-        this.logger = Logger.getLogger(ID);
+-        this.logger.log(Level.INFO, "This server bundles the spark profiler. For more information please visit https://docs.papermc.io/paper/profiling");
+-        this.spark = PaperSparkModule.create(Compatibility.VERSION_1_0, server, this.logger, new PaperScheduler() {
+-            @Override
+-            public void executeAsync(final Runnable runnable) {
+-                MCUtil.scheduleAsyncTask(this.catching(runnable, "asynchronous"));
+-            }
+-
+-            @Override
+-            public void executeSync(final Runnable runnable) {
+-                io.papermc.paper.threadedregions.RegionizedServer.getInstance().addTask(this.catching(runnable, "synchronous")); // Folia - region threading
+-            }
+ 
+-            private Runnable catching(final Runnable runnable, final String type) {
+-                return () -> {
+-                    try {
+-                        runnable.run();
+-                    } catch (final Throwable t) {
+-                        SparksFly.this.logger.log(Level.SEVERE, "An exception was encountered while executing a " + type + " spark task", t);
+-                    }
+-                };
+-            }
+-        }, new PaperClassLookup() {
+-            @Override
+-            public Class<?> lookup(final String className) throws Exception {
+-                final ExceptionCollector<ClassNotFoundException> exceptions = new ExceptionCollector<>();
+-                try {
+-                    return Class.forName(className);
+-                } catch (final ClassNotFoundException e) {
+-                    exceptions.add(e);
+-                    for (final ConfiguredPluginClassLoader loader : ((PaperPluginClassLoaderStorage) PaperClassLoaderStorage.instance()).getGlobalGroup().getClassLoaders()) {
+-                        try {
+-                            final Class<?> loadedClass = loader.loadClass(className, true, false, true);
+-                            if (loadedClass != null) {
+-                                return loadedClass;
+-                            }
+-                        } catch (final ClassNotFoundException exception) {
+-                            exceptions.add(exception);
+-                        }
+-                    }
+-                    exceptions.throwIfPresent();
+-                    return null;
+-                }
+-            }
+-        });
+-    }
++        // Kitin start
++        this.bukkitServer = server;
++        this.server = (MinecraftServer) ((CraftServer) server).getServer();
++        //Kitin end
+ 
+-    public void executeMainThreadTasks() {
+-        throw new UnsupportedOperationException(); // Folia - region threading
++        this.logger = Logger.getLogger(ID);
++        this.logger.log(Level.INFO, "This server bundles the spark profiler. For more information please visit https://docs.papermc.io/paper/profiling");
++        // Kitin start
++        this.gameThreadDumper = new ThreadDumper.Regex(ImmutableSet.of("(Folia )?Region Scheduler Thread #\\d+.*"));
++        this.spark = new SparkPlatform(this);
++        // Kitin end
++//        this.spark = PaperSparkModule.create(Compatibility.VERSION_1_0, server, this.logger, new PaperScheduler() {
++//            @Override
++//            public void executeAsync(final Runnable runnable) {
++//                MCUtil.scheduleAsyncTask(this.catching(runnable, "asynchronous"));
++//            }
++//
++//            @Override
++//            public void executeSync(final Runnable runnable) {
++//                io.papermc.paper.threadedregions.RegionizedServer.getInstance().addTask(this.catching(runnable, "synchronous")); // Folia - region threading
++//            }
++//
++//            private Runnable catching(final Runnable runnable, final String type) {
++//                return () -> {
++//                    try {
++//                        runnable.run();
++//                    } catch (final Throwable t) {
++//                        SparksFly.this.logger.log(Level.SEVERE, "An exception was encountered while executing a " + type + " spark task", t);
++//                    }
++//                };
++//            }
++//        }, new PaperClassLookup() {
++//            @Override
++//            public Class<?> lookup(final String className) throws Exception {
++//                final ExceptionCollector<ClassNotFoundException> exceptions = new ExceptionCollector<>();
++//                try {
++//                    return Class.forName(className);
++//                } catch (final ClassNotFoundException e) {
++//                    exceptions.add(e);
++//                    for (final ConfiguredPluginClassLoader loader : ((PaperPluginClassLoaderStorage) PaperClassLoaderStorage.instance()).getGlobalGroup().getClassLoaders()) {
++//                        try {
++//                            final Class<?> loadedClass = loader.loadClass(className, true, false, true);
++//                            if (loadedClass != null) {
++//                                return loadedClass;
++//                            }
++//                        } catch (final ClassNotFoundException exception) {
++//                            exceptions.add(exception);
++//                        }
++//                    }
++//                    exceptions.throwIfPresent();
++//                    return null;
++//                }
++//            }
++//        });
+     }
+-
++//
++//    public void executeMainThreadTasks() {
++//        throw new UnsupportedOperationException(); // Folia - region threading
++//    }
+     public void enableEarlyIfRequested() {
+-        if (!isPluginPreferred() && shouldEnableImmediately()) {
++        if (shouldEnableImmediately()) { // Kitin
+             this.enable();
+         }
+     }
+ 
+     public void enableBeforePlugins() {
+-        if (!isPluginPreferred()) {
+-            this.enable();
+-        }
++//        if (!isPluginPreferred()) {
++//            this.enable();
++//        } // Kitin off
+     }
+ 
+     public void enableAfterPlugins(final Server server) {
+-        final boolean isPluginPreferred = isPluginPreferred();
+-        final boolean isPluginEnabled = isPluginEnabled(server);
+-        if (!isPluginPreferred || !isPluginEnabled) {
+-            if (isPluginPreferred && !this.enabled) {
+-                this.logger.log(Level.INFO, "The spark plugin has been preferred but was not loaded. The bundled spark profiler will enabled instead.");
+-            }
++//        final boolean isPluginPreferred = isPluginPreferred();
++//        final boolean isPluginEnabled = isPluginEnabled(server);
++//        if (!isPluginPreferred || !isPluginEnabled) {
++//            if (isPluginPreferred && !this.enabled) {
++//                this.logger.log(Level.INFO, "The spark plugin has been preferred but was not loaded. The bundled spark profiler will enabled instead.");
++//            }
+             this.enable();
+-        }
++//        } // Kitin off
+     }
+ 
+     private void enable() {
+         if (!this.enabled) {
+-            if (false) { // Folia - disable in-built spark profiler
++            if (GlobalConfiguration.get().spark.enabled) { // Folia - disable in-built spark profiler // Kitin re
+                 this.enabled = true;
+                 this.spark.enable();
+             } else {
+@@ -136,39 +161,126 @@ public final class SparksFly {
+     }
+ 
+     public void registerCommandBeforePlugins(final Server server) {
+-        if (!isPluginPreferred()) {
++//        if (!isPluginPreferred()) {
+             this.registerCommand(server);
+-        }
++//        } // Kitin re
+     }
+ 
+     public void registerCommandAfterPlugins(final Server server) {
+-        if ((!isPluginPreferred() || !isPluginEnabled(server)) && server.getCommandMap().getCommand(COMMAND_NAME) == null) {
++        if (server.getCommandMap().getCommand(COMMAND_NAME) == null) { // Kitin
+             this.registerCommand(server);
+         }
+     }
+ 
+     private void registerCommand(final Server server) {
+-        server.getCommandMap().register(COMMAND_NAME, "paper", new CommandImpl(COMMAND_NAME, this.spark.getPermissions()));
++        server.getCommandMap().register(COMMAND_NAME, "paper", new CommandImpl(COMMAND_NAME)); // Kitin
+     }
+ 
+     public void tickStart() {
+-        this.spark.onServerTickStart();
++        //this.spark.onServerTickStart(); // Kitin off
+     }
+ 
+     public void tickEnd(final double duration) {
+-        this.spark.onServerTickEnd(duration);
++        //this.spark.onServerTickEnd(duration); // Kitin off
+     }
+ 
++    // ========================================================================
++    // SparkPlugin 接口实现
++    // ========================================================================
++
++    public Server getServer() {
++        return this.bukkitServer;
++    }
++
++    @Override
++    public String getVersion() {
++        return "Kitin-Internal"; // 这版本怎么获取?
++    }
++
++    @Override
++    public Path getPluginDirectory() { return Paths.get("plugins", "spark"); }
++
++    @Override
++    public String getCommandName() { return "spark"; }
++
++    @Override
++    public Stream<KitinCommandSender> getCommandSenders() {
++        return Stream.concat(
++                bukkitServer.getOnlinePlayers().stream(),
++                Stream.of(bukkitServer.getConsoleSender())
++        ).map(KitinCommandSender::new);
++    }
++
++    @Override
++    public void executeAsync(Runnable task) {
++        MCUtil.scheduleAsyncTask(task);
++    }
++
++    @Override
++    public void executeSync(Runnable task) {
++        RegionizedServer.getInstance().addTask(task);
++    }
++
++    @Override
++    public void log(Level level, String msg) {
++        this.logger.log(level, msg);
++    }
++
++    @Override
++    public void log(Level level, String msg, Throwable throwable) {
++        this.logger.log(level, msg, throwable);
++    }
++
++    @Override
++    public ThreadDumper getDefaultThreadDumper() { return this.gameThreadDumper; }
++
++    @Override
++    public TickStatistics createTickStatistics() { return new KitinTickStatistics(this.bukkitServer); }
++
++    @Override
++    public ClassSourceLookup createClassSourceLookup() { return new KitinClassSourceLookup(); }
++
++    @Override
++    public Collection<SourceMetadata> getKnownSources() {
++        return SourceMetadata.gather(
++                Arrays.asList(bukkitServer.getPluginManager().getPlugins()),
++                Plugin::getName,
++                plugin -> plugin.getPluginMeta().getVersion(),
++                plugin -> String.join(", ", plugin.getPluginMeta().getAuthors()),
++                plugin -> plugin.getPluginMeta().getDescription()
++        );
++    }
++
++    @Override
++    public PlayerPingProvider createPlayerPingProvider() { return new KitinPlayerPingProvider(this.bukkitServer); }
++
++    @Override
++    public ServerConfigProvider createServerConfigProvider() { return new KitinServerConfigProvider(); }
++
++    @Override
++    public WorldInfoProvider createWorldInfoProvider() { return new KitinWorldInfoProvider(this); }
++
++    @Override
++    public PlatformInfo getPlatformInfo() { return new KitinPlatformInfo(this.bukkitServer); }
++
++    @Override
++    public void registerApi(me.lucko.spark.api.Spark api) {
++    }
++
++    // ========================================================================
++    // Static Inner Class (完全复刻原版结构)
++    // ========================================================================
++
+     void executeCommand(final CommandSender sender, final String[] args) {
+-        this.spark.executeCommand(sender, args);
++        this.spark.executeCommand(new KitinCommandSender(sender), args); // Kitin
+     }
+ 
+     List<String> tabComplete(final CommandSender sender, final String[] args) {
+-        return this.spark.tabComplete(sender, args);
++            return this.spark.tabCompleteCommand(new KitinCommandSender(sender), args); // Kitin
+     }
+ 
+     public static boolean isPluginPreferred() {
+-        return true; // Folia - disable in-built spark profiler
++        return false; // Folia - disable in-built spark profiler // Kitin re
+     }
+ 
+     private static boolean isPluginEnabled(final Server server) {
+@@ -180,9 +292,10 @@ public final class SparksFly {
+     }
+ 
+     public static final class CommandImpl extends Command {
+-        CommandImpl(final String name, final Collection<String> permissions) {
++        CommandImpl(final String name) { // Kitin
+             super(name);
+-            this.setPermission(String.join(";", permissions));
++            //this.setPermission(String.join(";", permissions)); // Kitin off
++            this.setPermission("spark");
+         }
+ 
+         @Override

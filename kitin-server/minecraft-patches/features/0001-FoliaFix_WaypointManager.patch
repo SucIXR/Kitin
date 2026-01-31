@@ -5,7 +5,7 @@ Subject: [PATCH] FoliaFix_WaypointManager
 
 
 diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
-index 7aa9a76f1063dbfef5f4c02746e0a679caac3cb5..34e66488f32ed5630cd8e475618c37d350985d55 100644
+index 3471200d54b938ef82f142efc2fcb096d72ec7b4..7074c8bb9174cec9788743d0126ae5189987b353 100644
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
 @@ -649,7 +649,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
@@ -18,7 +18,7 @@ index 7aa9a76f1063dbfef5f4c02746e0a679caac3cb5..34e66488f32ed5630cd8e475618c37d3
          //this.updateSkyBrightness(); // Folia - region threading - delay until first tick
          // Paper start - rewrite chunk system
 diff --git a/net/minecraft/server/level/ServerPlayer.java b/net/minecraft/server/level/ServerPlayer.java
-index 5d4b1542143a2a6467e1bfa9d21ffe58facede8a..9b0e4e0d0555dcaf1c4323dec7057235588877a0 100644
+index 01e067a0045e59094bf271c448f158f932199aa3..512997e6fc481589770364d069c62fe551fae556 100644
 --- a/net/minecraft/server/level/ServerPlayer.java
 +++ b/net/minecraft/server/level/ServerPlayer.java
 @@ -875,6 +875,9 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
@@ -31,7 +31,7 @@ index 5d4b1542143a2a6467e1bfa9d21ffe58facede8a..9b0e4e0d0555dcaf1c4323dec7057235
          // CraftBukkit start
          if (this.joining) {
              this.joining = false;
-@@ -3639,5 +3642,37 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+@@ -3635,5 +3638,37 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
      public org.bukkit.craftbukkit.entity.CraftPlayer getBukkitEntity() {
          return (org.bukkit.craftbukkit.entity.CraftPlayer) super.getBukkitEntity();
      }
