@@ -19,7 +19,25 @@ mv kitin-server/build/libs/$project_id-paperclip-$grdversion-mojmap.jar $jarName
 echo "project_id=$project_id" >> $GITHUB_ENV
 echo "project_id_b=$project_id_b" >> $GITHUB_ENV
 echo "commit_id=$commitid" >> $GITHUB_ENV
-echo "commit_msg=$(git log --pretty='> [%h] %s' -1)" >> $GITHUB_ENV
+
+# Logic to get commit messages since last tag
+last_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+
+if [ -z "$last_tag" ]; then
+  # No tags found, show last 10 commits
+  logs=$(git log --pretty='> [%h] %s' -10)
+else
+  # Show commits since last tag
+  logs=$(git log --pretty='> [%h] %s' "$last_tag..HEAD")
+fi
+
+# Write multi-line environment variable
+{
+  echo "commit_msg<<EOF"
+  echo "$logs"
+  echo "EOF"
+} >> $GITHUB_ENV
+
 echo "mcversion=$mcversion" >> $GITHUB_ENV
 echo "pre=$preVersion" >> $GITHUB_ENV
 echo "tag=$release_tag" >> $GITHUB_ENV

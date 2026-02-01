@@ -1,9 +1,7 @@
 name: Kitin CI
 
 on:
-  push:
-    branches:
-      - "**"
+  workflow_dispatch:
 
 jobs:
   build:
@@ -13,6 +11,8 @@ jobs:
     steps:
       - name: Checkout Git Repository
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v5
@@ -76,7 +76,7 @@ jobs:
 
             > This release is automatically built by GitHub Actions.
 
-            #### 📜 Latest Commit Message:
+            #### 📜 Changes since last release:
             ${{ env.commit_msg }}
 
             #### 📊 Build Information:
