@@ -5,7 +5,7 @@ Subject: [PATCH] FoliaFix_Spark
 
 
 diff --git a/src/main/java/io/papermc/paper/SparksFly.java b/src/main/java/io/papermc/paper/SparksFly.java
-index b332645ed65928100f580221d8a9948bc77e362e..dcecf8f02f204cc2251dce4fcf501dc0e85e5acc 100644
+index b332645ed65928100f580221d8a9948bc77e362e..78d53b3887fa0e45cc8fa8d87041f03913b4f18b 100644
 --- a/src/main/java/io/papermc/paper/SparksFly.java
 +++ b/src/main/java/io/papermc/paper/SparksFly.java
 @@ -1,29 +1,39 @@
@@ -269,7 +269,7 @@ index b332645ed65928100f580221d8a9948bc77e362e..dcecf8f02f204cc2251dce4fcf501dc0
 +
 +    @Override
 +    public String getVersion() {
-+        return "Kitin-Internal"; // 这版本怎么获取?
++        return "Unknown-version-Kitin-Internal"; // Kitin - Hardcoded version
 +    }
 +
 +    @Override

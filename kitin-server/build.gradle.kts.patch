@@ -1,5 +1,13 @@
 --- a/folia-server/build.gradle.kts
 +++ b/folia-server/build.gradle.kts
+@@ -12,6 +_,7 @@
+ }
+ 
+ val paperMavenPublicUrl = "https://repo.papermc.io/repository/maven-public/"
++val sparkVersion = providers.gradleProperty("sparkVersion").get() // Spark Version from gradle.properties
+ 
+ dependencies {
+     mache("io.papermc:mache:1.21.11+build.1")
 @@ -23,6 +_,7 @@
      gitFilePatches = false
      
@@ -55,10 +63,12 @@
      implementation("ca.spottedleaf:concurrentutil:0.0.8")
      implementation("org.jline:jline-terminal-ffm:3.27.1") // use ffm on java 22+
      implementation("org.jline:jline-terminal-jni:3.27.1") // fall back to jni on java 21
-@@ -208,6 +_,7 @@
+@@ -207,7 +_,8 @@
+ 
      // Spark
      implementation("me.lucko:spark-api:0.1-20240720.200737-2")
-     implementation("me.lucko:spark-paper:1.10.152")
+-    implementation("me.lucko:spark-paper:1.10.152")
++    implementation("me.lucko:spark-paper:$sparkVersion")
 +    implementation("net.bytebuddy:byte-buddy-agent:1.14.9")
  }
  
@@ -83,3 +93,37 @@
              "Build-Number" to (build ?: ""),
              "Build-Time" to buildTime.toString(),
              "Git-Branch" to gitBranch,
+@@ -395,4 +_,33 @@
+             }
+         }
+     }
++}
++
++// Kitin - Update Spark Version in SparksFly.java
++tasks.register("updateSparkVersion") {
++    val sparksFlyFile = layout.projectDirectory.dir("../paper-server/src/main/java/io/papermc/paper/SparksFly.java").asFile
++    val version = sparkVersion // Capture variable for configuration cache
++
++    inputs.property("sparkVersion", version)
++    outputs.file(sparksFlyFile)
++
++    doLast {
++        if (sparksFlyFile.exists()) {
++            val content = sparksFlyFile.readText()
++            val newContent = content.replace(
++                Regex("return \".*\"; // Kitin - Hardcoded version"),
++                "return \"$version-Kitin-Internal\"; // Kitin - Hardcoded version"
++            )
++            if (content != newContent) {
++                sparksFlyFile.writeText(newContent)
++                println("Updated Spark version in SparksFly.java to $version")
++            }
++        } else {
++            println("Warning: SparksFly.java not found at $sparksFlyFile")
++        }
++    }
++}
++
++tasks.named("compileJava") {
++    dependsOn("updateSparkVersion")
+ }
