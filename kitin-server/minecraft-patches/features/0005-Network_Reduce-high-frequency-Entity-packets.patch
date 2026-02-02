@@ -1,0 +1,110 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: SucIXR <sasasa123456@foxmail.com>
+Date: Sat, 27 Dec 2025 18:42:42 +0800
+Subject: [PATCH] Network_Reduce-high-frequency-Entity-packets
+
+
+diff --git a/net/minecraft/server/level/ServerEntity.java b/net/minecraft/server/level/ServerEntity.java
+index 3a817c92147bb78c60238f3ddc1644b721aed7a2..e6a2be26c3e9ad0c9ece6166194511cc636c1f38 100644
+--- a/net/minecraft/server/level/ServerEntity.java
++++ b/net/minecraft/server/level/ServerEntity.java
+@@ -97,7 +97,12 @@ public class ServerEntity {
+     public void sendChanges() {
+         // Paper start - optimise collisions
+         if (((ca.spottedleaf.moonrise.patches.chunk_system.entity.ChunkSystemEntity)this.entity).moonrise$isHardColliding()) {
+-            this.teleportDelay = 9999;
++            //this.teleportDelay = 9999; Kitin off
++            // Kitin start - throttle forced position sync for vehicles
++            this.teleportDelay =
++                    me.sucixr.kitin.network.misc.EntitySyncPolicy.getInstance()
++                            .adjustTeleportDelayForHardCollision(this.entity, this.tickCount, this.teleportDelay);
++            // Kitin end
+         }
+         // Paper end - optimise collisions
+         this.entity.updateDataBeforeSync();
+@@ -163,6 +168,23 @@ public class ServerEntity {
+                 double vec3_dz = vec3.z - base.z;
+                 boolean flag1 = (vec3_dx * vec3_dx + vec3_dy * vec3_dy + vec3_dz * vec3_dz) >= 7.62939453125E-6D;
+                 // Paper end - reduce allocation of Vec3D here
++
++                // Kitin start - Network_Dont-send-high-speed-entity-packets
++                Vec3 deltaMovement = this.entity.getDeltaMovement();
++                double d = deltaMovement.distanceToSqr(this.lastSentMovement);
++                double currentSpeedSqr = deltaMovement.lengthSqr(); //移动了原版的逻辑位置
++                boolean skipPos = false;
++                double maxSpeedSqr = 65536.0; // viewDistance * 16.0 * 10
++                if (
++                        (this.entity instanceof net.minecraft.world.entity.item.PrimedTnt) && (this.entity.tickCount > 2) //TNT不是下落方块 前2tick不检测防止世吞漏尿
++                ){
++                    boolean isImpact = d > 0.0025;
++                    if (currentSpeedSqr > 0.01 && !isImpact) skipPos = true;
++                }else{
++                    if (!Double.isFinite(currentSpeedSqr) || currentSpeedSqr > maxSpeedSqr) skipPos = true;
++                }
++                // Kitin end
++
+                 Packet<ClientGamePacketListener> packet = null;
+                 boolean flag2 = flag1 || this.tickCount % 60 == 0;
+                 boolean flag3 = false;
+@@ -175,30 +197,32 @@ public class ServerEntity {
+                     || flag5
+                     || this.teleportDelay > 400
+                     || this.wasRiding
+-                    || this.wasOnGround != this.entity.onGround()) {
++                    || (this.wasOnGround != this.entity.onGround()&& !(this.entity instanceof AbstractMinecart || this.entity instanceof net.minecraft.world.entity.item.PrimedTnt))) { //Kitin 优化世吞矿车TNT发包
+                     this.wasOnGround = this.entity.onGround();
+                     this.teleportDelay = 0;
+-                    packet = ClientboundEntityPositionSyncPacket.of(this.entity);
++                    if (!skipPos) packet = ClientboundEntityPositionSyncPacket.of(this.entity); // Kitin - Network_Dont-send-high-speed-entity-packets
+                     flag3 = true;
+                     flag4 = true;
++                    me.sucixr.kitin.other.debug.EntityPacketDebug.record(this.entity, "Sync", 60); // Kitin Debug  注入点 A: 强制同步包
+                 } else if ((!flag2 || !flag) && !(this.entity instanceof AbstractArrow)) {
+-                    if (flag2) {
++                    if (flag2 && !skipPos) { // Kitin - Network_Dont-send-high-speed-entity-packets
++                        me.sucixr.kitin.other.debug.EntityPacketDebug.record(this.entity, "Pos", 15); // Kitin Debug 注入点 B: 纯位移包
+                         packet = new ClientboundMoveEntityPacket.Pos(this.entity.getId(), (short)l, (short)l1, (short)l2, this.entity.onGround());
+                         flag3 = true;
+                     } else if (flag) {
++                        me.sucixr.kitin.other.debug.EntityPacketDebug.record(this.entity, "Rot", 10); // Kitin Debug 注入点 C: 纯旋转包
+                         packet = new ClientboundMoveEntityPacket.Rot(this.entity.getId(), b, b1, this.entity.onGround());
+                         flag4 = true;
+                     }
+                 } else {
+                     packet = new ClientboundMoveEntityPacket.PosRot(this.entity.getId(), (short)l, (short)l1, (short)l2, b, b1, this.entity.onGround());
++                    me.sucixr.kitin.other.debug.EntityPacketDebug.record(this.entity, "PosRot", 20); // Kitin Debug 注入点 D: 位移+旋转包
+                     flag3 = true;
+                     flag4 = true;
+                 }
+ 
+                 if (this.entity.needsSync || this.trackDelta || this.entity instanceof LivingEntity && ((LivingEntity)this.entity).isFallFlying()) {
+-                    Vec3 deltaMovement = this.entity.getDeltaMovement();
+-                    double d = deltaMovement.distanceToSqr(this.lastSentMovement);
+-                    if (d > 1.0E-7 || d > 0.0 && deltaMovement.lengthSqr() == 0.0) {
++                    if (d > 1.0E-7 || d > 0.0 && currentSpeedSqr == 0.0) { // Kitin Network_Dont-send-high-speed-entity-packets
+                         this.lastSentMovement = deltaMovement;
+                         if (this.entity instanceof AbstractHurtingProjectile abstractHurtingProjectile) {
+                             this.synchronizer
+@@ -211,7 +235,21 @@ public class ServerEntity {
+                                     )
+                                 );
+                         } else {
+-                            this.synchronizer.sendToTrackingPlayers(new ClientboundSetEntityMotionPacket(this.entity.getId(), this.lastSentMovement));
++                            // Kitin start - Network_Dont-send-high-speed-entity-packets
++                            boolean skipMotion = false;
++                            if (this.entity instanceof net.minecraft.world.entity.item.ItemEntity
++                                    || this.entity instanceof net.minecraft.world.entity.ExperienceOrb
++                                    || this.entity instanceof net.minecraft.world.entity.item.PrimedTnt) {
++                                boolean isImpact = d > 0.0025;
++                                if (currentSpeedSqr > 0.01 && !isImpact) skipMotion = true;
++                            }else{
++                                if (!Double.isFinite(currentSpeedSqr) || currentSpeedSqr > maxSpeedSqr) skipMotion = true;
++                            }
++                            if (!skipMotion) {
++                                this.synchronizer.sendToTrackingPlayers(new ClientboundSetEntityMotionPacket(this.entity.getId(), this.lastSentMovement));
++                            }
++                            // Kitin end
++                            if (!skipMotion) me.sucixr.kitin.other.debug.EntityPacketDebug.record(this.entity, "Motion", 26); // Kitin Debug 注入点 E: 速度包
+                         }
+                     }
+                 }

@@ -4,6 +4,8 @@ import com.mojang.logging.LogUtils;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.vehicle.minecart.AbstractMinecart;
+import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
 
 import java.util.Comparator;
@@ -21,12 +23,37 @@ public final class EntityPacketDebug {
 
     private EntityPacketDebug() {}
 
+    // [新增] 矿车日志限流计数器
+//    private static final java.util.concurrent.atomic.AtomicInteger MINECART_SAMPLE_COUNT = new java.util.concurrent.atomic.AtomicInteger(0);
+
     /**
      * @param packetType 包的简短名称，如 "Motion", "Pos", "Sync"
      * @param estimatedSize 预估包大小
      */
     public static void record(Entity entity, String packetType, int estimatedSize) {
         if (true) return;//临时开关 true为关!
+
+
+//        // [Kitin Temp] 临时开关：只开启矿车的详细数据监控
+//        // 监控 Pos (位置) 和 Motion (速度) 包
+//        if (entity instanceof AbstractMinecart) {
+//            if (packetType.contains("Pos") || packetType.contains("Motion")) {
+//                // [修改] 核心限流逻辑：只有前 10 次允许打印
+//                if (MINECART_SAMPLE_COUNT.incrementAndGet() <= 10) {
+//                    double dx = entity.getX() - entity.xo;
+//                    double dy = entity.getY() - entity.yo;
+//                    double dz = entity.getZ() - entity.zo;
+//                    net.minecraft.world.phys.Vec3 motion = entity.getDeltaMovement();
+//
+//                    LOGGER.info("[Minecart Debug] Type: {} | Size: {}B", packetType, estimatedSize);
+//                    LOGGER.info(String.format("   -> Pos: %.5f, %.5f, %.5f", entity.getX(), entity.getY(), entity.getZ()));
+//                    LOGGER.info(String.format("   -> Delta: %.5f, %.5f, %.5f", dx, dy, dz));
+//                    LOGGER.info(String.format("   -> Motion: %.5f, %.5f, %.5f", motion.x, motion.y, motion.z));
+//                    LOGGER.info("--------------------------------------------------");
+//                }
+//            }
+//        }
+
         if (entity == null) return;
 
         // 组合键：实体名 + 包名
@@ -68,6 +95,8 @@ public final class EntityPacketDebug {
             } finally {
                 COUNTS.clear();
                 BYTES.clear();
+
+//                MINECART_SAMPLE_COUNT.set(0);
             }
         }
     }

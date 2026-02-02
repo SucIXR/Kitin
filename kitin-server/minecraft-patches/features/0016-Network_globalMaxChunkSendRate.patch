@@ -5,7 +5,7 @@ Subject: [PATCH] Network_globalMaxChunkSendRate
 
 
 diff --git a/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java b/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
-index a36e9a35d8305406051d89bd3f9d703f07ffae59..ea7e980de0354caf59ca0a948c6cde1e5bf6dcb6 100644
+index a61285a2c83e0540ffd981cbaf40f6124d9e4218..c944192e81b2274d213a09f03bc5aff6240f19d8 100644
 --- a/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
 +++ b/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
 @@ -827,6 +827,11 @@ public final class RegionizedPlayerChunkLoader {
