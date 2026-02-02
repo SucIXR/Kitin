@@ -5,7 +5,7 @@ Subject: [PATCH] Network_Reduce-high-frequency-Entity-packets
 
 
 diff --git a/net/minecraft/server/level/ServerEntity.java b/net/minecraft/server/level/ServerEntity.java
-index 3a817c92147bb78c60238f3ddc1644b721aed7a2..e6a2be26c3e9ad0c9ece6166194511cc636c1f38 100644
+index 3a817c92147bb78c60238f3ddc1644b721aed7a2..999003b18612327be6b340b89ba786adb58cd5a1 100644
 --- a/net/minecraft/server/level/ServerEntity.java
 +++ b/net/minecraft/server/level/ServerEntity.java
 @@ -97,7 +97,12 @@ public class ServerEntity {
@@ -46,7 +46,7 @@ index 3a817c92147bb78c60238f3ddc1644b721aed7a2..e6a2be26c3e9ad0c9ece6166194511cc
                  Packet<ClientGamePacketListener> packet = null;
                  boolean flag2 = flag1 || this.tickCount % 60 == 0;
                  boolean flag3 = false;
-@@ -175,30 +197,32 @@ public class ServerEntity {
+@@ -175,30 +197,34 @@ public class ServerEntity {
                      || flag5
                      || this.teleportDelay > 400
                      || this.wasRiding
@@ -55,10 +55,12 @@ index 3a817c92147bb78c60238f3ddc1644b721aed7a2..e6a2be26c3e9ad0c9ece6166194511cc
                      this.wasOnGround = this.entity.onGround();
                      this.teleportDelay = 0;
 -                    packet = ClientboundEntityPositionSyncPacket.of(this.entity);
-+                    if (!skipPos) packet = ClientboundEntityPositionSyncPacket.of(this.entity); // Kitin - Network_Dont-send-high-speed-entity-packets
++                    if (!skipPos) {
++                        packet = ClientboundEntityPositionSyncPacket.of(this.entity); // Kitin - Network_Dont-send-high-speed-entity-packets
++                        me.sucixr.kitin.other.debug.EntityPacketDebug.record(this.entity, "Sync", 60); // Kitin Debug  注入点 A: 强制同步包
++                    }
                      flag3 = true;
                      flag4 = true;
-+                    me.sucixr.kitin.other.debug.EntityPacketDebug.record(this.entity, "Sync", 60); // Kitin Debug  注入点 A: 强制同步包
                  } else if ((!flag2 || !flag) && !(this.entity instanceof AbstractArrow)) {
 -                    if (flag2) {
 +                    if (flag2 && !skipPos) { // Kitin - Network_Dont-send-high-speed-entity-packets
@@ -85,7 +87,7 @@ index 3a817c92147bb78c60238f3ddc1644b721aed7a2..e6a2be26c3e9ad0c9ece6166194511cc
                          this.lastSentMovement = deltaMovement;
                          if (this.entity instanceof AbstractHurtingProjectile abstractHurtingProjectile) {
                              this.synchronizer
-@@ -211,7 +235,21 @@ public class ServerEntity {
+@@ -211,7 +237,21 @@ public class ServerEntity {
                                      )
                                  );
                          } else {

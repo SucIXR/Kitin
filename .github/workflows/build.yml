@@ -1,7 +1,15 @@
 name: Kitin CI
 
 on:
-  workflow_dispatch:
+  #workflow_dispatch: 手动模式
+  push:
+    branches:
+      - "**"
+    paths-ignore:
+      - '**.md'
+      - '.gitignore'
+      - 'LICENSE'
+      - 'readme/**'
 
 jobs:
   build:
