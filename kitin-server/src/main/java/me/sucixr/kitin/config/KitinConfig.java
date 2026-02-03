@@ -188,14 +188,16 @@ public class KitinConfig {
 
     public static boolean chunkLazyLoading = true;
     public static int globalMaxChunkSendRate = -1;
+    public static double globalChunkSendBurstFactor = 0.05;
     public static boolean optimizeAllBoats = false;
     public static boolean optimizeAllMinecarts = false;
     public static Set<EntityType<?>> optimizedSyncEntities = new HashSet<>();
     private static void networkSettings() {
         chunkLazyLoading = getBoolean("network.chunk-lazy-loading",true);
         //
-        globalMaxChunkSendRate = getInt("network.global-max-chunk-send-rate", globalMaxChunkSendRate);
+        globalMaxChunkSendRate = getInt("network.chunk-send.global-max-chunk-send-rate", globalMaxChunkSendRate);
         me.sucixr.kitin.network.qos.GlobalChunkLimiter.setLimit(globalMaxChunkSendRate);
+        globalChunkSendBurstFactor = getDouble("network.chunk-send.global-chunk-send-burst-factor", globalChunkSendBurstFactor);
         //
         optimizeAllBoats = false;
         optimizeAllMinecarts = false;
