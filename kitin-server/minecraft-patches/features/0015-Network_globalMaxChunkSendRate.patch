@@ -5,10 +5,67 @@ Subject: [PATCH] Network_globalMaxChunkSendRate
 
 
 diff --git a/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java b/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
-index a61285a2c83e0540ffd981cbaf40f6124d9e4218..c944192e81b2274d213a09f03bc5aff6240f19d8 100644
+index a61285a2c83e0540ffd981cbaf40f6124d9e4218..6d1b9155ea733c66108cd49336d75e73a1b1f81c 100644
 --- a/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
 +++ b/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
-@@ -827,6 +827,11 @@ public final class RegionizedPlayerChunkLoader {
+@@ -303,16 +303,54 @@ public final class RegionizedPlayerChunkLoader {
+         return false;
+     }
+ 
++    // Kitin start - QoS globalMaxChunkSendRate
++    private static final java.util.Comparator<ServerPlayer> URGENCY_COMPARATOR = (p1, p2) -> {
++        PlayerChunkLoaderData l1 = ((ChunkSystemServerPlayer) p1).moonrise$getChunkLoader();
++        PlayerChunkLoaderData l2 = ((ChunkSystemServerPlayer) p2).moonrise$getChunkLoader();
++
++        boolean empty1 = l1 == null || l1.sendQueue.isEmpty();
++        boolean empty2 = l2 == null || l2.sendQueue.isEmpty();
++        if (empty1 && empty2) return 0;
++        if (empty1) return 1;
++        if (empty2) return -1;
++
++        long key1 = l1.sendQueue.firstLong();
++        long key2 = l2.sendQueue.firstLong();
++
++        // 直接利用 Moonrise 的工具类计算曼哈顿距离
++        int dist1 = Math.abs(CoordinateUtils.getChunkX(key1) - l1.lastChunkX) + Math.abs(CoordinateUtils.getChunkZ(key1) - l1.lastChunkZ);
++        int dist2 = Math.abs(CoordinateUtils.getChunkX(key2) - l2.lastChunkX) + Math.abs(CoordinateUtils.getChunkZ(key2) - l2.lastChunkZ);
++
++        return Integer.compare(dist1, dist2);
++    };
++    // Kitin end
++
+     public void tick() {
+         TickThread.ensureTickThread("Cannot tick player chunk loader async");
+         long currTime = System.nanoTime();
+-        for (final ServerPlayer player : new java.util.ArrayList<>(this.world.getLocalPlayers())) { // Folia - region threding
++
++        // Kitin start - QoS globalMaxChunkSendRate
++        java.util.List<ServerPlayer> players = new java.util.ArrayList<>(this.world.getLocalPlayers()); // Folia - region threding
++
++        for (final ServerPlayer player : players) {
++            final PlayerChunkLoaderData loader = ((ChunkSystemServerPlayer)player).moonrise$getChunkLoader();
++            if (loader != null && !loader.removed && loader.world == this.world) { // can't invoke plugin logic
++                loader.update();
++            }
++        }
++
++        if (!players.isEmpty()) {
++            players.sort(URGENCY_COMPARATOR);
++        }
++        // Kitin end
++
++        for (final ServerPlayer player : players) { // Folia - region threding // Kitin - The code has been moved to the top
+             final PlayerChunkLoaderData loader = ((ChunkSystemServerPlayer)player).moonrise$getChunkLoader();
+             if (loader == null || loader.removed || loader.world != this.world) {
+                 // not our problem anymore
+                 continue;
+             }
+-            loader.update(); // can't invoke plugin logic
++            //loader.update(); // can't invoke plugin logic // Kitin - The code has been moved to the top
+             loader.updateQueues(currTime);
+         }
+     }
+@@ -827,6 +865,11 @@ public final class RegionizedPlayerChunkLoader {
              final int maxSendsThisTick = Math.min((int)this.chunkSendLimiter.takeAllocation(time, sendRate, maxSends), this.sendQueue.size());
              // we do not return sends that we took from the allocation back because we want to limit the max send rate, not target it
              for (int i = 0; i < maxSendsThisTick; ++i) {
