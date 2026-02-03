@@ -43,7 +43,9 @@ public class GlobalChunkLimiter {
 
             // 1. 先"发工资" (Tick Allocation)
             // 允许的最大突发量(MaxAllocation)建议设为 1秒 的量，或者更平滑点 0.1秒
-            double maxBurst = globalRate * 0.05;
+            //double maxBurst = globalRate * 0.05;
+            // [Kitin Fix] 允许 0.2秒 (200ms) 的突发量，应对高频循环
+            double maxBurst = Math.max(1.0, globalRate * 0.2);
             limiter.tickAllocation(now, globalRate, maxBurst);
 
             // 2. 尝试"消费" (Take Allocation)
@@ -74,7 +76,7 @@ public class GlobalChunkLimiter {
         }
 
         public void reset(final long time) {
-            this.allocation = 0.0;
+            this.allocation = 0.0; // 可能需要给个初始额度?
             this.lastAllocationUpdate = time;
             this.takeCarry = 0.0;
             this.lastTakeUpdate = time;
@@ -112,10 +114,12 @@ public class GlobalChunkLimiter {
             // 这里的逻辑是计算 "本次 take 能拿到的最大额度"
             // Math.min(maxTake - takeCarry, allocation) 是桶里有的
             // rate * (diff * 1.0E-9) 是这微小瞬间产生的
-            final double take = Math.min(
-                    Math.min((double)maxTake - this.takeCarry, this.allocation),
-                    rate * (diff * 1.0E-9)
-            );
+//            final double take = Math.min(
+//                    Math.min((double)maxTake - this.takeCarry, this.allocation),
+//                    rate * (diff * 1.0E-9)
+//            ); // 不行，会发现地形加载非常缓慢，强制1tick一次
+
+            final double take = Math.min((double)maxTake - this.takeCarry, this.allocation);
 
             // 累加到 ret (包含上次的 carry)
             ret += take;
