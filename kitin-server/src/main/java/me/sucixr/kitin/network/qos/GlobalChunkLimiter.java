@@ -1,46 +1,134 @@
 package me.sucixr.kitin.network.qos;
 
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.TimeUnit;
 
 public class GlobalChunkLimiter {
-    private static volatile int globalMaxChunkSendRate = -1;
-    //private static final int GLOBAL_MAX_CHUNKS_PER_TICK = 3;//每Tick 允许全局发多少个包
-//一个区块有多大？
-//虚空/超平坦: 约 1 KB - 3 KB
-//普通生存地形: 约 4 KB - 10 KB
-//复杂主城/模组服: 可能会飙升到 20 KB - 50 KB
-//GLOBAL_MAX_CHUNKS_PER_TICK=服务器带宽(以KB算)*0.98(一般生存服的地形带宽占比)/(一个区块的平均大小*20)
-//一般来说，服务器Mbps*0.9(普通生存服)(取整)
-//你可以认为，你服务器有多少Mbps。就填多少
-    private static final AtomicInteger currentTickUsage = new AtomicInteger(0);
-    private static final AtomicLong lastResetTime = new AtomicLong(System.currentTimeMillis());
 
-    public static void setLimit(int limit) {
-        globalMaxChunkSendRate = limit;
+    // 配置：每秒限制多少个区块
+    private static volatile double globalRate = -1.0;
+
+    // 核心限流器实例 (直接使用 Paper 的算法)
+    private static final AllocatingRateLimiter limiter = new AllocatingRateLimiter(TimeUnit.SECONDS.toNanos(1L));
+
+    // 锁对象，确保多线程并发安全 (Paper 的原类不是线程安全的)
+    private static final Object mutex = new Object();
+
+    /**
+     * 设置全局限流
+     * @param chunksPerSecond 每秒最大区块数
+     */
+    public static void setLimit(double chunksPerSecond) {
+        synchronized (mutex) {
+            if (chunksPerSecond <= 0) {
+                globalRate = -1.0;
+            } else {
+                globalRate = chunksPerSecond;
+                // 重置限流器状态
+                limiter.reset(System.nanoTime());
+            }
+        }
     }
 
+    /**
+     * 尝试获取发送 1 个区块的权限
+     * @return true=允许发送, false=拦截
+     */
     public static boolean tryAcquire() {
-        int limit = globalMaxChunkSendRate;
-        if (limit == -1) {
+        if (globalRate <= 0) {
             return true;
         }
-        tickReset();
-        int current = currentTickUsage.get();
-        if (current >= limit) {
-            return false;
+
+        synchronized (mutex) {
+            long now = System.nanoTime();
+
+            // 1. 先"发工资" (Tick Allocation)
+            // 允许的最大突发量(MaxAllocation)建议设为 1秒 的量，或者更平滑点 0.1秒
+            double maxBurst = globalRate * 0.05;
+            limiter.tickAllocation(now, globalRate, maxBurst);
+
+            // 2. 尝试"消费" (Take Allocation)
+            // 尝试取走 1 个令牌
+            long taken = limiter.takeAllocation(now, globalRate, 1);
+
+            return taken == 1;
         }
-        return currentTickUsage.incrementAndGet() <= limit;
     }
 
-    private static void tickReset() {
-        long now = System.currentTimeMillis();
-        long last = lastResetTime.get();
+    // ==================================================================================
+    // 下面直接复制 Paper (Moonrise) 的 AllocatingRateLimiter 源码
+    // ==================================================================================
 
-        if (now - last >= 50) {
-            if (lastResetTime.compareAndSet(last, now)) {
-                currentTickUsage.set(0);
+    private static final class AllocatingRateLimiter {
+        // max difference granularity in ns
+        private final long maxGranularity;
+
+        private double allocation = 0.0;
+        private long lastAllocationUpdate;
+
+        // 浮点数补偿：存储上次取整后剩下的小数
+        private double takeCarry = 0.0;
+        private long lastTakeUpdate;
+
+        public AllocatingRateLimiter(final long maxGranularity) {
+            this.maxGranularity = maxGranularity;
+        }
+
+        public void reset(final long time) {
+            this.allocation = 0.0;
+            this.lastAllocationUpdate = time;
+            this.takeCarry = 0.0;
+            this.lastTakeUpdate = time;
+        }
+
+        // rate in units/s, and time in ns
+        public void tickAllocation(final long time, final double rate, final double maxAllocation) {
+            // 防止时间倒流或突发过大
+            long timeDiff = time - this.lastAllocationUpdate;
+            if (timeDiff < 0) timeDiff = 0; // Kitin fix: 防御性编程
+
+            final long diff = Math.min(this.maxGranularity, timeDiff);
+            this.lastAllocationUpdate = time;
+
+            // 核心公式：现有令牌 + (时间差 * 速率)
+            this.allocation = Math.min(maxAllocation - this.takeCarry, this.allocation + rate * (diff * 1.0E-9D));
+        }
+
+        // rate in units/s, and time in ns
+        public long takeAllocation(final long time, final double rate, final long maxTake) {
+            if (maxTake < 1L) {
+                return 0L;
             }
+
+            double ret = this.takeCarry;
+
+            long timeDiff = time - this.lastTakeUpdate;
+            if (timeDiff < 0) timeDiff = 0; // Kitin fix
+
+            final long diff = Math.min(this.maxGranularity, timeDiff);
+            this.lastTakeUpdate = time;
+
+            // 这里 Paper 做了一个很聪明的处理：
+            // 它在 take 的时候，也会根据当前时间再次计算一下 allocation（虽然 tickAllocation 算过了）
+            // 这里的逻辑是计算 "本次 take 能拿到的最大额度"
+            // Math.min(maxTake - takeCarry, allocation) 是桶里有的
+            // rate * (diff * 1.0E-9) 是这微小瞬间产生的
+            final double take = Math.min(
+                    Math.min((double)maxTake - this.takeCarry, this.allocation),
+                    rate * (diff * 1.0E-9)
+            );
+
+            // 累加到 ret (包含上次的 carry)
+            ret += take;
+            // 扣除桶里的令牌
+            this.allocation -= take;
+
+            // 向下取整，算出实际能拿多少个整数令牌
+            final long retInteger = (long)Math.floor(ret);
+
+            // 把剩下的小数存回 takeCarry，留给下次用
+            this.takeCarry = ret - (double)retInteger;
+
+            return retInteger;
         }
     }
 }
