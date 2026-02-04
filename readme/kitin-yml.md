@@ -58,15 +58,16 @@ This page explains the configuration options found in `config/kitin.yml`.
   - 限制服务器**每秒**向所有玩家发送区块包的总量。
   - **计算公式:** `服务器上行带宽(Mbps) * 0.6(地形占用带宽比例，一般来说可高达99%，如果挂机很多则低) / (平均区块大小KB)`
     *(简单来说：直接填写你的服务器带宽 Mbps*12(向下取整) 即可，例如 30Mbps 就填 360，没有进行仔细测量，以实际为准)*
+  - **建议**:paper-global.yml内的player-max-chunk-send-rate如果大于此值，建议降低到此值以下，可能能更好降低抖动
 - #### `global-chunk-send-burst-factor`
 - **默认值:** `0.05`
 - **说明:**
   - 需要启用global-max-chunk-send-rate此值才生效
-  - 这个值很玄学，默认值理论上适应大多数情况，调低global-max-chunk-send-rate可能比修改此值更有效
+  - **建议**:默认值理论上适应大多数情况，调低global-max-chunk-send-rate以及paper-global.yml内player-max-chunk-send-rate的可能比修改此值更有效
   - 这个值影响很大，允许的突发系数(默认0.05，即允许积攒突发发包0.05秒的配额)，调大可能导致带宽峰值，造成网络拥堵，调小可能导致玩家感觉地形加载过慢
   - 如果global-max-chunk-send-rate设置的值很小(应保证至少乘以此值>1)，那此值不应过小，否则会导致每tick发包量极低;如果带宽非常吃紧，此值不应过大(会导致带宽峰值造成延迟抖动)
   - 有些服务器商标注的3M，但实际上突发能跑到4M甚至更高，(大厂一般都不会虚标)，这类服务器可以提高此值;
-  - 像小厂，一般标注的带宽都是"峰值带宽"，最多只能跑到他们标注的值，标注值就是突发值，因此你会感觉实际上跑不满，这类服务器的带宽可能要打六七折，甚至更低。应该首先等比例降低global-max-chunk-send-rate。如果你的服务器属于这种峰值带宽情况，且玩家数量确实多，但是带宽总量也大，那可以把此值调到很低
+  - 像小厂，一般标注的带宽都是"峰值带宽"，最多只能跑到他们标注的值，标注值就是突发值，因此你会感觉实际上跑不满，这类服务器的带宽可能要打六七折，甚至更低。应该首先等比例降低global-max-chunk-send-rate，以及首先降低paper-global.yml内的player-max-chunk-send-rate(如果此值大于global)。如果你的服务器属于这种峰值带宽情况，且玩家数量确实多，但是带宽总量也大，那可以把此值调到很低
 
 
 ### `reduce-high-frequency-entity-sync-packets`
