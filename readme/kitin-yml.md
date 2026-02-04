@@ -11,7 +11,7 @@ This page explains the configuration options found in `config/kitin.yml`.
         - `-minecraft:bedrock` (特定方块)
         - `-'#minecraft:shulker_boxes'` (标签，包含所有颜色的潜影盒)
         - `-'*concrete_powder'` (通配符，包含所有混凝土粉末)
-        - 可以不写前缀`minecraft:`,对于带有`$``#``*`等特殊符号的需要加单引号
+        - 可以不写前缀`minecraft:`，对于带有`$``#``*`等特殊符号的需要加单引号
 
 ## 🛠️ Fixes / 修复与调整
 
@@ -19,7 +19,7 @@ This page explains the configuration options found in `config/kitin.yml`.
 - #### `enabled`
 - **默认值:** `true`
 - **说明:** 
-    - 修复Folia无法使用珍珠加载器的问题,以及珍珠在跨区、重新上线后消失
+    - 修复Folia无法使用珍珠加载器的问题，以及珍珠在跨区、重新上线后消失
 - #### `player-max-save-ender-pearl`
 - **默认值:** `-1`
 - **说明:** 
@@ -32,13 +32,13 @@ This page explains the configuration options found in `config/kitin.yml`.
 ### `disable-max-tnt-per-tick-and-optimize`
 - **默认值:** `false`
 - **说明:** 
-    - 设为 `true` 时，服务器将不再限制每Tick引爆的TNT数量,而是优化超限的TNT
+    - 设为 `true` 时，服务器将不再限制每Tick引爆的TNT数量，而是优化超限的TNT
     - 这可以让世吞等高TNT使用量的机器能够正常运行
 
 ### `sand-duper.blacklistblocks`
 - **类型:** 列表 (List)
 - **说明:** 
-    - 定义哪些方块**禁止**通过末地传送门机制进行复制
+    - 定义哪些方块**禁止**通过末地传送门进行复制
 
 ---
 
@@ -54,17 +54,19 @@ This page explains the configuration options found in `config/kitin.yml`.
 - #### `global-max-chunk-send-rate`  **强烈建议设置此值**
 - **默认值:** `-1`
 - **说明:** 
-  - 如果你的服务器带宽较小或者吃紧，且网络十分稳定(例如BGP服务器,或者多线,且带宽能保证不掉速)，强烈建议设置此项，能显著提高服务器的延迟与体验(跨网QoS问题没法解决)
+  - 如果你的服务器带宽较小或者吃紧，且网络十分稳定(例如BGP服务器，或者多线，且带宽能保证不掉速)，强烈建议设置此项，能显著提高服务器的延迟与体验(跨网QoS问题没法解决)
   - 限制服务器**每秒**向所有玩家发送区块包的总量。
-  - **计算公式:** `服务器上行带宽(Mbps) * 0.6(地形占用带宽比例,一般来说可高达99%，如果挂机很多则低) / (平均区块大小KB)`
+  - **计算公式:** `服务器上行带宽(Mbps) * 0.6(地形占用带宽比例，一般来说可高达99%，如果挂机很多则低) / (平均区块大小KB)`
     *(简单来说：直接填写你的服务器带宽 Mbps*12(向下取整) 即可，例如 30Mbps 就填 360，没有进行仔细测量，以实际为准)*
 - #### `global-chunk-send-burst-factor`
 - **默认值:** `0.05`
 - **说明:**
   - 需要启用global-max-chunk-send-rate此值才生效
-  - 这个值很玄学,默认值理论上适应大多数情况,调低global-max-chunk-send-rate可能比修改此值更有效
-  - 这个值影响很大,允许的突发系数(默认0.05，即允许积攒突发发包0.05秒的配额),调大可能导致瞬间带宽峰值，调小可能导致玩家感觉地形加载过慢
-  - 如果global-max-chunk-send-rate设置的值很小(应保证至少乘以此值>1),那此值不应过小,否则会导致每tick发包量极低;如果带宽非常吃紧，此值不应过大(会导致带宽峰值造成延迟抖动)
+  - 这个值很玄学，默认值理论上适应大多数情况，调低global-max-chunk-send-rate可能比修改此值更有效
+  - 这个值影响很大，允许的突发系数(默认0.05，即允许积攒突发发包0.05秒的配额)，调大可能导致带宽峰值，造成网络拥堵，调小可能导致玩家感觉地形加载过慢
+  - 如果global-max-chunk-send-rate设置的值很小(应保证至少乘以此值>1)，那此值不应过小，否则会导致每tick发包量极低;如果带宽非常吃紧，此值不应过大(会导致带宽峰值造成延迟抖动)
+  - 有些服务器商标注的3M，但实际上突发能跑到4M甚至更高，(大厂一般都不会虚标)，这类服务器可以提高此值;
+  - 像小厂，一般标注的带宽都是"峰值带宽"，最多只能跑到他们标注的值，标注值就是突发值，因此你会感觉实际上跑不满，这类服务器的带宽可能要打六七折，甚至更低。应该首先等比例降低global-max-chunk-send-rate。如果你的服务器属于这种峰值带宽情况，且玩家数量确实多，但是带宽总量也大，那可以把此值调到很低
 
 
 ### `reduce-high-frequency-entity-sync-packets`
@@ -74,7 +76,7 @@ This page explains the configuration options found in `config/kitin.yml`.
     - Paper虽然优化了实体Sync包的发包频率，但是当实体受到碰撞或者伤害时，会强制发包，导致大带宽占用
     - 列表内的实体在受到伤害或碰撞时，将不再强制立即发送同步数据包
     - 能显著减少生电机器（如猪人塔，潜影贝农场）运行时的网络拥堵，且看不出实体状态差异
-    - **特殊值:** `'$AbstractMinecart'` (所有矿车), `'$AbstractBoat'` (所有船)
+    - **特殊值:** `'$AbstractMinecart'` (所有矿车)， `'$AbstractBoat'` (所有船)
 
 ---
 
@@ -101,5 +103,5 @@ This page explains the configuration options found in `config/kitin.yml`.
 - #### `items`
 - **类型:** 列表 (List)
 - **说明:** 
-    - 定义哪些掉落物实体在接近"弱加载区块"边缘,且在移动时会被**直接清除**
+    - 定义哪些掉落物实体在接近"弱加载区块"边缘，且在移动时会被**直接清除**
     - **背景:** 在原版机制下，掉落物进入弱加载区块后不会自然清除，长期运行可能导致该区域堆积成千上万个实体，一旦玩家靠近加载该区块，服务器会瞬间崩溃
