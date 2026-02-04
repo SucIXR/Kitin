@@ -24,6 +24,7 @@
 
 * [📄 配置文件详解 (kitin.yml)](readme/kitin-yml.md)
 * [🔧 修复与优化列表 (Fixes & Optimizations)](readme/fix-and-opt-list.md)
+* [🛠️ 核心命令手册 (Kitin Commands)](readme/kitin-command.md)
 
 ---
 

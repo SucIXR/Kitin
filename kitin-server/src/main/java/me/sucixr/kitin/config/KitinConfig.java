@@ -41,24 +41,80 @@ public class KitinConfig {
 
     public static int version;
     public static boolean verbose;
+    private static boolean isReloading = false;
 
-    public static void init(File configFile) {
-        CONFIG_FILE = configFile;
+    // 独立的文件加载逻辑,原来在init内
+    private static void loadYaml() {
+        if (CONFIG_FILE == null) CONFIG_FILE = new File("config/kitin.yml");
         config = new YamlConfiguration();
         try {
             config.load(CONFIG_FILE);
         } catch (IOException ignore) {
         } catch (InvalidConfigurationException ex) {
-            Bukkit.getLogger().log(Level.SEVERE, "Could not load kitin.yml, please correct your syntax errors", ex);
+            Bukkit.getLogger().log(Level.SEVERE, "Could not load kitin.yml", ex);
             throw Throwables.propagate(ex);
         }
         config.options().header(HEADER);
         config.options().copyDefaults(true);
+    }
+
+    public static void init(File configFile) {
+        CONFIG_FILE = configFile;
+        loadYaml();
 
         version = getInt("config-version", 1);
         set("config-version", 1);
 
         readConfig(KitinConfig.class, null);
+    }
+
+    // 反射重载
+    public static String reload(String module) {
+        isReloading = true;
+        loadYaml();
+
+        String target = module.toLowerCase(Locale.ROOT);
+
+        if (target.equals("all")) {
+            readConfig(KitinConfig.class, null);
+            isReloading = false;
+            return "All configurations";
+        }
+
+        boolean found = false;
+        try {
+            for (Method method : KitinConfig.class.getDeclaredMethods()) {
+                if (Modifier.isPrivate(method.getModifiers()) && method.getParameterCount() == 0) {
+                    String methodName = method.getName().toLowerCase(Locale.ROOT);
+                    // 匹配逻辑：方法名包含输入的模块名，且以 settings 结尾
+                    if (methodName.contains(target) && methodName.endsWith("settings")) {
+                        method.setAccessible(true);
+                        method.invoke(null);
+                        found = true;
+                        break;
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            isReloading = false;
+            throw new RuntimeException(ex);
+        }
+        isReloading = false;
+
+        if (found) return "Module '" + module + "'";
+        throw new IllegalArgumentException("Unknown module: " + module);
+    }
+
+    // 给命令补全用的
+    public static Set<String> getReloadableModules() {
+        Set<String> modules = new HashSet<>();
+        modules.add("all");
+        for (Method method : KitinConfig.class.getDeclaredMethods()) {
+            if (method.getName().endsWith("Settings")) {
+                modules.add(method.getName().replace("Settings", "").toLowerCase(Locale.ROOT));
+            }
+        }
+        return modules;
     }
 
     static void readConfig(Class<?> clazz, Object instance) {
@@ -166,32 +222,33 @@ public class KitinConfig {
 
     //----------------------------------------
 
-    public static boolean disableMaxTntPerTickAndOptimize = false;
-    public static boolean pearlFixEnabled = true;
-    public static int pearlFixMaxSave = -1;
-    public static Set<Block> sandDuperBlacklist = new HashSet<>();
+    public static volatile boolean disableMaxTntPerTickAndOptimize = false;
+    public static volatile boolean pearlFixEnabled = true;
+    public static volatile int pearlFixMaxSave = -1;
+    public static volatile Set<Block> sandDuperBlacklist = Collections.emptySet();
     private static void fixesSettings() {
         pearlFixEnabled = getBoolean("fixes.ender-pearl-chunk-loading.enabled", true);
         pearlFixMaxSave = getInt("fixes.ender-pearl-chunk-loading.player-max-save-ender-pearl", -1);
         //
         disableMaxTntPerTickAndOptimize = getBoolean("fixes.disable-max-tnt-per-tick-and-optimize", disableMaxTntPerTickAndOptimize);
         //
-        sandDuperBlacklist.clear();
+        Set<Block> tempBlocks = new HashSet<>(); // reload Folia安全
         List<String> defaultBlocks = new ArrayList<>();
         List<String> configList = getList("fixes.sand-duper.blacklistblocks", defaultBlocks);
         for (String key : configList) {
-            sandDuperBlacklist.addAll(getBlockType(key));
+            tempBlocks.addAll(getBlockType(key)); // reload Folia安全
         }
+        sandDuperBlacklist = Set.copyOf(tempBlocks); // reload Folia安全
     }
 
     //----------------------------------------
 
-    public static boolean chunkLazyLoading = true;
-    public static int globalMaxChunkSendRate = -1;
-    public static double globalChunkSendBurstFactor = 0.05;
-    public static boolean optimizeAllBoats = false;
-    public static boolean optimizeAllMinecarts = false;
-    public static Set<EntityType<?>> optimizedSyncEntities = new HashSet<>();
+    public static volatile boolean chunkLazyLoading = true; // 加上volatile代表允许reload
+    public static volatile int globalMaxChunkSendRate = -1;
+    public static volatile double globalChunkSendBurstFactor = 0.05;
+    public static volatile boolean optimizeAllBoats = false;
+    public static volatile boolean optimizeAllMinecarts = false;
+    public static volatile Set<EntityType<?>> optimizedSyncEntities = Collections.emptySet(); //原为 public static Set<EntityType<?>> optimizedSyncEntities = new HashSet<>();
     private static void networkSettings() {
         chunkLazyLoading = getBoolean("network.chunk-lazy-loading",true);
         //
@@ -201,7 +258,7 @@ public class KitinConfig {
         //
         optimizeAllBoats = false;
         optimizeAllMinecarts = false;
-        optimizedSyncEntities.clear();
+        Set<EntityType<?>> tempEntities = new HashSet<>(); // reload Folia安全 原为optimizedSyncEntities.clear();
         List<String> defaultEntities = new ArrayList<>();
         defaultEntities.add("$AbstractMinecart");
         defaultEntities.add("$AbstractBoat");
@@ -216,23 +273,24 @@ public class KitinConfig {
                 optimizeAllBoats = true;
                 continue;
             }
-            optimizedSyncEntities.addAll(getEntityType(key));
+            tempEntities.addAll(getEntityType(key)); // reload Folia安全
         }
+        optimizedSyncEntities = Set.copyOf(tempEntities); // reload Folia安全
     }
 
-    public static boolean useSimplerEntityPush = true;
-    public static boolean optimizeDropper = false;
+    public static volatile boolean useSimplerEntityPush = true;
+    public static volatile boolean optimizeDropper = false;
     private static void performanceSettings() {
         useSimplerEntityPush = getBoolean("performance.use-simpler-entity-push", useSimplerEntityPush);
         //
-        optimizeDropper = getBoolean("performance.optimize-dropper", false);
+        optimizeDropper = getBoolean("performance.optimize-dropper", false); //可以加入if (!isReloading)判断来拒绝重载
     }
 
     //----------------------------------------
 
-    public static Set<net.minecraft.world.item.Item> lazyChunkBarrierItems = new HashSet<>();
+    public static volatile Set<net.minecraft.world.item.Item> lazyChunkBarrierItems = Collections.emptySet();
     private static void safetySettings() {
-        lazyChunkBarrierItems.clear();
+        Set<Item> tempItems = new HashSet<>(); // reload Folia安全
         List<String> defaultItems = new ArrayList<>();
         defaultItems.add("*concrete");
         defaultItems.add("#wool_carpets");
@@ -242,8 +300,9 @@ public class KitinConfig {
         defaultItems.add("prismarine_crystals");
         List<String> configList = getList("safety.lazy-chunk-barrier.items", defaultItems);
         for (String key : configList) {
-            lazyChunkBarrierItems.addAll(getItemType(key));
+            tempItems.addAll(getItemType(key)); // reload Folia安全
         }
+        lazyChunkBarrierItems = Set.copyOf(tempItems); // reload Folia安全
     }
 
 }
