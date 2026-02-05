@@ -30,7 +30,7 @@ public class KitinCommand {
 
                                         double ms = (end - start) / 1_000_000.0;
                                         context.getSource().sendSuccess(() -> Component.literal(
-                                                String.format("§a[Kitin] Reloaded §f%s §ain %.2fms", result, ms)
+                                                String.format("[Kitin] Reloaded %s in %.2fms", result, ms)
                                         ), true);
 
                                     } catch (IllegalArgumentException e) {
