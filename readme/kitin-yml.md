@@ -13,7 +13,7 @@ This page explains the configuration options found in `config/kitin.yml`.
         - `-'*concrete_powder'` (通配符，包含所有混凝土粉末)
         - 可以不写前缀`minecraft:`，对于带有`$``#``*`等特殊符号的需要加单引号
 
-## 🛠️ Fixes / 修复与调整
+## 🛠️ Fixes / 修复调整
 
 ### `ender-pearl-chunk-loading`
 - #### `enabled`
@@ -42,7 +42,7 @@ This page explains the configuration options found in `config/kitin.yml`.
 
 ---
 
-## 📡 Network / 网络与带宽
+## 📡 Network / 网络带宽
 
 ### `chunk-lazy-loading`
 - **默认值:** `true`
