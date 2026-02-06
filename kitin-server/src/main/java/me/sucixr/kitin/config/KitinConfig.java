@@ -121,6 +121,12 @@ public class KitinConfig {
         for (Method method : clazz.getDeclaredMethods()) {
             if (Modifier.isPrivate(method.getModifiers())) {
                 if (method.getParameterTypes().length == 0 && method.getReturnType() == Void.TYPE) {
+                    // 解决配置文件加载异常，增加名称过滤，防止错误执行 loadYaml 方法
+                    // 只有名字以 "Settings" 结尾的方法才会被视为配置加载方法
+                    if (!method.getName().endsWith("Settings")) {
+                        continue;
+                    }
+                    // end
                     try {
                         method.setAccessible(true);
                         method.invoke(instance);
