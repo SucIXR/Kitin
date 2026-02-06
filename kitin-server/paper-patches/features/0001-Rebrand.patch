@@ -1,9 +1,22 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: SucIXR <sasasa123456@foxmail.com>
 Date: Sat, 20 Dec 2025 18:15:24 +0800
-Subject: [PATCH] Logo
+Subject: [PATCH] Rebrand
 
 
+diff --git a/src/main/java/com/destroystokyo/paper/Metrics.java b/src/main/java/com/destroystokyo/paper/Metrics.java
+index 08745a35b1ce8cc56d970472088de3cd17b9e43a..68b9c798200694a13d7f1a95926cc44edc23c362 100644
+--- a/src/main/java/com/destroystokyo/paper/Metrics.java
++++ b/src/main/java/com/destroystokyo/paper/Metrics.java
+@@ -593,7 +593,7 @@ public class Metrics {
+             boolean logFailedRequests = config.getBoolean("logFailedRequests", false);
+             // Only start Metrics, if it's enabled in the config
+             if (config.getBoolean("enabled", true)) {
+-                Metrics metrics = new Metrics("Folia", serverUUID, logFailedRequests, Bukkit.getLogger()); // Folia - we have our own bstats page
++                Metrics metrics = new Metrics("Kitin", serverUUID, logFailedRequests, Bukkit.getLogger()); // Folia - we have our own bstats page // Kitin
+ 
+                 metrics.addCustomChart(new Metrics.SimplePie("minecraft_version", () -> {
+                     String minecraftVersion = Bukkit.getVersion();
 diff --git a/src/main/resources/logo.png b/src/main/resources/logo.png
 index c06126b92e36566c93b901637926703bbfcc42ff..98b6733affb258a00f2c6e82211a816b80cb9375 100644
 GIT binary patch
