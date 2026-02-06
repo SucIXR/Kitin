@@ -5,7 +5,7 @@ Subject: [PATCH] Rebrand
 
 
 diff --git a/src/main/java/com/destroystokyo/paper/Metrics.java b/src/main/java/com/destroystokyo/paper/Metrics.java
-index 08745a35b1ce8cc56d970472088de3cd17b9e43a..68b9c798200694a13d7f1a95926cc44edc23c362 100644
+index 08745a35b1ce8cc56d970472088de3cd17b9e43a..b6f3e759315415452e8679956c01886e0684692a 100644
 --- a/src/main/java/com/destroystokyo/paper/Metrics.java
 +++ b/src/main/java/com/destroystokyo/paper/Metrics.java
 @@ -593,7 +593,7 @@ public class Metrics {
@@ -17,6 +17,20 @@ index 08745a35b1ce8cc56d970472088de3cd17b9e43a..68b9c798200694a13d7f1a95926cc44e
  
                  metrics.addCustomChart(new Metrics.SimplePie("minecraft_version", () -> {
                      String minecraftVersion = Bukkit.getVersion();
+@@ -607,11 +607,11 @@ public class Metrics {
+                 final String implVersion = org.bukkit.craftbukkit.Main.class.getPackage().getImplementationVersion();
+                 if (implVersion != null) {
+                     final String buildOrHash = implVersion.substring(implVersion.lastIndexOf('-') + 1);
+-                    paperVersion = "git-Folia-%s-%s".formatted(Bukkit.getServer().getMinecraftVersion(), buildOrHash); // Folia - we have our own bstats page
++                    paperVersion = "git-Kitin-%s-%s".formatted(Bukkit.getServer().getMinecraftVersion(), buildOrHash); // Folia - we have our own bstats page // Kitin
+                 } else {
+                     paperVersion = "unknown";
+                 }
+-                metrics.addCustomChart(new Metrics.SimplePie("folia_version", () -> paperVersion)); // Folia - we have our own bstats page
++                metrics.addCustomChart(new Metrics.SimplePie("kitin_version", () -> paperVersion)); // Folia - we have our own bstats page // Kitin
+ 
+                 metrics.addCustomChart(new Metrics.DrilldownPie("java_version", () -> {
+                     Map<String, Map<String, Integer>> map = new HashMap<>();
 diff --git a/src/main/resources/logo.png b/src/main/resources/logo.png
 index c06126b92e36566c93b901637926703bbfcc42ff..98b6733affb258a00f2c6e82211a816b80cb9375 100644
 GIT binary patch
