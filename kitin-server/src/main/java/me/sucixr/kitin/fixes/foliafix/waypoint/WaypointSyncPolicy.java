@@ -12,7 +12,7 @@ public final class WaypointSyncPolicy {
     private static final double SCALE = 332.0;
     //private static final double SCALE_SQ = SCALE * SCALE;
     private static final int BASE_INTERVAL = 5;
-    private static final int MAX_INTERVAL = 100;
+    private static final int MAX_INTERVAL = 400;//最大间隔刻数
 
     private static final double ALPHA = 0.9604339;
     private static final double BETA = 0.3978247;

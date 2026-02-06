@@ -80,6 +80,7 @@ public final class KitinServerWaypointManager extends ServerWaypointManager {
                 existing.disconnect();
                 entry.connections.remove(tx);
             }
+            return; // ##关键修复，关闭localbar后部分玩家瞬间网络协议错误
         }//连接断开，移除
 
         if (existing != null && !existing.isBroken()) {
