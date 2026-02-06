@@ -1,0 +1,28 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: SucIXR <sasasa123456@foxmail.com>
+Date: Fri, 6 Feb 2026 21:01:53 +0800
+Subject: [PATCH] Rebrand
+
+
+diff --git a/src/main/java/io/papermc/paper/ServerBuildInfo.java b/src/main/java/io/papermc/paper/ServerBuildInfo.java
+index 652ff54e7c50412503725d628bfe72ed03059790..054d7e18f28171b2c0cf5af96cd8d6b893b8beb2 100644
+--- a/src/main/java/io/papermc/paper/ServerBuildInfo.java
++++ b/src/main/java/io/papermc/paper/ServerBuildInfo.java
+@@ -19,6 +19,17 @@ public interface ServerBuildInfo {
+      */
+     Key BRAND_PAPER_ID = Key.key("papermc", "paper");
+ 
++    // Kitin start - Rebrand
++    /**
++     * The brand id for folia
++     */
++    Key BRAND_FOLIA_ID = Key.key("papermc", "folia");
++    /**
++     * The brand id for Kitin.
++     */
++    Key BRAND_KITIN_ID = Key.key("sucixr", "kitin");
++    // Kitin end
++
+     /**
+      * Gets the {@code ServerBuildInfo}.
+      *
