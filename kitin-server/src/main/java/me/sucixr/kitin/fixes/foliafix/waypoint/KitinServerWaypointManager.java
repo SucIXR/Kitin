@@ -131,6 +131,10 @@ public final class KitinServerWaypointManager extends ServerWaypointManager {
 
     @Override public void addPlayer(ServerPlayer player) {
         if (player.level() != this.world) return;
+
+        // BUGFIX 清理全局探针里的缓存，可能会有内存泄漏?
+        GlobalPositionProbe.getInstance().remove(player.getUUID());
+
         this.receivers.add(player);
         final long tick = this.world.getGameTime();
         scheduleToOrRun(player, () -> {
