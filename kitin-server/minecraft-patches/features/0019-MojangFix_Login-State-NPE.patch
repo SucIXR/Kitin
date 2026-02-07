@@ -1,0 +1,44 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: SucIXR <sasasa123456@foxmail.com>
+Date: Sun, 8 Feb 2026 01:29:33 +0800
+Subject: [PATCH] MojangFix_Login-State-NPE
+
+
+diff --git a/net/minecraft/server/players/PlayerList.java b/net/minecraft/server/players/PlayerList.java
+index 8274afe0d07c50ece420b1d3cb20165ed0162acb..c7ec6e21a66ddf49e85e2968af76088f418f2fe3 100644
+--- a/net/minecraft/server/players/PlayerList.java
++++ b/net/minecraft/server/players/PlayerList.java
+@@ -260,14 +260,29 @@ public abstract class PlayerList {
+             )
+         );
+         player.getBukkitEntity().sendSupportedChannels(); // CraftBukkit
+-        serverGamePacketListenerImpl.send(new ClientboundChangeDifficultyPacket(levelData.getDifficulty(), levelData.isDifficultyLocked()));
+-        serverGamePacketListenerImpl.send(new ClientboundPlayerAbilitiesPacket(player.getAbilities()));
+-        serverGamePacketListenerImpl.send(new ClientboundSetHeldSlotPacket(player.getInventory().getSelectedSlot()));
++//        serverGamePacketListenerImpl.send(new ClientboundChangeDifficultyPacket(levelData.getDifficulty(), levelData.isDifficultyLocked()));
++//        serverGamePacketListenerImpl.send(new ClientboundPlayerAbilitiesPacket(player.getAbilities()));
++//        serverGamePacketListenerImpl.send(new ClientboundSetHeldSlotPacket(player.getInventory().getSelectedSlot())); // Kitin off The code has been migrated MojangFix_Login-State-NPE
+         RecipeManager recipeManager = this.server.getRecipeManager();
+         serverGamePacketListenerImpl.send(
+             new ClientboundUpdateRecipesPacket(recipeManager.getSynchronizedItemProperties(), recipeManager.getSynchronizedStonecutterRecipes())
+         );
+-        this.sendPlayerPermissionLevel(player);
++        //this.sendPlayerPermissionLevel(player); // Kitin off The code has been migrated MojangFix_Login-State-NPE
++
++        // Kitin start - MojangFix_Login-State-NPE
++        // 修复 Mod 客户端进服网络协议错误 (NPE) 问题
++        // 原因：Kitin核心优化了网络发包逻辑，导致状态包在客户端 World 初始化完成前到达。
++        // 原版也有这种问题，只是出现概率很低，因为会拼命发送区块包，自然导致玩家信息数据发送延迟
++        // 方案：延迟nTick发送
++        player.getBukkitEntity().taskScheduler.schedule((ServerPlayer p) -> {
++            if (p.connection == null) return;
++            p.connection.send(new ClientboundChangeDifficultyPacket(levelData.getDifficulty(), levelData.isDifficultyLocked()));
++            p.connection.send(new ClientboundPlayerAbilitiesPacket(p.getAbilities()));
++            p.connection.send(new ClientboundSetHeldSlotPacket(p.getInventory().getSelectedSlot()));
++            this.sendPlayerPermissionLevel(p);
++        }, null, 3L); // 延迟 3 tick
++        // Kitin end
++
+         player.getStats().markAllDirty();
+         player.getRecipeBook().sendInitialRecipeBook(player);
+         //this.updateEntireScoreboard(serverLevel.getScoreboard(), player); // Folia - region threading
