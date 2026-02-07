@@ -31,6 +31,7 @@
 ## 📈 项目统计 (Project Statistics)
 
 [![bStats](https://bstats.org/signatures/server-implementation/Kitin.svg)](https://bstats.org/plugin/server-implementation/Kitin "bStats")
+
 ## 🛠️ 如何编译 (How to Build)
 
 Releases内已经有发布好的文件可以直接使用，若要自行编译，请按照以下方法进行编译：
