@@ -231,20 +231,11 @@ public class KitinConfig {
     public static volatile boolean disableMaxTntPerTickAndOptimize = false;
     public static volatile boolean pearlFixEnabled = true;
     public static volatile int pearlFixMaxSave = -1;
-    public static volatile Set<Block> sandDuperBlacklist = Collections.emptySet();
     private static void fixesSettings() {
         pearlFixEnabled = getBoolean("fixes.ender-pearl-chunk-loading.enabled", true);
         pearlFixMaxSave = getInt("fixes.ender-pearl-chunk-loading.player-max-save-ender-pearl", -1);
         //
         disableMaxTntPerTickAndOptimize = getBoolean("fixes.disable-max-tnt-per-tick-and-optimize", disableMaxTntPerTickAndOptimize);
-        //
-        Set<Block> tempBlocks = new HashSet<>(); // reload Folia安全
-        List<String> defaultBlocks = new ArrayList<>();
-        List<String> configList = getList("fixes.sand-duper.blacklistblocks", defaultBlocks);
-        for (String key : configList) {
-            tempBlocks.addAll(getBlockType(key)); // reload Folia安全
-        }
-        sandDuperBlacklist = Set.copyOf(tempBlocks); // reload Folia安全
     }
 
     //----------------------------------------
@@ -269,8 +260,8 @@ public class KitinConfig {
         defaultEntities.add("$AbstractMinecart");
         defaultEntities.add("$AbstractBoat");
         defaultEntities.add("shulker");
-        List<String> configList = getList("network.reduce-high-frequency-entity-sync-packets.entitys", defaultEntities);
-        for (String key : configList) {
+        List<String> optimizedSyncEntities_configList = getList("network.reduce-high-frequency-entity-sync-packets.entitys", defaultEntities);
+        for (String key : optimizedSyncEntities_configList) {
             if (key.equalsIgnoreCase("$AbstractMinecart")) {
                 optimizeAllMinecarts = true;
                 continue;
@@ -295,20 +286,31 @@ public class KitinConfig {
     //----------------------------------------
 
     public static volatile Set<net.minecraft.world.item.Item> lazyChunkBarrierItems = Collections.emptySet();
+    public static volatile Set<Block> sandDuperBlacklist = Collections.emptySet();
+    public static volatile double sandDuperMinTps = 5.0; // Kitin - TPS protection
     private static void safetySettings() {
-        Set<Item> tempItems = new HashSet<>(); // reload Folia安全
-        List<String> defaultItems = new ArrayList<>();
-        defaultItems.add("*concrete");
-        defaultItems.add("#wool_carpets");
-        defaultItems.add("minecraft:obsidian");
-        defaultItems.add("minecraft:poppy");
-        defaultItems.add("minecraft:prismarine_shard");
-        defaultItems.add("prismarine_crystals");
-        List<String> configList = getList("safety.lazy-chunk-barrier.items", defaultItems);
-        for (String key : configList) {
-            tempItems.addAll(getItemType(key)); // reload Folia安全
+        Set<Item> lazyChunkBarrierItems_tempItems = new HashSet<>(); // reload Folia安全
+        List<String> lazyChunkBarrierItems_defaultItems = new ArrayList<>();
+        lazyChunkBarrierItems_defaultItems.add("*concrete");
+        lazyChunkBarrierItems_defaultItems.add("#wool_carpets");
+        lazyChunkBarrierItems_defaultItems.add("minecraft:obsidian");
+        lazyChunkBarrierItems_defaultItems.add("minecraft:poppy");
+        lazyChunkBarrierItems_defaultItems.add("minecraft:prismarine_shard");
+        lazyChunkBarrierItems_defaultItems.add("prismarine_crystals");
+        List<String> lazyChunkBarrierItemsconfigList = getList("safety.lazy-chunk-barrier.items", lazyChunkBarrierItems_defaultItems);
+        for (String key : lazyChunkBarrierItemsconfigList) {
+            lazyChunkBarrierItems_tempItems.addAll(getItemType(key)); // reload Folia安全
         }
-        lazyChunkBarrierItems = Set.copyOf(tempItems); // reload Folia安全
+        lazyChunkBarrierItems = Set.copyOf(lazyChunkBarrierItems_tempItems); // reload Folia安全
+        //
+        Set<Block> blacklistblocks_tempBlocks = new HashSet<>(); // reload Folia安全
+        List<String> blacklistblocks_defaultBlocks = new ArrayList<>();
+        List<String> blacklistblocks_configList = getList("safety.sand-duper.blacklistblocks", blacklistblocks_defaultBlocks);
+        for (String key : blacklistblocks_configList) {
+            blacklistblocks_tempBlocks.addAll(getBlockType(key)); // reload Folia安全
+        }
+        sandDuperBlacklist = Set.copyOf(blacklistblocks_tempBlocks); // reload Folia安全
+        sandDuperMinTps = getDouble("safety.sand-duper.min-tps-threshold", 5.0);
     }
 
 }

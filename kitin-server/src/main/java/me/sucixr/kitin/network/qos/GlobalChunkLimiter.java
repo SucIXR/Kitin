@@ -46,7 +46,7 @@ public class GlobalChunkLimiter {
             // 1. 先"发工资" (Tick Allocation)
             // 允许的最大突发量(MaxAllocation)建议设为 1秒 的量，或者更平滑点 0.1秒
             //double maxBurst = globalRate * 0.05;
-            // [Kitin Fix] 允许 0.2秒 (200ms) 的突发量，应对高频循环
+            //允许配置文件设置突发量，应对高频循环
             double maxBurst = Math.max(1.0, globalRate * KitinConfig.globalChunkSendBurstFactor);
             limiter.tickAllocation(now, globalRate, maxBurst);
 
