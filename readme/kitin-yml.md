@@ -70,7 +70,6 @@ This page explains the configuration options found in `config/kitin.yml`.
   - 有些服务器商标注的3M，但实际上突发能跑到4M甚至更高，(大厂一般都不会虚标)，这类服务器可以提高此值;
   - 像小厂，一般标注的带宽都是"峰值带宽"，最多只能跑到他们标注的值，标注值就是突发值，因此你会感觉实际上跑不满，这类服务器的带宽可能要打六七折，甚至更低。应该首先等比例降低global-max-chunk-send-rate，以及首先降低paper-global.yml内的player-max-chunk-send-rate(如果此值大于global)。如果你的服务器属于这种峰值带宽情况，且玩家数量确实多，但是带宽总量也大，那可以把此值调到很低
 
-
 ### `reduce-high-frequency-entity-sync-packets`
 - #### `entitys`
 - **类型:** 列表 (List)
@@ -79,6 +78,27 @@ This page explains the configuration options found in `config/kitin.yml`.
     - 列表内的实体在受到伤害或碰撞时，将不再强制立即发送同步数据包
     - 能显著减少生电机器（如猪人塔，潜影贝农场）运行时的网络拥堵，且看不出实体状态差异
     - **特殊值:** `'$AbstractMinecart'` (所有矿车)， `'$AbstractBoat'` (所有船)
+
+### `particle`
+- **提示:** 
+  - 经测试100个粒子包大约会占用100KiB/S的突发带宽，突发发送过量粒子会导致服务器网络卡顿，尤其是领地插件
+  - Kitin会先进行了视野、距离、遮挡剔除，再忽略多余的粒子，这能获得更好的观感
+- #### `player-max-particles-per-packet`
+- **默认值:** `250`
+- **说明:**
+  - 玩家每个包的最大粒子数量，超过的会忽略
+- #### `player-min-optimize-threshold`
+- **默认值:** `50`
+- **说明:**
+  - 玩家粒子开始打包以及剔除的阈值，并不是越小越好，打包和剔除会消耗大量性能
+- #### `global-max-delay-ticks`
+- **默认值:** `10`
+- **说明:**
+  - 全局粒子包最多可以推迟多少tick再发送,超时将会直接清除不发送
+- #### `global-max-packet-particles-per-tick`
+- **默认值:** `499`
+- **说明:**
+  - 全局每tick限制的打包后的粒子数量(只计算打包后的(打包后的粒子总量依旧计算为原值)，不会限制没有被打包的粒子)，如果超过数量，则会被推迟
 
 ---
 
