@@ -246,6 +246,11 @@ public class KitinConfig {
     public static volatile boolean optimizeAllBoats = false;
     public static volatile boolean optimizeAllMinecarts = false;
     public static volatile Set<EntityType<?>> optimizedSyncEntities = Collections.emptySet(); //原为 public static Set<EntityType<?>> optimizedSyncEntities = new HashSet<>();
+    public static volatile int playerMaxParticlesPerPacket = 250;
+    public static volatile int playerMaxBufferSize = 5000;
+    public static volatile int playerMinOptimizeThreshold = 50;
+    public static volatile int globalMaxDelayTicks = 10;
+    public static volatile int globalMaxPacketParticlesPerTick = 499;
     private static void networkSettings() {
         chunkLazyLoading = getBoolean("network.chunk-lazy-loading",true);
         //
@@ -273,6 +278,13 @@ public class KitinConfig {
             tempEntities.addAll(getEntityType(key)); // reload Folia安全
         }
         optimizedSyncEntities = Set.copyOf(tempEntities); // reload Folia安全
+        //
+        playerMaxParticlesPerPacket = getInt("network.particle.player-max-particles-per-packet", playerMaxParticlesPerPacket);
+        //playerMaxBufferSize = getInt("network.particle.player-max-buffer-size", playerMaxBufferSize);
+        playerMinOptimizeThreshold = getInt("network.particle.player-min-optimize-threshold", playerMinOptimizeThreshold);
+        globalMaxDelayTicks = getInt("network.particle.global-max-delay-ticks", globalMaxDelayTicks);
+        globalMaxPacketParticlesPerTick = getInt("network.particle.global-max-packet-particles-per-tick", globalMaxPacketParticlesPerTick);
+
     }
 
     public static volatile boolean useSimplerEntityPush = true;
