@@ -5,14 +5,14 @@ Subject: [PATCH] Network_Particle-throttling-and-packing
 
 
 diff --git a/net/minecraft/server/network/ServerGamePacketListenerImpl.java b/net/minecraft/server/network/ServerGamePacketListenerImpl.java
-index 8fb4c7c7d58a7e78a85f3147b9a7ac7af9711fd1..3ae9049536506b200da1bd91f6d4216deb509d5f 100644
+index 8fb4c7c7d58a7e78a85f3147b9a7ac7af9711fd1..f05d720d56918c117972b64267b2aef14bce6a23 100644
 --- a/net/minecraft/server/network/ServerGamePacketListenerImpl.java
 +++ b/net/minecraft/server/network/ServerGamePacketListenerImpl.java
 @@ -27,6 +27,7 @@ import java.util.function.BiFunction;
  import java.util.function.Consumer;
  import java.util.stream.Collectors;
  import java.util.stream.Stream;
-+import me.sucixr.kitin.network.misc.ParticleOptimizer;
++import me.sucixr.kitin.network.particle.ParticleOptimizer;
  import net.minecraft.ChatFormatting;
  import net.minecraft.advancements.AdvancementHolder;
  import net.minecraft.advancements.CriteriaTriggers;
