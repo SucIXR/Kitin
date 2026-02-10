@@ -113,6 +113,7 @@ This page explains the configuration options found in `config/kitin.yml`.
 - **类型:** 列表 (List)
 - **说明:**
   - 定义哪些方块**禁止**通过末地传送门进行复制
+  - 提示:只有下落方块能刷取，TNT不是下落方块
 - #### `min-tps-threshold`
 - **默认值:** `5.0`
 - **说明:**
