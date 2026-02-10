@@ -35,11 +35,6 @@ This page explains the configuration options found in `config/kitin.yml`.
     - 设为 `true` 时，服务器将不再限制每Tick引爆的TNT数量，而是优化超限的TNT
     - 这可以让世吞等高TNT使用量的机器能够正常运行
 
-### `sand-duper.blacklistblocks`
-- **类型:** 列表 (List)
-- **说明:** 
-    - 定义哪些方块**禁止**通过末地传送门进行复制
-
 ---
 
 ## 📡 Network / 网络带宽
@@ -112,3 +107,13 @@ This page explains the configuration options found in `config/kitin.yml`.
 - **说明:** 
     - 定义哪些掉落物实体在接近"弱加载区块"边缘，且在移动时会被**直接清除**(玩家死亡掉落自然下坠不会清除，但是掉到流动的水里就不好说了)
     - **背景:** 在原版机制下，掉落物进入弱加载区块后不会自然清除，长期运行可能导致该区域堆积成千上万个实体，一旦玩家靠近加载该区块，服务器会瞬间崩溃
+
+### `sand-duper`
+- #### `blacklistblocks`
+- **类型:** 列表 (List)
+- **说明:**
+  - 定义哪些方块**禁止**通过末地传送门进行复制
+- #### `min-tps-threshold`
+- **默认值:** `5.0`
+- **说明:**
+  - 刷沙机出口处TPS低于指定值后禁止刷沙(设为-1禁用此命令)
