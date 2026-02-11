@@ -135,6 +135,32 @@ This page explains the configuration options found in `config/kitin.yml`.
       rate: 200.0                # 自身限速200,且不受总闸限制注意仍会受global-max-chunk-send-rate限制
   ```
 
+### `extra-listeners` **(多端口监听)**
+- **说明:**
+  - 允许服务器监听额外的端口，并为每个端口单独配置 `proxy-protocol`。
+  - 解决了 FRP (开启 PPv2) 和直连玩家无法共存的问题。
+  - **注意**: 此配置**不支持热重载**，修改后必须重启服务器。
+- **配置项详解:**
+  - `port`: 监听端口。
+  - `bind-address`: 绑定 IP (默认 0.0.0.0)。
+  - `proxy-protocol`: 是否开启 PROXY Protocol v2 支持 (true/false)。
+
+- **配置案例:**
+  ```yaml
+  extra-listeners:
+    # FRP 专用端口 (开启 PPv2)
+    frp-listener:
+      port: 25566
+      proxy-protocol: true
+      bind-address: "0.0.0.0"
+
+    # 管理员专用端口 (仅限本地)
+    admin-listener:
+      port: 25567
+      proxy-protocol: false
+      bind-address: "127.0.0.1"
+  ```
+
 ### `reduce-high-frequency-entity-sync-packets`
 - #### `entitys`
 - **类型:** 列表 (List)

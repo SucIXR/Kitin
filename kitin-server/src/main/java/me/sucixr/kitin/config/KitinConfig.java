@@ -183,6 +183,27 @@ public class KitinConfig {
         return config.getStringList(path);
     }
 
+    // Kitin start - Config helper
+    private static <T> List<T> getListFromSection(String path, java.util.function.BiFunction<String, ConfigurationSection, T> mapper) {
+        ConfigurationSection section = config.getConfigurationSection(path);
+        if (section == null) {
+            // 如果配置不存在，注册一个空的默认值，使其在保存时显示为 {}
+            config.addDefault(path, new HashMap<>());
+            return new ArrayList<>();
+        }
+
+        List<T> result = new ArrayList<>();
+        for (String key : section.getKeys(false)) {
+            ConfigurationSection subSection = section.getConfigurationSection(key);
+            if (subSection != null) {
+                T obj = mapper.apply(key, subSection);
+                if (obj != null) result.add(obj);
+            }
+        }
+        return result;
+    }
+    // Kitin end
+
     private static <T> Set<T> resolveRegistry(String key, net.minecraft.core.Registry<T> registry, net.minecraft.resources.ResourceKey<net.minecraft.core.Registry<T>> registryKey) {
         Set<T> result = new HashSet<>();
         try {
@@ -256,6 +277,24 @@ public class KitinConfig {
     public static volatile int playerMinOptimizeThreshold = 50;
     public static volatile int globalMaxDelayTicks = 10;
     public static volatile int globalMaxPacketParticlesPerTick = 499;
+    
+    // Kitin start - Multi-port listening
+    public static class ListenerConfig {
+        public final String name;
+        public final String bindAddress;
+        public final int port;
+        public final boolean proxyProtocol;
+
+        public ListenerConfig(String name, String bindAddress, int port, boolean proxyProtocol) {
+            this.name = name;
+            this.bindAddress = bindAddress;
+            this.port = port;
+            this.proxyProtocol = proxyProtocol;
+        }
+    }
+    public static volatile List<ListenerConfig> extraListeners = Collections.emptyList();
+    // Kitin end
+    
     private static void networkSettings() {
         chunkLazyLoading = getBoolean("network.chunk-lazy-loading",true);
         //
@@ -263,80 +302,61 @@ public class KitinConfig {
         globalChunkSendBurstFactor = getDouble("network.chunk-send.global-chunk-send-burst-factor", globalChunkSendBurstFactor);
 
         // Kitin start - QoS multi-line support
-        config.addDefault("network.chunk-send.qos-groups._example_group_.rate", 50.0);
-        config.addDefault("network.chunk-send.qos-groups._example_group_.virtual-host", "example.com");
-//        getDouble("network.chunk-send.qos-groups.example-group.rate", 50.0);
-//        getString("network.chunk-send.qos-groups.example-group.virtual-host", "play.example.com");
-//        getString("network.chunk-send.qos-groups.example-group.upstream", "main-line");
-//        getDouble("network.chunk-send.qos-groups.main-line.rate", 100.0);
-//        getString("network.chunk-send.qos-groups.main-line.bind-address", "1.1.1.1");
+        List<GlobalChunkLimiter.GroupRule> rules = getListFromSection("network.chunk-send.qos-groups", (key, section) -> {
+            double rate = section.getDouble("rate", -1.0);
+            String bindAddress = section.getString("bind-address", null);
+            String upstream = section.getString("upstream", null);
+            String virtualHost = section.getString("virtual-host", null);
 
-        List<GlobalChunkLimiter.GroupRule> rules = new ArrayList<>();
-        ConfigurationSection qosSection = config.getConfigurationSection("network.chunk-send.qos-groups");
+            java.util.function.Predicate<ServerPlayer> matcher = p -> {
+                if (p.connection == null || p.connection.connection == null) return false;
 
-        if (qosSection != null) {
-            for (String key : qosSection.getKeys(false)) {
-                ConfigurationSection groupSection = qosSection.getConfigurationSection(key);
-                if (groupSection == null) continue;
-
-                double rate = groupSection.getDouble("rate", -1.0);
-                String bindAddress = groupSection.getString("bind-address", null);
-                String upstream = groupSection.getString("upstream", null); // 读取上游配置
-                String virtualHost = groupSection.getString("virtual-host", null); // 读取虚拟主机配置
-
-                // 构建匹配器
-                java.util.function.Predicate<ServerPlayer> matcher = p -> {
-                    if (p.connection == null || p.connection.connection == null) return false;
-
-                    // 1. 匹配虚拟主机 (Virtual Host) - 优先匹配
-                    if (virtualHost != null && !virtualHost.isEmpty()) {
-                        // 尝试获取 virtualHost
-                        if (p.connection.connection.virtualHost != null) {
-                            String playerVirtualHost = p.connection.connection.virtualHost.getHostString();
-                            if (!playerVirtualHost.equalsIgnoreCase(virtualHost)) {
-                                return false; // 域名不匹配
-                            }
-                        } else if (p.connection.connection.hostname != null) {
-                            // Fallback: 尝试从 hostname 字段获取 (通常包含端口)
-                            String hostname = p.connection.connection.hostname;
-                            if (hostname.contains(":")) {
-                                hostname = hostname.split(":")[0];
-                            }
-                            if (!hostname.equalsIgnoreCase(virtualHost)) {
-                                return false;
-                            }
-                        } else {
-                            return false; // 无法获取域名
-                        }
+                if (virtualHost != null && !virtualHost.isEmpty()) {
+                    if (p.connection.connection.virtualHost != null) {
+                        String playerVirtualHost = p.connection.connection.virtualHost.getHostString();
+                        if (!playerVirtualHost.equalsIgnoreCase(virtualHost)) return false;
+                    } else if (p.connection.connection.hostname != null) {
+                        String hostname = p.connection.connection.hostname;
+                        if (hostname.contains(":")) hostname = hostname.split(":")[0];
+                        if (!hostname.equalsIgnoreCase(virtualHost)) return false;
+                    } else {
+                        return false;
                     }
+                }
 
-                    // 2. 匹配绑定地址 (Bind Address)
-                    if (bindAddress != null && !bindAddress.isEmpty()) {
-                        if (p.connection.connection.channel == null) return false;
-                        SocketAddress socketAddress = p.connection.connection.channel.localAddress();
-                        if (socketAddress instanceof InetSocketAddress inetAddr) {
-                            String localIp = inetAddr.getAddress().getHostAddress();
-                            if (!localIp.equals(bindAddress)) {
-                                return false; // IP不匹配
-                            }
-                        } else {
-                            return false;
-                        }
+                if (bindAddress != null && !bindAddress.isEmpty()) {
+                    if (p.connection.connection.channel == null) return false;
+                    SocketAddress socketAddress = p.connection.connection.channel.localAddress();
+                    if (socketAddress instanceof InetSocketAddress inetAddr) {
+                        String localIp = inetAddr.getAddress().getHostAddress();
+                        if (!localIp.equals(bindAddress)) return false;
+                    } else {
+                        return false;
                     }
+                }
+                return true;
+            };
 
-                    // 如果配置了条件但都通过了（或者没配置条件），则匹配成功
-                    return true;
-                };
+            return new GlobalChunkLimiter.GroupRule(key, rate, upstream, virtualHost, matcher);
+        });
 
-                rules.add(new GlobalChunkLimiter.GroupRule(key, rate, upstream, virtualHost, matcher));
-            }
-        }
-
-        // 始终添加默认组作为兜底 (匹配所有玩家)
-        // 放在列表最后，只有当前面规则都不匹配时才生效
+        // 始终添加默认组作为兜底
         rules.add(new GlobalChunkLimiter.GroupRule(GlobalChunkLimiter.DEFAULT_GROUP, globalMaxChunkSendRate, null, null, p -> true));
-
         GlobalChunkLimiter.reload(rules);
+        // Kitin end
+        
+        // Kitin start - Multi-port listening
+        if (!isReloading) { // 防止重载时重复绑定
+            extraListeners = getListFromSection("network.extra-listeners", (key, section) -> {
+                int port = section.getInt("port", -1);
+                if (port < 0 || port > 65535) return null;
+
+                String bindAddress = section.getString("bind-address", "0.0.0.0");
+                boolean proxyProtocol = section.getBoolean("proxy-protocol", false);
+
+                return new ListenerConfig(key, bindAddress, port, proxyProtocol);
+            });
+        }
         // Kitin end
 
         //
