@@ -5,7 +5,7 @@ Subject: [PATCH] Network_globalMaxChunkSendRate
 
 
 diff --git a/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java b/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
-index a61285a2c83e0540ffd981cbaf40f6124d9e4218..6d1b9155ea733c66108cd49336d75e73a1b1f81c 100644
+index a61285a2c83e0540ffd981cbaf40f6124d9e4218..8d47ab6c97dc3c6fa52e3490632deafea8af5bca 100644
 --- a/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
 +++ b/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
 @@ -303,16 +303,54 @@ public final class RegionizedPlayerChunkLoader {
@@ -70,10 +70,25 @@ index a61285a2c83e0540ffd981cbaf40f6124d9e4218..6d1b9155ea733c66108cd49336d75e73
              // we do not return sends that we took from the allocation back because we want to limit the max send rate, not target it
              for (int i = 0; i < maxSendsThisTick; ++i) {
 +                // Kitin - QoS globalMaxChunkSendRate
-+                if (!me.sucixr.kitin.network.qos.GlobalChunkLimiter.tryAcquire()) {
++                if (!me.sucixr.kitin.network.qos.GlobalChunkLimiter.tryAcquire(this.player)) {
 +                    break;
 +                }
 +                // Kitin end
                  final long pendingSend = this.sendQueue.firstLong();
                  final int pendingSendX = CoordinateUtils.getChunkX(pendingSend);
                  final int pendingSendZ = CoordinateUtils.getChunkZ(pendingSend);
+diff --git a/net/minecraft/server/players/PlayerList.java b/net/minecraft/server/players/PlayerList.java
+index 8274afe0d07c50ece420b1d3cb20165ed0162acb..10b159a61480b790a9fd320876ff731ab0897507 100644
+--- a/net/minecraft/server/players/PlayerList.java
++++ b/net/minecraft/server/players/PlayerList.java
+@@ -579,6 +579,10 @@ public abstract class PlayerList {
+             this.server.notificationManager().playerLeft(player);
+         }
+ 
++        // Kitin start - QoS cleanup
++        me.sucixr.kitin.network.qos.GlobalChunkLimiter.onPlayerQuit(player);
++        // Kitin end
++
+         // CraftBukkit start
+         // this.broadcastAll(new ClientboundPlayerInfoRemovePacket(List.of(player.getUUID())));
+         ClientboundPlayerInfoRemovePacket packet = new ClientboundPlayerInfoRemovePacket(List.of(player.getUUID()));
