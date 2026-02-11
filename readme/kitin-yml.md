@@ -12,6 +12,8 @@ This page explains the configuration options found in `config/kitin.yml`.
         - `-'#minecraft:shulker_boxes'` (标签，包含所有颜色的潜影盒)
         - `-'*concrete_powder'` (通配符，包含所有混凝土粉末)
         - 可以不写前缀`minecraft:`，对于带有`$``#``*`等特殊符号的需要加单引号
+- **类型:** 自定义配置
+    - 如果列表为空，则显示为{}.需要去除{}并按要求填写(相关详细配置会举例讲解)
 
 ## 🛠️ Fixes / 修复调整
 
@@ -72,6 +74,7 @@ This page explains the configuration options found in `config/kitin.yml`.
   - 像小厂，一般标注的带宽都是"峰值带宽"，最多只能跑到他们标注的值，标注值就是突发值，因此你会感觉实际上跑不满，这类服务器的带宽可能要打六七折，甚至更低。应该首先等比例降低global-max-chunk-send-rate，以及首先降低paper-global.yml内的player-max-chunk-send-rate(如果此值大于global)。如果你的服务器属于这种峰值带宽情况，且玩家数量确实多，但是带宽总量也大，那可以把此值调到很低
 
 - #### `qos-groups` **(高级多线路限流)**
+- **类型:** 自定义配置
 - **说明:**
   - 允许根据玩家的连接方式（IP、域名、线路）设置不同的限流策略。
   - 支持**级联限流**（Upstream），完美模拟真实网络拓扑（如 FRP 转发受限于主站带宽）。
@@ -136,6 +139,7 @@ This page explains the configuration options found in `config/kitin.yml`.
   ```
 
 ### `extra-listeners` **(多端口监听)**
+- **类型:** 自定义配置
 - **说明:**
   - 允许服务器监听额外的端口，并为每个端口单独配置 `proxy-protocol`。
   - 解决了 FRP (开启 PPv2) 和直连玩家无法共存的问题。
