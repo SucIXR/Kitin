@@ -58,7 +58,8 @@ This page explains the configuration options found in `config/kitin.yml`.
   - 限制服务器**每秒**向所有玩家发送区块包的总量。
   - **计算公式:** `服务器上行带宽(Mbps) * (0.6-0.9)(地形占用带宽比例，可高达99%，如果挂机很多则低) * (平均区块大小KB)`
   - *(简单来说：直接填写你的服务器带宽 Mbps\*9(向下取整)即可(大厂的带宽往往不虚标，可以\*12)，例如 30Mbps 就填 270，没有进行仔细测量，以实际为准，如果你想低带宽承载更多人就降到更低)*
-  - **建议**:paper-global.yml内的player-max-chunk-send-rate如果大于此值，建议降低到此值以下，可能能更好降低抖动
+  - **建议**:paper-global.yml内的player-max-chunk-send-rate如果大于此值，建议降低到此值以下，可能比修改此值更有效
+  - **注意**: 如果配置了 `qos-groups`，此值将作为**默认兜底策略**（即未匹配到任何组的玩家将使用此速率）。
 - #### `global-chunk-send-burst-factor`
 - **默认值:** `0.05`
 - **建议值:** `默认，除非你真的很了解这个值的作用，否则修改其他值可能更有用`
@@ -69,6 +70,70 @@ This page explains the configuration options found in `config/kitin.yml`.
   - 如果global-max-chunk-send-rate设置的值很小(应保证至少乘以此值>1)，那此值不应过小，否则会导致每tick发包量极低;如果带宽非常吃紧，此值不应过大(会导致带宽峰值造成延迟抖动)
   - 有些服务器商标注的3M，但实际上突发能跑到4M甚至更高，(大厂一般都不会虚标)，这类服务器可以提高此值;
   - 像小厂，一般标注的带宽都是"峰值带宽"，最多只能跑到他们标注的值，标注值就是突发值，因此你会感觉实际上跑不满，这类服务器的带宽可能要打六七折，甚至更低。应该首先等比例降低global-max-chunk-send-rate，以及首先降低paper-global.yml内的player-max-chunk-send-rate(如果此值大于global)。如果你的服务器属于这种峰值带宽情况，且玩家数量确实多，但是带宽总量也大，那可以把此值调到很低
+
+- #### `qos-groups` **(高级多线路限流)**
+- **说明:**
+  - 允许根据玩家的连接方式（IP、域名、线路）设置不同的限流策略。
+  - 支持**级联限流**（Upstream），完美模拟真实网络拓扑（如 FRP 转发受限于主站带宽）。
+  - **优先级**: 此处的规则优先级**高于** `global-max-chunk-send-rate`。系统会优先匹配这里的规则，如果都未匹配上，则回退使用 `global-max-chunk-send-rate`。
+- **配置项详解:**
+  - `rate`: 每秒允许发送的最大区块数（Chunk/s）。
+  - `bind-address`: 玩家连接的服务端 IP（Local Address）。适用于多网卡或 FRP 转发到不同内网 IP。
+  - `virtual-host`: 玩家连接时输入的域名。适用于 Velocity/BungeeCord 多入口或单 IP 多域名。
+  - `upstream`: 上游组名。当前组的流量会同时扣除上游组的配额（级联限流）。
+
+- **配置案例:**
+
+  **案例 1：单ip服务器（最简单）**
+  ```yaml
+  # 无需配置 qos-groups，直接设置 global-max-chunk-send-rate 即可
+  # 如果你有需求本地不限速，只限制远程，可以往下看
+  ```
+
+  **案例 2：多ip服务器,且带宽互不影响（多网卡/多IP）**
+  ```yaml
+  qos-groups:
+    telecom-line:
+      bind-address: "1.1.1.1" # 电信IP
+      rate: 100.0
+    mobile-line:
+      bind-address: "2.2.2.2" # 移动IP
+      rate: 20.0
+  ```
+
+  **案例 3：Velocity多入口（使用域名区分）**
+  ```yaml
+  qos-groups:
+    cn-proxy:
+      virtual-host: "cn.mc.com" # 国内优化域名
+      rate: 50.0
+    us-direct:
+      virtual-host: "us.mc.com" # 美国直连域名
+      rate: 30.0
+  ```
+
+  **案例 4：FRP内网穿透、Velocity嵌套等套娃情景（级联限流）**
+  ```yaml
+  qos-groups:
+    # === 1. 定义主服务器的总带宽池 ===
+    main-bandwidth-pool:
+      rate: 100.0 # 总物理带宽限制，当然，如果你的情景比较简单，可以不配置upstream和此值,直接控制global-max-chunk-send-rate即可
+
+    # === 2. 定义各条线路 ===
+    frp-node-a:
+      bind-address: "127.0.0.2"  # FRP A 转发到的内网 IP A,请注意，不要将不同的FRP都转发到127.0.0.1，否则无法区分不同流量
+      rate: 20.0                 # 自身限速 20
+      upstream: "main-bandwidth-pool" # 同时受总闸限制
+
+    frp-node-b:
+      bind-address: "127.0.0.3"  # FRP B 转发到的内网 IP B
+      rate: 60.0                 # 自身限速 60
+      upstream: "main-bandwidth-pool" # 同时受总闸限制
+
+    local-admin:
+      bind-address: "127.0.0.1"  # 本地直连
+      rate: 200.0                # 自身限速200,且不受总闸限制注意仍会受global-max-chunk-send-rate限制
+  ```
 
 ### `reduce-high-frequency-entity-sync-packets`
 - #### `entitys`

@@ -1,15 +1,18 @@
 package me.sucixr.kitin.config;
 
 import com.google.common.base.Throwables;
+import me.sucixr.kitin.network.qos.GlobalChunkLimiter;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import java.io.File;
@@ -17,6 +20,8 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.*;
 import java.util.logging.Level;
 import static net.minecraft.core.RegistryAccess.LOGGER;
@@ -255,8 +260,85 @@ public class KitinConfig {
         chunkLazyLoading = getBoolean("network.chunk-lazy-loading",true);
         //
         globalMaxChunkSendRate = getInt("network.chunk-send.global-max-chunk-send-rate", globalMaxChunkSendRate);
-        me.sucixr.kitin.network.qos.GlobalChunkLimiter.setLimit(globalMaxChunkSendRate);
         globalChunkSendBurstFactor = getDouble("network.chunk-send.global-chunk-send-burst-factor", globalChunkSendBurstFactor);
+
+        // Kitin start - QoS multi-line support
+        config.addDefault("network.chunk-send.qos-groups._example_group_.rate", 50.0);
+        config.addDefault("network.chunk-send.qos-groups._example_group_.virtual-host", "example.com");
+//        getDouble("network.chunk-send.qos-groups.example-group.rate", 50.0);
+//        getString("network.chunk-send.qos-groups.example-group.virtual-host", "play.example.com");
+//        getString("network.chunk-send.qos-groups.example-group.upstream", "main-line");
+//        getDouble("network.chunk-send.qos-groups.main-line.rate", 100.0);
+//        getString("network.chunk-send.qos-groups.main-line.bind-address", "1.1.1.1");
+
+        List<GlobalChunkLimiter.GroupRule> rules = new ArrayList<>();
+        ConfigurationSection qosSection = config.getConfigurationSection("network.chunk-send.qos-groups");
+
+        if (qosSection != null) {
+            for (String key : qosSection.getKeys(false)) {
+                ConfigurationSection groupSection = qosSection.getConfigurationSection(key);
+                if (groupSection == null) continue;
+
+                double rate = groupSection.getDouble("rate", -1.0);
+                String bindAddress = groupSection.getString("bind-address", null);
+                String upstream = groupSection.getString("upstream", null); // 读取上游配置
+                String virtualHost = groupSection.getString("virtual-host", null); // 读取虚拟主机配置
+
+                // 构建匹配器
+                java.util.function.Predicate<ServerPlayer> matcher = p -> {
+                    if (p.connection == null || p.connection.connection == null) return false;
+
+                    // 1. 匹配虚拟主机 (Virtual Host) - 优先匹配
+                    if (virtualHost != null && !virtualHost.isEmpty()) {
+                        // 尝试获取 virtualHost
+                        if (p.connection.connection.virtualHost != null) {
+                            String playerVirtualHost = p.connection.connection.virtualHost.getHostString();
+                            if (!playerVirtualHost.equalsIgnoreCase(virtualHost)) {
+                                return false; // 域名不匹配
+                            }
+                        } else if (p.connection.connection.hostname != null) {
+                            // Fallback: 尝试从 hostname 字段获取 (通常包含端口)
+                            String hostname = p.connection.connection.hostname;
+                            if (hostname.contains(":")) {
+                                hostname = hostname.split(":")[0];
+                            }
+                            if (!hostname.equalsIgnoreCase(virtualHost)) {
+                                return false;
+                            }
+                        } else {
+                            return false; // 无法获取域名
+                        }
+                    }
+
+                    // 2. 匹配绑定地址 (Bind Address)
+                    if (bindAddress != null && !bindAddress.isEmpty()) {
+                        if (p.connection.connection.channel == null) return false;
+                        SocketAddress socketAddress = p.connection.connection.channel.localAddress();
+                        if (socketAddress instanceof InetSocketAddress inetAddr) {
+                            String localIp = inetAddr.getAddress().getHostAddress();
+                            if (!localIp.equals(bindAddress)) {
+                                return false; // IP不匹配
+                            }
+                        } else {
+                            return false;
+                        }
+                    }
+
+                    // 如果配置了条件但都通过了（或者没配置条件），则匹配成功
+                    return true;
+                };
+
+                rules.add(new GlobalChunkLimiter.GroupRule(key, rate, upstream, virtualHost, matcher));
+            }
+        }
+
+        // 始终添加默认组作为兜底 (匹配所有玩家)
+        // 放在列表最后，只有当前面规则都不匹配时才生效
+        rules.add(new GlobalChunkLimiter.GroupRule(GlobalChunkLimiter.DEFAULT_GROUP, globalMaxChunkSendRate, null, null, p -> true));
+
+        GlobalChunkLimiter.reload(rules);
+        // Kitin end
+
         //
         optimizeAllBoats = false;
         optimizeAllMinecarts = false;
