@@ -1,0 +1,50 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: SucIXR <sasasa123456@foxmail.com>
+Date: Wed, 11 Feb 2026 17:22:35 +0800
+Subject: [PATCH] Network_Multi-Port-Listening
+
+
+diff --git a/net/minecraft/server/network/ServerConnectionListener.java b/net/minecraft/server/network/ServerConnectionListener.java
+index 7f86b3538449616a7fa8423e86897364563af957..cd19b90d06e5a7479f8d8cc83417f7a57fddd15b 100644
+--- a/net/minecraft/server/network/ServerConnectionListener.java
++++ b/net/minecraft/server/network/ServerConnectionListener.java
+@@ -67,11 +67,28 @@ public class ServerConnectionListener {
+     }
+ 
+     public void startTcpServerListener(SocketAddress address) throws IOException {
+-        // Paper end - Unix domain socket support
++        // Kitin start - Multi-port listening
++        // 绑定主端口 (使用全局配置)
++        this.bind(address, io.papermc.paper.configuration.GlobalConfiguration.get().proxies.proxyProtocol);
++
++        // 绑定额外端口
++        for (me.sucixr.kitin.config.KitinConfig.ListenerConfig cfg : me.sucixr.kitin.config.KitinConfig.extraListeners) {
++            try {
++                LOGGER.info("[Kitin] Binding extra listener '{}' on {}:{} (ProxyProtocol: {})", 
++                    cfg.name, cfg.bindAddress, cfg.port, cfg.proxyProtocol);
++                this.bind(new java.net.InetSocketAddress(InetAddress.getByName(cfg.bindAddress), cfg.port), cfg.proxyProtocol);
++            } catch (Exception e) {
++                LOGGER.error("[Kitin] Failed to bind extra listener: " + cfg.name, e);
++            }
++        }
++    }
++
++    private void bind(SocketAddress address, boolean useProxyProtocol) throws IOException {
++        // Kitin end
+         synchronized (this.channels) {
+             EventLoopGroupHolder eventLoopGroupHolder = EventLoopGroupHolder.remote(address, this.server.useNativeTransport()); // Paper - Unix domain socket support
+             // Paper start - Warn people with console access that HAProxy is in use.
+-            if (io.papermc.paper.configuration.GlobalConfiguration.get().proxies.proxyProtocol) {
++            if (useProxyProtocol) { // Kitin - use parameter
+                 LOGGER.warn("Using HAProxy, please ensure the server port is adequately firewalled.");
+             }
+             // Paper end - Warn people with console access that HAProxy is in use.
+@@ -105,7 +122,7 @@ public class ServerConnectionListener {
+                                         ? new RateKickingConnection(rateLimitPacketsPerSecond)
+                                         : new Connection(PacketFlow.SERVERBOUND));
+                                     // Paper start - Add support for Proxy Protocol
+-                                    if (io.papermc.paper.configuration.GlobalConfiguration.get().proxies.proxyProtocol) {
++                                    if (useProxyProtocol) { // Kitin - use parameter
+                                         channel.pipeline().addAfter("timeout", "haproxy-decoder", new io.netty.handler.codec.haproxy.HAProxyMessageDecoder());
+                                         channel.pipeline().addAfter("haproxy-decoder", "haproxy-handler", new ChannelInboundHandlerAdapter() {
+                                             @Override
