@@ -402,6 +402,10 @@ public class KitinConfig {
     public static volatile Set<net.minecraft.world.item.Item> lazyChunkBarrierItems = Collections.emptySet();
     public static volatile Set<Block> sandDuperBlacklist = Collections.emptySet();
     public static volatile double sandDuperMinTps = 5.0; // Kitin - TPS protection
+    public static volatile boolean highAltitudeVoidEnabled = true;
+    public static volatile int highAltitudeVoidHeight = 114514;
+    public static volatile boolean highAltitudeVoidDamagePlayers = false;
+    public static volatile boolean highAltitudeVoidLogWarnings = true;
     private static void safetySettings() {
         Set<Item> lazyChunkBarrierItems_tempItems = new HashSet<>(); // reload Folia安全
         List<String> lazyChunkBarrierItems_defaultItems = new ArrayList<>();
@@ -425,6 +429,13 @@ public class KitinConfig {
         }
         sandDuperBlacklist = Set.copyOf(blacklistblocks_tempBlocks); // reload Folia安全
         sandDuperMinTps = getDouble("safety.sand-duper.min-tps-threshold", 5.0);
+        //
+        // Kitin start - High Altitude Void
+        highAltitudeVoidEnabled = getBoolean("safety.high-altitude-void.enabled", true);
+        highAltitudeVoidHeight = getInt("safety.high-altitude-void.max-height", 10000);
+        highAltitudeVoidDamagePlayers = getBoolean("safety.high-altitude-void.damage-players", false);
+        highAltitudeVoidLogWarnings = getBoolean("safety.high-altitude-void.log-warnings", true);
+        // Kitin end
     }
 
 }
