@@ -1,0 +1,49 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: SucIXR <sasasa123456@foxmail.com>
+Date: Fri, 13 Feb 2026 01:08:56 +0800
+Subject: [PATCH] Safety_High-altitude-void
+
+
+diff --git a/net/minecraft/world/entity/Entity.java b/net/minecraft/world/entity/Entity.java
+index a7bac5430032727af274c7c646a628d53276334b..7a28d18eec7b943967f3ad55481872055a48efe7 100644
+--- a/net/minecraft/world/entity/Entity.java
++++ b/net/minecraft/world/entity/Entity.java
+@@ -209,6 +209,7 @@ public abstract class Entity implements SyncedDataHolder, DebugValueSource, Name
+     }
+     // Paper end
+     private static final Logger LOGGER = LogUtils.getLogger();
++    private static long lastHighAltitudeVoidLogTime = 0; // Kitin - High Altitude Void
+     public static final String TAG_ID = "id";
+     public static final String TAG_UUID = "UUID";
+     public static final String TAG_PASSENGERS = "Passengers";
+@@ -942,6 +943,30 @@ public abstract class Entity implements SyncedDataHolder, DebugValueSource, Name
+ 
+     public void checkBelowWorld() {
+         if (!this.level.getWorld().isVoidDamageEnabled()) return; // Paper - check if void damage is enabled on the world
++
++        // Kitin Start - High Altitude Void
++        if (me.sucixr.kitin.config.KitinConfig.highAltitudeVoidEnabled && this.getY() > (double) me.sucixr.kitin.config.KitinConfig.highAltitudeVoidHeight) {
++            if (this instanceof Player && !me.sucixr.kitin.config.KitinConfig.highAltitudeVoidDamagePlayers) {
++                return;
++            }
++            if (me.sucixr.kitin.config.KitinConfig.highAltitudeVoidLogWarnings) {
++                long now = System.currentTimeMillis();
++                if (now - lastHighAltitudeVoidLogTime >= 10000L) {
++                    lastHighAltitudeVoidLogTime = now;
++                    LOGGER.warn("[Kitin] {} moved too high, removed! World:{}[{},{},{}]",
++                            this.getEncodeId(),
++                            this.level.getWorld().getName(),
++                            String.format("%.2f", this.getX()),
++                            String.format("%.2f", this.getY()),
++                            String.format("%.2f", this.getZ())
++                    );
++                }
++            }
++            this.onBelowWorld();
++            return;
++        }
++        // Kitin end
++
+         // Paper start - Configurable nether ceiling damage
+         if (this.getY() < (this.level.getMinY() + this.level.getWorld().getVoidDamageMinBuildHeightOffset()) || (this.level.getWorld().getEnvironment() == org.bukkit.World.Environment.NETHER // Paper - use configured min build height offset
+             && this.level.paperConfig().environment.netherCeilingVoidDamageHeight.test(v -> this.getY() >= v)
