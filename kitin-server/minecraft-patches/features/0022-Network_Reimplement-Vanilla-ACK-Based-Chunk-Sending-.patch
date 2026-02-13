@@ -1,0 +1,88 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: SucIXR <sasasa123456@foxmail.com>
+Date: Sat, 14 Feb 2026 01:36:35 +0800
+Subject: [PATCH] Network_Reimplement-Vanilla-ACK-Based-Chunk-Sending-System
+
+
+diff --git a/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java b/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
+index cef84ce2d1064b68a879993820fce32454b1fa2c..a48fe64b417db0e9fc7780617b853f76c55e8184 100644
+--- a/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
++++ b/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
+@@ -434,9 +434,18 @@ public final class RegionizedPlayerChunkLoader {
+ 
+         private volatile boolean removed;
+ 
++        // Kitin start - Network_Reimplement-Vanilla-ACK-Based-Chunk-Sending-System
++        // 引入原版发送器，让它来接管发包逻辑
++        public final PlayerChunkSender vanillaChunkSender;
++        // Kitin end
++
+         public PlayerChunkLoaderData(final ServerLevel world, final ServerPlayer player) {
+             this.world = world;
+             this.player = player;
++            // Kitin start - Network_Reimplement-Vanilla-ACK-Based-Chunk-Sending-System
++            // 初始化原版发送器 (false 表示非内存连接)
++            this.vanillaChunkSender = new PlayerChunkSender(false);
++            // Kitin end
+         }
+ 
+         private void flushDelayedTicketOps() {
+@@ -459,7 +468,13 @@ public final class RegionizedPlayerChunkLoader {
+                 final LevelChunk chunk = ((ChunkSystemLevel)this.world).moonrise$getFullChunkIfLoaded(chunkX, chunkZ);
+ 
+                 PlatformHooks.get().onChunkWatch(this.world, chunk, this.player);
+-                PlayerChunkSender.sendChunk(this.player.connection, this.world, chunk);
++                // Kitin start - Network_Reimplement-Vanilla-ACK-Based-Chunk-Sending-System
++                //PlayerChunkSender.sendChunk(this.player.connection, this.world, chunk); // Kitin off
++                // 不再直接 connection.send()，而是放入 Vanilla 的缓冲池
++                // 将区块加入 Vanilla Sender 的 pending 队列
++                this.vanillaChunkSender.markChunkPendingToSend(chunk);
++                // Kitin end
++
+                 return;
+             }
+             throw new IllegalStateException();
+@@ -478,7 +493,13 @@ public final class RegionizedPlayerChunkLoader {
+             // Note: drop isAlive() check so that chunks properly unload client-side when the player dies
+             ((ChunkSystemChunkHolder)((ChunkSystemServerLevel)this.world).moonrise$getChunkTaskScheduler().chunkHolderManager
+                 .getChunkHolder(chunkX, chunkZ).vanillaChunkHolder).moonrise$removeReceivedChunk(this.player);
+-            this.player.connection.send(new ClientboundForgetLevelChunkPacket(new ChunkPos(chunkX, chunkZ)));
++            // Kitin start - Network_Reimplement-Vanilla-ACK-Based-Chunk-Sending-System
++            //this.player.connection.send(new ClientboundForgetLevelChunkPacket(new ChunkPos(chunkX, chunkZ))); // Kitin off
++            // 原版 dropChunk 会检查
++            // 如果还在 pending 队列中，直接移除，不再发送以节省带宽。
++            // 如果已经发送了，才发送 Forget 包。
++            this.vanillaChunkSender.dropChunk(this.player, new ChunkPos(chunkX, chunkZ));
++            // Kitin end
+             // Paper start - PlayerChunkUnloadEvent
+             if (io.papermc.paper.event.packet.PlayerChunkUnloadEvent.getHandlerList().getRegisteredListeners().length > 0) {
+                 new io.papermc.paper.event.packet.PlayerChunkUnloadEvent(player.getBukkitEntity().getWorld().getChunkAt(new ChunkPos(chunkX, chunkZ).longKey), player.getBukkitEntity()).callEvent();
+@@ -893,6 +914,11 @@ public final class RegionizedPlayerChunkLoader {
+             }
+ 
+             this.flushDelayedTicketOps();
++            // Kitin start - Network_Reimplement-Vanilla-ACK-Based-Chunk-Sending-System
++            // 恢复原版ACK逻辑
++            // 原版有ACK逻辑，可以动态控制玩家的网络卡顿，而废物 Moonrise 砍掉了这个功能
++            this.vanillaChunkSender.sendNextChunks(this.player);
++            // Kitin end
+         }
+ 
+         void add() {
+diff --git a/net/minecraft/server/network/ServerGamePacketListenerImpl.java b/net/minecraft/server/network/ServerGamePacketListenerImpl.java
+index f05d720d56918c117972b64267b2aef14bce6a23..37c026c4b6ede1950d4212ae4d2784c147f893ca 100644
+--- a/net/minecraft/server/network/ServerGamePacketListenerImpl.java
++++ b/net/minecraft/server/network/ServerGamePacketListenerImpl.java
+@@ -3743,6 +3743,12 @@ public class ServerGamePacketListenerImpl
+     public void handleChunkBatchReceived(ServerboundChunkBatchReceivedPacket packet) {
+         PacketUtils.ensureRunningOnSameThread(packet, this, this.player.level());
+         this.chunkSender.onChunkBatchReceivedByClient(packet.desiredChunksPerTick());
++        // Kitin start - Network_Reimplement-Vanilla-ACK-Based-Chunk-Sending-System
++        ca.spottedleaf.moonrise.patches.chunk_system.player.RegionizedPlayerChunkLoader.PlayerChunkLoaderData loader = ((ca.spottedleaf.moonrise.patches.chunk_system.player.ChunkSystemServerPlayer)this.player).moonrise$getChunkLoader();
++        if (loader != null) {
++            loader.vanillaChunkSender.onChunkBatchReceivedByClient(packet.desiredChunksPerTick());
++        }
++        // Kitin end
+     }
+ 
+     @Override
