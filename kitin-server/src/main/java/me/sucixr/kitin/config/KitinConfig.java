@@ -406,6 +406,7 @@ public class KitinConfig {
     public static volatile int highAltitudeVoidHeight = 114514;
     public static volatile boolean highAltitudeVoidDamagePlayers = false;
     public static volatile boolean highAltitudeVoidLogWarnings = true;
+    public static volatile boolean useSecureSeed = false;
     private static void safetySettings() {
         Set<Item> lazyChunkBarrierItems_tempItems = new HashSet<>(); // reload Folia安全
         List<String> lazyChunkBarrierItems_defaultItems = new ArrayList<>();
@@ -436,6 +437,8 @@ public class KitinConfig {
         highAltitudeVoidDamagePlayers = getBoolean("safety.high-altitude-void.damage-players", false);
         highAltitudeVoidLogWarnings = getBoolean("safety.high-altitude-void.log-warnings", true);
         // Kitin end
+        //
+        useSecureSeed = getBoolean("safety.use-secure-seed",false);
     }
 
 }
