@@ -69,6 +69,41 @@ index cef84ce2d1064b68a879993820fce32454b1fa2c..a48fe64b417db0e9fc7780617b853f76
          }
  
          void add() {
+diff --git a/net/minecraft/server/network/PlayerChunkSender.java b/net/minecraft/server/network/PlayerChunkSender.java
+index 644948d64791d0ffa4166375d0f4419f1ffa214a..294fbd4309c8f8cde444edc04b7e853c11d8472e 100644
+--- a/net/minecraft/server/network/PlayerChunkSender.java
++++ b/net/minecraft/server/network/PlayerChunkSender.java
+@@ -96,13 +96,20 @@ public class PlayerChunkSender {
+         level.debugSynchronizers().startTrackingChunk(packetListener.player, chunk.getPos());
+     }
+ 
++    // Kitin start - Network_Reimplement-Vanilla-ACK-Based-Chunk-Sending-System
++    // 计算曼哈顿距离 这里有个问题目前没解决:如果使用圆形，那会与moonrise的菱形冲突造成ACK机制速度奇慢，但是如果换成菱形，那弱网玩家慢速加载区块将不够智能(不会加载离玩家最近的区块)
++    private static int manhattanDistance(ChunkPos target, long chunkKey) {
++        return Math.abs(target.x - ChunkPos.getX(chunkKey)) + Math.abs(target.z - ChunkPos.getZ(chunkKey));
++    }
++    // Kitin end
++
+     private List<LevelChunk> collectChunksToSend(ChunkMap chunkMap, ChunkPos chunkPos) {
+         int floor = Mth.floor(this.batchQuota);
+         List<LevelChunk> list;
+         if (!this.memoryConnection && this.pendingChunks.size() > floor) {
+             list = this.pendingChunks
+                 .stream()
+-                .collect(Comparators.least(floor, Comparator.comparingInt(chunkPos::distanceSquared)))
++                .collect(Comparators.least(floor, Comparator.comparingInt(pos -> manhattanDistance(chunkPos, pos)))) // Kitin - Network_Reimplement-Vanilla-ACK-Based-Chunk-Sending-System use manhattan distance (optimized)
+                 .stream()
+                 .mapToLong(Long::longValue)
+                 .mapToObj(chunkMap::getChunkToSend)
+@@ -113,7 +120,7 @@ public class PlayerChunkSender {
+                 .longStream()
+                 .mapToObj(chunkMap::getChunkToSend)
+                 .filter(Objects::nonNull)
+-                .sorted(Comparator.comparingInt(levelChunk1 -> chunkPos.distanceSquared(levelChunk1.getPos())))
++                .sorted(Comparator.comparingInt(levelChunk1 -> manhattanDistance(chunkPos, levelChunk1.getPos().toLong()))) // Kitin - Network_Reimplement-Vanilla-ACK-Based-Chunk-Sending-System use manhattan distance (optimized)
+                 .toList();
+         }
+ 
 diff --git a/net/minecraft/server/network/ServerGamePacketListenerImpl.java b/net/minecraft/server/network/ServerGamePacketListenerImpl.java
 index f05d720d56918c117972b64267b2aef14bce6a23..37c026c4b6ede1950d4212ae4d2784c147f893ca 100644
 --- a/net/minecraft/server/network/ServerGamePacketListenerImpl.java
