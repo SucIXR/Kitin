@@ -277,7 +277,7 @@ public class KitinConfig {
     public static volatile int playerMinOptimizeThreshold = 50;
     public static volatile int globalMaxDelayTicks = 10;
     public static volatile int globalMaxPacketParticlesPerTick = 499;
-    
+    public static boolean useVanillaChunkSender = false;
     // Kitin start - Multi-port listening
     public static class ListenerConfig {
         public final String name;
@@ -298,6 +298,7 @@ public class KitinConfig {
     private static void networkSettings() {
         chunkLazyLoading = getBoolean("network.chunk-lazy-loading",true);
         //
+        useVanillaChunkSender = getBoolean("network.chunk-send.use-vanilla-chunk-sender", false);
         globalMaxChunkSendRate = getInt("network.chunk-send.global-max-chunk-send-rate", globalMaxChunkSendRate);
         globalChunkSendBurstFactor = getDouble("network.chunk-send.global-chunk-send-burst-factor", globalChunkSendBurstFactor);
 
