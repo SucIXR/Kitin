@@ -5,7 +5,7 @@ Subject: [PATCH] Network_globalMaxChunkSendRate
 
 
 diff --git a/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java b/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
-index a61285a2c83e0540ffd981cbaf40f6124d9e4218..8d47ab6c97dc3c6fa52e3490632deafea8af5bca 100644
+index 8c544157cd360cc2cb5c019a1bd456b5fd6b0946..3c7b15d53eed0e374e9ed3bf848e1f9b5283b14e 100644
 --- a/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
 +++ b/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
 @@ -303,16 +303,54 @@ public final class RegionizedPlayerChunkLoader {
@@ -65,7 +65,7 @@ index a61285a2c83e0540ffd981cbaf40f6124d9e4218..8d47ab6c97dc3c6fa52e3490632deafe
              loader.updateQueues(currTime);
          }
      }
-@@ -827,6 +865,11 @@ public final class RegionizedPlayerChunkLoader {
+@@ -830,6 +868,11 @@ public final class RegionizedPlayerChunkLoader {
              final int maxSendsThisTick = Math.min((int)this.chunkSendLimiter.takeAllocation(time, sendRate, maxSends), this.sendQueue.size());
              // we do not return sends that we took from the allocation back because we want to limit the max send rate, not target it
              for (int i = 0; i < maxSendsThisTick; ++i) {
