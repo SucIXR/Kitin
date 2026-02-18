@@ -5,82 +5,104 @@ Subject: [PATCH] Network_Reimplement-Vanilla-ACK-Based-Chunk-Sending-System
 
 
 diff --git a/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java b/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
-index cef84ce2d1064b68a879993820fce32454b1fa2c..a48fe64b417db0e9fc7780617b853f76c55e8184 100644
+index cef84ce2d1064b68a879993820fce32454b1fa2c..82e24dc2000f45c80bd11d500189435f93712ecc 100644
 --- a/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
 +++ b/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
-@@ -434,9 +434,18 @@ public final class RegionizedPlayerChunkLoader {
+@@ -434,6 +434,14 @@ public final class RegionizedPlayerChunkLoader {
  
          private volatile boolean removed;
  
 +        // Kitin start - Network_Reimplement-Vanilla-ACK-Based-Chunk-Sending-System
-+        // 引入原版发送器，让它来接管发包逻辑
-+        public final PlayerChunkSender vanillaChunkSender;
++        // 严格遵循 Vanilla 默认参数
++        private float desiredChunksPerTick = 9.0F; // Vanilla 默认值
++        private float batchQuota;
++        private int unacknowledgedBatches;
++        private int maxUnacknowledgedBatches = 10; // Vanilla 固定值
 +        // Kitin end
 +
          public PlayerChunkLoaderData(final ServerLevel world, final ServerPlayer player) {
              this.world = world;
              this.player = player;
+@@ -856,9 +864,28 @@ public final class RegionizedPlayerChunkLoader {
+             }
+ 
+             // try to pull sending chunks
+-            final long maxSends = Math.max(0L, Math.min(MAX_RATE, Integer.MAX_VALUE)); // note: no logic to track concurrent sends
+-            final int maxSendsThisTick = Math.min((int)this.chunkSendLimiter.takeAllocation(time, sendRate, maxSends), this.sendQueue.size());
++//            final long maxSends = Math.max(0L, Math.min(MAX_RATE, Integer.MAX_VALUE)); // note: no logic to track concurrent sends
++//            final int maxSendsThisTick = Math.min((int)this.chunkSendLimiter.takeAllocation(time, sendRate, maxSends), this.sendQueue.size()); // Kitin off Network_Reimplement-Vanilla-ACK-Based-Chunk-Sending-System
+             // we do not return sends that we took from the allocation back because we want to limit the max send rate, not target it
 +            // Kitin start - Network_Reimplement-Vanilla-ACK-Based-Chunk-Sending-System
-+            // 初始化原版发送器 (false 表示非内存连接)
-+            this.vanillaChunkSender = new PlayerChunkSender(false);
-+            // Kitin end
-         }
- 
-         private void flushDelayedTicketOps() {
-@@ -459,7 +468,13 @@ public final class RegionizedPlayerChunkLoader {
-                 final LevelChunk chunk = ((ChunkSystemLevel)this.world).moonrise$getFullChunkIfLoaded(chunkX, chunkZ);
- 
-                 PlatformHooks.get().onChunkWatch(this.world, chunk, this.player);
--                PlayerChunkSender.sendChunk(this.player.connection, this.world, chunk);
-+                // Kitin start - Network_Reimplement-Vanilla-ACK-Based-Chunk-Sending-System
-+                //PlayerChunkSender.sendChunk(this.player.connection, this.world, chunk); // Kitin off
-+                // 不再直接 connection.send()，而是放入 Vanilla 的缓冲池
-+                // 将区块加入 Vanilla Sender 的 pending 队列
-+                this.vanillaChunkSender.markChunkPendingToSend(chunk);
-+                // Kitin end
++            // 配额累积逻辑复刻 Vanilla: PlayerChunkSender.sendNextChunks)
++            // 注意：Moonrise 是每 Tick 调用一次 updateQueues，所以这里直接累加是正确的
++            if (this.unacknowledgedBatches < this.maxUnacknowledgedBatches) {
++                float f = Math.max(1.0F, this.desiredChunksPerTick);
++                this.batchQuota = Math.min(this.batchQuota + this.desiredChunksPerTick, f);
++            }
 +
-                 return;
-             }
-             throw new IllegalStateException();
-@@ -478,7 +493,13 @@ public final class RegionizedPlayerChunkLoader {
-             // Note: drop isAlive() check so that chunks properly unload client-side when the player dies
-             ((ChunkSystemChunkHolder)((ChunkSystemServerLevel)this.world).moonrise$getChunkTaskScheduler().chunkHolderManager
-                 .getChunkHolder(chunkX, chunkZ).vanillaChunkHolder).moonrise$removeReceivedChunk(this.player);
--            this.player.connection.send(new ClientboundForgetLevelChunkPacket(new ChunkPos(chunkX, chunkZ)));
-+            // Kitin start - Network_Reimplement-Vanilla-ACK-Based-Chunk-Sending-System
-+            //this.player.connection.send(new ClientboundForgetLevelChunkPacket(new ChunkPos(chunkX, chunkZ))); // Kitin off
-+            // 原版 dropChunk 会检查
-+            // 如果还在 pending 队列中，直接移除，不再发送以节省带宽。
-+            // 如果已经发送了，才发送 Forget 包。
-+            this.vanillaChunkSender.dropChunk(this.player, new ChunkPos(chunkX, chunkZ));
++            int maxSendsThisTick = 0;
++            if (this.unacknowledgedBatches < this.maxUnacknowledgedBatches && this.batchQuota >= 1.0F) {
++                maxSendsThisTick = net.minecraft.util.Mth.floor(this.batchQuota);
++                maxSendsThisTick = Math.min(maxSendsThisTick, this.sendQueue.size());
++            }
++
++            if (maxSendsThisTick > 0) {
++                this.unacknowledgedBatches++;
++                this.player.connection.send(net.minecraft.network.protocol.game.ClientboundChunkBatchStartPacket.INSTANCE);
++            }
 +            // Kitin end
-             // Paper start - PlayerChunkUnloadEvent
-             if (io.papermc.paper.event.packet.PlayerChunkUnloadEvent.getHandlerList().getRegisteredListeners().length > 0) {
-                 new io.papermc.paper.event.packet.PlayerChunkUnloadEvent(player.getBukkitEntity().getWorld().getChunkAt(new ChunkPos(chunkX, chunkZ).longKey), player.getBukkitEntity()).callEvent();
-@@ -893,6 +914,11 @@ public final class RegionizedPlayerChunkLoader {
+             for (int i = 0; i < maxSendsThisTick; ++i) {
+                 // Kitin - QoS globalMaxChunkSendRate
+                 if (!me.sucixr.kitin.network.qos.GlobalChunkLimiter.tryAcquire(this.player)) {
+@@ -892,9 +919,35 @@ public final class RegionizedPlayerChunkLoader {
+                 }
              }
  
-             this.flushDelayedTicketOps();
 +            // Kitin start - Network_Reimplement-Vanilla-ACK-Based-Chunk-Sending-System
-+            // 恢复原版ACK逻辑
-+            // 原版有ACK逻辑，可以动态控制玩家的网络卡顿，而废物 Moonrise 砍掉了这个功能
-+            this.vanillaChunkSender.sendNextChunks(this.player);
++            if (maxSendsThisTick > 0) {
++                this.player.connection.send(new net.minecraft.network.protocol.game.ClientboundChunkBatchFinishedPacket(maxSendsThisTick));
++                // 扣除 maxSendsThisTick，而不是实际发送的真实量，欺骗客户端防止ACK请求量低
++                this.batchQuota -= (float)maxSendsThisTick;
++            }
 +            // Kitin end
++
+             this.flushDelayedTicketOps();
          }
  
++        // Kitin start - Network_Reimplement-Vanilla-ACK-Based-Chunk-Sending-System
++        public void onChunkBatchReceived(float desiredRate) {
++            this.unacknowledgedBatches--;
++
++            // Paper的配置文件player-max-chunk-send-rate定义已修改，转译为vanilla发包逻辑
++            double paperConfigRate = PlatformHooks.get().configPlayerMaxSendRate();
++            float convertedLimit = (float) (paperConfigRate / 20.0);
++
++            this.desiredChunksPerTick = Double.isNaN((double)desiredRate) ? 0.01F : net.minecraft.util.Mth.clamp(desiredRate, 0.01F, convertedLimit);
++
++            if (this.unacknowledgedBatches == 0) {
++                this.batchQuota = 1.0F;
++            }
++
++            this.maxUnacknowledgedBatches = 10;
++        }
++        // Kitin end
++
          void add() {
+             TickThread.ensureTickThread(this.player, "Cannot add player asynchronously");
+             if (this.removed) {
 diff --git a/net/minecraft/server/network/ServerGamePacketListenerImpl.java b/net/minecraft/server/network/ServerGamePacketListenerImpl.java
-index f05d720d56918c117972b64267b2aef14bce6a23..37c026c4b6ede1950d4212ae4d2784c147f893ca 100644
+index f1aeb213c4f2a8b7dee45b259744b665ef1c9d4f..ead8d1409aed2b08c07753866039e83dbe1854f7 100644
 --- a/net/minecraft/server/network/ServerGamePacketListenerImpl.java
 +++ b/net/minecraft/server/network/ServerGamePacketListenerImpl.java
-@@ -3743,6 +3743,12 @@ public class ServerGamePacketListenerImpl
+@@ -3744,6 +3744,13 @@ public class ServerGamePacketListenerImpl
      public void handleChunkBatchReceived(ServerboundChunkBatchReceivedPacket packet) {
          PacketUtils.ensureRunningOnSameThread(packet, this, this.player.level());
          this.chunkSender.onChunkBatchReceivedByClient(packet.desiredChunksPerTick());
 +        // Kitin start - Network_Reimplement-Vanilla-ACK-Based-Chunk-Sending-System
-+        ca.spottedleaf.moonrise.patches.chunk_system.player.RegionizedPlayerChunkLoader.PlayerChunkLoaderData loader = ((ca.spottedleaf.moonrise.patches.chunk_system.player.ChunkSystemServerPlayer)this.player).moonrise$getChunkLoader();
++        ca.spottedleaf.moonrise.patches.chunk_system.player.RegionizedPlayerChunkLoader.PlayerChunkLoaderData loader =
++                ((ca.spottedleaf.moonrise.patches.chunk_system.player.ChunkSystemServerPlayer)this.player).moonrise$getChunkLoader();
 +        if (loader != null) {
-+            loader.vanillaChunkSender.onChunkBatchReceivedByClient(packet.desiredChunksPerTick());
++            loader.onChunkBatchReceived(packet.desiredChunksPerTick());
 +        }
 +        // Kitin end
      }
