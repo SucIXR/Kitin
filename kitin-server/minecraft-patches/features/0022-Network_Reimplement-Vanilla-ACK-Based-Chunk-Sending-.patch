@@ -5,7 +5,7 @@ Subject: [PATCH] Network_Reimplement-Vanilla-ACK-Based-Chunk-Sending-System
 
 
 diff --git a/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java b/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
-index cef84ce2d1064b68a879993820fce32454b1fa2c..d095f43ebd35d0f8da8813d14fdd2008acdbf861 100644
+index cef84ce2d1064b68a879993820fce32454b1fa2c..82e24dc2000f45c80bd11d500189435f93712ecc 100644
 --- a/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
 +++ b/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
 @@ -434,6 +434,14 @@ public final class RegionizedPlayerChunkLoader {
@@ -54,13 +54,14 @@ index cef84ce2d1064b68a879993820fce32454b1fa2c..d095f43ebd35d0f8da8813d14fdd2008
              for (int i = 0; i < maxSendsThisTick; ++i) {
                  // Kitin - QoS globalMaxChunkSendRate
                  if (!me.sucixr.kitin.network.qos.GlobalChunkLimiter.tryAcquire(this.player)) {
-@@ -892,9 +919,30 @@ public final class RegionizedPlayerChunkLoader {
+@@ -892,9 +919,35 @@ public final class RegionizedPlayerChunkLoader {
                  }
              }
  
 +            // Kitin start - Network_Reimplement-Vanilla-ACK-Based-Chunk-Sending-System
 +            if (maxSendsThisTick > 0) {
 +                this.player.connection.send(new net.minecraft.network.protocol.game.ClientboundChunkBatchFinishedPacket(maxSendsThisTick));
++                // 扣除 maxSendsThisTick，而不是实际发送的真实量，欺骗客户端防止ACK请求量低
 +                this.batchQuota -= (float)maxSendsThisTick;
 +            }
 +            // Kitin end
@@ -72,7 +73,11 @@ index cef84ce2d1064b68a879993820fce32454b1fa2c..d095f43ebd35d0f8da8813d14fdd2008
 +        public void onChunkBatchReceived(float desiredRate) {
 +            this.unacknowledgedBatches--;
 +
-+            this.desiredChunksPerTick = Double.isNaN((double)desiredRate) ? 0.01F : net.minecraft.util.Mth.clamp(desiredRate, 0.01F, 64.0F);
++            // Paper的配置文件player-max-chunk-send-rate定义已修改，转译为vanilla发包逻辑
++            double paperConfigRate = PlatformHooks.get().configPlayerMaxSendRate();
++            float convertedLimit = (float) (paperConfigRate / 20.0);
++
++            this.desiredChunksPerTick = Double.isNaN((double)desiredRate) ? 0.01F : net.minecraft.util.Mth.clamp(desiredRate, 0.01F, convertedLimit);
 +
 +            if (this.unacknowledgedBatches == 0) {
 +                this.batchQuota = 1.0F;
