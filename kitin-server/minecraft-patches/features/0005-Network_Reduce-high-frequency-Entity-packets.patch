@@ -5,7 +5,7 @@ Subject: [PATCH] Network_Reduce-high-frequency-Entity-packets
 
 
 diff --git a/net/minecraft/server/level/ServerEntity.java b/net/minecraft/server/level/ServerEntity.java
-index 3a817c92147bb78c60238f3ddc1644b721aed7a2..999003b18612327be6b340b89ba786adb58cd5a1 100644
+index 3a817c92147bb78c60238f3ddc1644b721aed7a2..f9e50e63432f4d2d37701357729fad307806083c 100644
 --- a/net/minecraft/server/level/ServerEntity.java
 +++ b/net/minecraft/server/level/ServerEntity.java
 @@ -97,7 +97,12 @@ public class ServerEntity {
@@ -34,7 +34,7 @@ index 3a817c92147bb78c60238f3ddc1644b721aed7a2..999003b18612327be6b340b89ba786ad
 +                boolean skipPos = false;
 +                double maxSpeedSqr = 65536.0; // viewDistance * 16.0 * 10
 +                if (
-+                        (this.entity instanceof net.minecraft.world.entity.item.PrimedTnt) && (this.entity.tickCount > 2) //TNT不是下落方块 前2tick不检测防止世吞漏尿
++                        (this.entity instanceof net.minecraft.world.entity.item.PrimedTnt) && (this.entity.tickCount > 10) //TNT不是下落方块 前10tick不检测防止TNT复制异常
 +                ){
 +                    boolean isImpact = d > 0.0025;
 +                    if (currentSpeedSqr > 0.01 && !isImpact) skipPos = true;
@@ -51,15 +51,16 @@ index 3a817c92147bb78c60238f3ddc1644b721aed7a2..999003b18612327be6b340b89ba786ad
                      || this.teleportDelay > 400
                      || this.wasRiding
 -                    || this.wasOnGround != this.entity.onGround()) {
-+                    || (this.wasOnGround != this.entity.onGround()&& !(this.entity instanceof AbstractMinecart || this.entity instanceof net.minecraft.world.entity.item.PrimedTnt))) { //Kitin 优化世吞矿车TNT发包
++                    || (this.wasOnGround != this.entity.onGround()&& !(this.entity instanceof AbstractMinecart))){// || this.entity instanceof net.minecraft.world.entity.item.PrimedTnt))) { //Kitin 优化世吞矿车TNT发包
                      this.wasOnGround = this.entity.onGround();
                      this.teleportDelay = 0;
 -                    packet = ClientboundEntityPositionSyncPacket.of(this.entity);
+-                    flag3 = true;
 +                    if (!skipPos) {
 +                        packet = ClientboundEntityPositionSyncPacket.of(this.entity); // Kitin - Network_Dont-send-high-speed-entity-packets
 +                        me.sucixr.kitin.other.debug.EntityPacketDebug.record(this.entity, "Sync", 60); // Kitin Debug  注入点 A: 强制同步包
++                        flag3 = true; // Kitin - Network_Dont-send-high-speed-entity-packets 确保落地后立即更新Sync
 +                    }
-                     flag3 = true;
                      flag4 = true;
                  } else if ((!flag2 || !flag) && !(this.entity instanceof AbstractArrow)) {
 -                    if (flag2) {
