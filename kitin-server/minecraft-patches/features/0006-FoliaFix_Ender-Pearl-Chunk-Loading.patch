@@ -5,7 +5,7 @@ Subject: [PATCH] FoliaFix_Ender-Pearl-Chunk-Loading
 
 
 diff --git a/net/minecraft/server/level/ServerPlayer.java b/net/minecraft/server/level/ServerPlayer.java
-index 9b0e4e0d0555dcaf1c4323dec7057235588877a0..fda4387cd19d23c1cef796a39d76f4f51cf8ca28 100644
+index 512997e6fc481589770364d069c62fe551fae556..a14690b1bbdef99107d59b19c17af9d5584005fd 100644
 --- a/net/minecraft/server/level/ServerPlayer.java
 +++ b/net/minecraft/server/level/ServerPlayer.java
 @@ -757,6 +757,10 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc

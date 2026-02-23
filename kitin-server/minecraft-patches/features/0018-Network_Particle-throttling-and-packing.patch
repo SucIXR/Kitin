@@ -5,7 +5,7 @@ Subject: [PATCH] Network_Particle-throttling-and-packing
 
 
 diff --git a/net/minecraft/server/network/ServerGamePacketListenerImpl.java b/net/minecraft/server/network/ServerGamePacketListenerImpl.java
-index 8fb4c7c7d58a7e78a85f3147b9a7ac7af9711fd1..f05d720d56918c117972b64267b2aef14bce6a23 100644
+index bdd3062d0e2cca647c749259c8d497d05f7fed86..f1aeb213c4f2a8b7dee45b259744b665ef1c9d4f 100644
 --- a/net/minecraft/server/network/ServerGamePacketListenerImpl.java
 +++ b/net/minecraft/server/network/ServerGamePacketListenerImpl.java
 @@ -27,6 +27,7 @@ import java.util.function.BiFunction;

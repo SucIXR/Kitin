@@ -63,6 +63,14 @@
      implementation("ca.spottedleaf:concurrentutil:0.0.8")
      implementation("org.jline:jline-terminal-ffm:3.27.1") // use ffm on java 22+
      implementation("org.jline:jline-terminal-jni:3.27.1") // fall back to jni on java 21
+@@ -173,6 +_,7 @@
+         isTransitive = false
+     }
+     implementation("io.netty:netty-codec-haproxy:4.2.7.Final") // Add support for proxy protocol
++    implementation("io.netty:netty-transport-native-io_uring:4.2.7.Final") // ModernNetty - io_uring transport
+     implementation("org.apache.logging.log4j:log4j-iostreams:2.24.1")
+     implementation("org.ow2.asm:asm-commons:9.8")
+     implementation("org.spongepowered:configurate-yaml:4.2.0")
 @@ -207,7 +_,8 @@
  
      // Spark
