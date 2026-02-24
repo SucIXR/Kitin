@@ -1,0 +1,20 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: SucIXR <sasasa123456@foxmail.com>
+Date: Tue, 24 Feb 2026 23:54:17 +0800
+Subject: [PATCH] 
+ FoliaFix_ArrayIndexOutOfBoundsException-in-TransientCraftingContainer
+
+
+diff --git a/net/minecraft/world/inventory/TransientCraftingContainer.java b/net/minecraft/world/inventory/TransientCraftingContainer.java
+index 62e77f66a1ee569ec0ed2b41b218f32e12e8fab1..607ff15b049fcf1b32c06892e23c3b3b69824ed6 100644
+--- a/net/minecraft/world/inventory/TransientCraftingContainer.java
++++ b/net/minecraft/world/inventory/TransientCraftingContainer.java
+@@ -14,7 +14,7 @@ public class TransientCraftingContainer implements CraftingContainer {
+     private final AbstractContainerMenu menu;
+ 
+     // CraftBukkit start - add fields
+-    public List<org.bukkit.entity.HumanEntity> transaction = new java.util.ArrayList<>();
++    public List<org.bukkit.entity.HumanEntity> transaction = new java.util.concurrent.CopyOnWriteArrayList<>(); // Kitin FoliaFix_ArrayIndexOutOfBoundsException-in-TransientCraftingContainer
+     private net.minecraft.world.item.crafting.RecipeHolder<net.minecraft.world.item.crafting.CraftingRecipe> currentRecipe;
+     public net.minecraft.world.Container resultInventory;
+     private Player owner;

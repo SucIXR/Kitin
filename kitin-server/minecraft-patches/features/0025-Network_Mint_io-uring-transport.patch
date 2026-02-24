@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
-From: Bacteriawa <A3167717663@hotmail.com>
-Date: Mon, 23 Feb 2026 23:14:02 +0800
-Subject: [PATCH] Mint: io_uring transport
+From: SucIXR <sasasa123456@foxmail.com>
+Date: Tue, 24 Feb 2026 23:49:14 +0800
+Subject: [PATCH] Network_Mint_io uring transport
 
 add io_uring event loop group and channel selection for remote connections
 The IOUring transmission feature is only available on Linux platforms with kernel versions greater than 5.1
