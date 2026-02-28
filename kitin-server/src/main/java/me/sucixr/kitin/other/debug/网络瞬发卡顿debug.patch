@@ -1,0 +1,174 @@
+Subject: [PATCH] 网络瞬发卡顿debug
+---
+Index: net/minecraft/server/network/ServerGamePacketListenerImpl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/net/minecraft/server/network/ServerGamePacketListenerImpl.java b/net/minecraft/server/network/ServerGamePacketListenerImpl.java
+--- a/net/minecraft/server/network/ServerGamePacketListenerImpl.java	(revision 5db5e6cfaa44713e1ae20979863d478e8e0c68bd)
++++ b/net/minecraft/server/network/ServerGamePacketListenerImpl.java	(date 1772209021591)
+@@ -329,10 +329,27 @@
+     public final Long disconnectTicketId = Long.valueOf(DISCONNECT_TICKET_ID_GENERATOR.getAndIncrement());
+     // Folia end - region threading
+ 
++    // Kitin start - Latency Storm Debugger
++    private static long kitin$lastLatencyLogTime = 0;
++    // Kitin end
++
+     // Kitin start - ParticleOptimizer
+     private final ParticleOptimizer kitin$particleOptimizer;
+     @Override
+     public void send(Packet<?> packet) {
++        // Kitin start - Latency Storm Debugger
++        if (packet instanceof ClientboundPlayerInfoUpdatePacket infoPacket) {
++            // 检查是不是 Ping 值更新包
++            if (infoPacket.actions().contains(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LATENCY)) {
++                long now = System.currentTimeMillis();
++                // 限流：1秒内只打印一次，防止 120 个假人同时收到包时刷爆控制台
++                if (now - kitin$lastLatencyLogTime > 1000) {
++                    kitin$lastLatencyLogTime = now;
++                    LOGGER.info("====== [Kitin Radar] 全局 Ping (UPDATE_LATENCY) 广播触发! ======");
++                }
++            }
++        }
++        // Kitin end
+         if (this.kitin$particleOptimizer.handleSend(packet, this)) {
+             return;
+         }
+Index: net/minecraft/network/Connection.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/net/minecraft/network/Connection.java b/net/minecraft/network/Connection.java
+--- a/net/minecraft/network/Connection.java	(revision 5db5e6cfaa44713e1ae20979863d478e8e0c68bd)
++++ b/net/minecraft/network/Connection.java	(date 1772216516734)
+@@ -480,12 +480,47 @@
+         }
+     }
+ 
++    // Kitin: 静态全局锁，用于 Netty 探针限流
++    private static volatile long lastSniper2LogTime = 0;
++    // Kitin: 新增！用于在卡顿瞬间，连续抓取多个包的配额计数器
++    private static volatile int burstCaptureCount = 0;
++
+     private void sendPacket(Packet<?> packet, @Nullable ChannelFutureListener sendListener, boolean flush) {
+         this.sentPackets++;
++        final long submitTime = System.nanoTime();
++
+         if (this.channel.eventLoop().inEventLoop()) {
+             this.doSendPacket(packet, sendListener, flush);
+         } else {
+-            this.channel.eventLoop().execute(() -> this.doSendPacket(packet, sendListener, flush));
++            this.channel.eventLoop().execute(() -> {
++                long delayMs = (System.nanoTime() - submitTime) / 1_000_000L;
++
++                // --- Kitin Hook: 基于延迟触发的精准连抓 开始 ---
++                if (delayMs > 100) {
++                    long now = System.currentTimeMillis();
++                    // 限流：每 2 秒最多触发一次卡顿报警
++                    if (now - lastSniper2LogTime > 2000) {
++                        lastSniper2LogTime = now;
++                        burstCaptureCount = 5; // 🎯 核心逻辑：一旦发现卡顿，立刻授权解剖队列里紧挨着的 5 个元数据包！
++                        LOGGER.warn("🚨 [Kitin Sniper 2] Netty假死触发! 延迟: {}ms | 开启连抓模式...", delayMs);
++                    }
++                }
++
++                // 如果处于连抓配额期，并且当前包刚好是元数据包，立刻扒开它！
++                if (burstCaptureCount > 0 && packet instanceof net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket dataPacket) {
++                    burstCaptureCount--; // 消耗一次抓取配额
++                    StringBuilder ids = new StringBuilder();
++                    if (dataPacket.packedItems() != null) {
++                        for (net.minecraft.network.syncher.SynchedEntityData.DataValue<?> value : dataPacket.packedItems()) {
++                            ids.append(value.id()).append(" ");
++                        }
++                    }
++                    LOGGER.warn("   🕵️ [Kitin Burst X-Ray] 堵塞在队列中的元数据 ID: [{}]", ids.toString().trim());
++                }
++                // --- Kitin Hook: 基于延迟触发的精准连抓 结束 ---
++
++                this.doSendPacket(packet, sendListener, flush);
++            });
+         }
+     }
+ 
+@@ -1030,11 +1065,28 @@
+ 
+     private static final class PacketSendAction extends WrappedConsumer {
+         private final Packet<?> packet;
++        // Kitin: 静态全局锁，防止日志雪崩卡死线程
++        private static volatile long lastSniper1LogTime = 0;
+ 
+         private PacketSendAction(final Packet<?> packet, @Nullable final ChannelFutureListener channelFutureListener, final boolean flush) {
+-            super(connection -> connection.sendPacket(packet, channelFutureListener, flush));
++            super(createConsumer(packet, channelFutureListener, flush, System.nanoTime()));
+             this.packet = packet;
+         }
++
++        private static Consumer<Connection> createConsumer(Packet<?> packet, @Nullable ChannelFutureListener listener, boolean flush, long enqueueTime) {
++            return connection -> {
++                long waitMs = (System.nanoTime() - enqueueTime) / 1_000_000L;
++                if (waitMs > 100) {
++                    long now = System.currentTimeMillis();
++                    // 核心限流：每 2 秒最多只打印一次警告
++                    if (now - lastSniper1LogTime > 2000) {
++                        lastSniper1LogTime = now;
++                        LOGGER.warn("🚨 [Kitin Sniper 1] Folia队列大堵塞! 耗时: {}ms | 样本包: {}", waitMs, packet.getClass().getSimpleName());
++                    }
++                }
++                connection.sendPacket(packet, listener, flush);
++            };
++        }
+     }
+     // Paper end - Optimize network
+ }
+Index: net/minecraft/network/syncher/SynchedEntityData.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/net/minecraft/network/syncher/SynchedEntityData.java b/net/minecraft/network/syncher/SynchedEntityData.java
+--- a/net/minecraft/network/syncher/SynchedEntityData.java	(revision 5db5e6cfaa44713e1ae20979863d478e8e0c68bd)
++++ b/net/minecraft/network/syncher/SynchedEntityData.java	(date 1772249205532)
+@@ -21,6 +21,9 @@
+     private final SynchedEntityData.DataItem<?>[] itemsById;
+     private boolean isDirty;
+ 
++    // --- Kitin: 专门抓捕修改 ID 10 的限流锁 ---
++    private static volatile long kitin$lastId10TraceTime = 0;
++
+     SynchedEntityData(SyncedDataHolder entity, SynchedEntityData.DataItem<?>[] itemsById) {
+         this.entity = entity;
+         this.itemsById = itemsById;
+@@ -58,12 +61,30 @@
+     }
+ 
+     public <T> void set(EntityDataAccessor<T> key, T value, boolean force) {
++        // --- Kitin Hook: 临时物理切断 ID 10 (药水粒子) 的同步总闸 ---
++        if (key.id() == 10) {
++            return; // 直接拦截！不赋值，不标记 Dirty，绝对不引发广播发包！
++        }
++        // --- Kitin Hook 结束 ---
+         SynchedEntityData.DataItem<T> item = this.getItem(key);
+         if (force || ObjectUtils.notEqual(value, item.getValue())) {
+             item.setValue(value);
+             this.entity.onSyncedDataUpdated(key);
+             item.setDirty(true);
+             this.isDirty = true;
++
++            // --- Kitin Hook: 堆栈抓捕 开始 ---
++            if (key.id() == 10) {
++                long now = System.currentTimeMillis();
++                // 限流：每 5 秒只打印一次异常堆栈，防止卡服
++                if (now - kitin$lastId10TraceTime > 5000) {
++                    kitin$lastId10TraceTime = now;
++                    // 生成假异常以获取当前堆栈
++                    RuntimeException trace = new RuntimeException("Kitin Stack Trace Snipe");
++                    LOGGER.warn("🚨 [Kitin Truth] 捕获到元数据 ID [10] 被修改! 正在输出罪魁祸首的调用堆栈:", trace);
++                }
++            }
++            // --- Kitin Hook 结束 ---
+         }
+     }
+ 
