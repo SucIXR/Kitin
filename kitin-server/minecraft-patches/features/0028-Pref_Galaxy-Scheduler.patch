@@ -1,0 +1,157 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: SucIXR <sasasa123456@foxmail.com>
+Date: Wed, 4 Mar 2026 21:42:17 +0800
+Subject: [PATCH] Pref_Galaxy-Scheduler
+
+
+diff --git a/io/papermc/paper/threadedregions/TickRegionScheduler.java b/io/papermc/paper/threadedregions/TickRegionScheduler.java
+index 439c5a222fcf51c9dc5bfef9cdb23f419fffc28c..e2d6efacef29490d02819010c8df7eaa79880df1 100644
+--- a/io/papermc/paper/threadedregions/TickRegionScheduler.java
++++ b/io/papermc/paper/threadedregions/TickRegionScheduler.java
+@@ -53,6 +53,7 @@ public final class TickRegionScheduler {
+ 
+     public static enum SchedulerType {
+         EDF,
++        GALAXY, // Kitin Galaxy Scheduler
+         WORK_STEALING;
+     }
+ 
+@@ -77,6 +78,12 @@ public final class TickRegionScheduler {
+                 this.scheduler = new EDFSchedulerThreadPool(initialThreads, threadFactory);
+                 break;
+             }
++            // Kitin start - Kitin Galaxy Scheduler
++            case GALAXY: {
++                this.scheduler = new me.sucixr.kitin.performance.scheduler.galaxy.core.GalaxySchedulerThreadPool(initialThreads, threadFactory);
++                break;
++            }
++            // Kitin end
+             case WORK_STEALING: {
+                 this.scheduler = new StealingScheduledThreadPool(
+                         threadFactory, MoonriseConstants.NUMA_ENABLE ? OSNuma.getNativeInstance() : OSNuma.NoOp.INSTANCE
+@@ -94,6 +101,12 @@ public final class TickRegionScheduler {
+         if (this.scheduler instanceof EDFSchedulerThreadPool edfSchedulerThreadPool) {
+             edfSchedulerThreadPool.start();
+         }
++        // Kitin start - Kitin Galaxy Scheduler
++        if (this.scheduler instanceof me.sucixr.kitin.performance.scheduler.galaxy.core.GalaxySchedulerThreadPool galaxyPool) {
++            galaxyPool.start();
++        }
++        me.sucixr.kitin.performance.scheduler.galaxy.GalaxyObservatory.ignitePhysicsEngine();
++        // Kitin end
+     }
+ 
+     public void setThreads(final int threads) {
+diff --git a/net/minecraft/network/Connection.java b/net/minecraft/network/Connection.java
+index c26e81b07f1ea6d0820147da35cc8555fd83f75c..29ec60b6d89344e10ab5a47e178a79ee95269572 100644
+--- a/net/minecraft/network/Connection.java
++++ b/net/minecraft/network/Connection.java
+@@ -65,7 +65,8 @@ public class Connection extends SimpleChannelInboundHandler<Packet<?>> {
+     private static final ProtocolInfo<ServerHandshakePacketListener> INITIAL_PROTOCOL = HandshakeProtocols.SERVERBOUND;
+     private final PacketFlow receiving;
+     private volatile boolean sendLoginDisconnect = true;
+-    private final Queue<WrappedConsumer> pendingActions = new ca.spottedleaf.concurrentutil.collection.MultiThreadedQueue<>(); // Paper - Optimize network // Folia - region threading - connection fixes
++    //private final Queue<WrappedConsumer> pendingActions = new ca.spottedleaf.concurrentutil.collection.MultiThreadedQueue<>(); // Paper - Optimize network // Folia - region threading - connection fixes // Kitin off
++    private final me.sucixr.kitin.performance.scheduler.galaxy.StellarDispatchQueue<WrappedConsumer> pendingActions = new me.sucixr.kitin.performance.scheduler.galaxy.StellarDispatchQueue<>(); // Kitin Galaxy Scheduler
+     public Channel channel;
+     public SocketAddress address;
+     // Spigot start
+@@ -451,7 +452,12 @@ public class Connection extends SimpleChannelInboundHandler<Packet<?>> {
+             final java.util.List<Packet<?>> extraPackets = InnerUtil.buildExtraPackets(packet);
+             final boolean hasExtraPackets = extraPackets != null && !extraPackets.isEmpty();
+             if (!hasExtraPackets) {
+-                this.pendingActions.add(new PacketSendAction(packet, sendListener, flush));
++                //this.pendingActions.add(new PacketSendAction(packet, sendListener, flush)); // Kitin off
++                // Kitin start - Kitin Galaxy Scheduler
++                me.sucixr.kitin.performance.scheduler.galaxy.StellarOrbit orbit = me.sucixr.kitin.performance.scheduler.galaxy.StellarOrbit.classify(packet);
++                // 传入 this.channel.eventLoop() 作为目标星体
++                this.pendingActions.offer(new PacketSendAction(packet, sendListener, flush), orbit, this.channel.eventLoop());
++                // Kitin end
+             } else {
+                 final java.util.List<PacketSendAction> actions = new java.util.ArrayList<>(1 + extraPackets.size());
+                 actions.add(new PacketSendAction(packet, null, false)); // Delay the future listener until the end of the extra packets
+@@ -462,7 +468,14 @@ public class Connection extends SimpleChannelInboundHandler<Packet<?>> {
+                     actions.add(new PacketSendAction(extraPacket, end ? sendListener : null, end)); // Append listener to the end
+                 }
+ 
+-                this.pendingActions.addAll(actions);
++                //this.pendingActions.addAll(actions); // Kitin off
++                // Kitin start - Kitin Galaxy Scheduler 优化：对子包也进行精准的物理定级入轨
++                for (PacketSendAction action : actions) {
++                    me.sucixr.kitin.performance.scheduler.galaxy.StellarOrbit subOrbit =
++                            me.sucixr.kitin.performance.scheduler.galaxy.StellarOrbit.classify(action.packet);
++                    this.pendingActions.offer(action, subOrbit,this.channel.eventLoop());
++                }
++                // Kitin end
+             }
+ 
+             this.flushQueue();
+@@ -561,6 +574,7 @@ public class Connection extends SimpleChannelInboundHandler<Packet<?>> {
+         if (!this.isConnected()) {
+             return true;
+         }
++        java.util.List<WrappedConsumer> quantumBatch = new java.util.ArrayList<>(); // Kitin Galaxy Scheduler 量子纠缠缓冲区！用于收集这一瞬间所有的发包动作
+ 
+         while (this.canWritePackets()) {
+             final boolean set = this.flushingQueue.getAndSet(true);
+@@ -569,9 +583,11 @@ public class Connection extends SimpleChannelInboundHandler<Packet<?>> {
+                     // we didn't acquire the lock, break
+                     return false;
+                 }
+-
+-                ca.spottedleaf.concurrentutil.collection.MultiThreadedQueue<WrappedConsumer> queue =
+-                    (ca.spottedleaf.concurrentutil.collection.MultiThreadedQueue<WrappedConsumer>)this.pendingActions;
++                // Kitin start - Kitin Galaxy Scheduler
++//                ca.spottedleaf.concurrentutil.collection.MultiThreadedQueue<WrappedConsumer> queue =
++//                    (ca.spottedleaf.concurrentutil.collection.MultiThreadedQueue<WrappedConsumer>)this.pendingActions;
++                me.sucixr.kitin.performance.scheduler.galaxy.StellarDispatchQueue<WrappedConsumer> queue = this.pendingActions;
++                // Kitin end
+                 WrappedConsumer holder;
+                 for (;;) {
+                     // synchronise so that queue clears appear atomic
+@@ -582,7 +598,8 @@ public class Connection extends SimpleChannelInboundHandler<Packet<?>> {
+                         break;
+                     }
+ 
+-                    holder.accept(this);
++                    //holder.accept(this); // Kitin off
++                    quantumBatch.add(holder); // Kitin Galaxy Scheduler 不再立刻执行 (action.accept) 产生 Netty 碎片任务,而是将它们收集到量子缓冲区中！
+                 }
+ 
+             } finally {
+@@ -591,6 +608,27 @@ public class Connection extends SimpleChannelInboundHandler<Packet<?>> {
+                 }
+             }
+         }
++        // Kitin start - Kitin Galaxy Scheduler 量子纠缠倾泻
++        if (!quantumBatch.isEmpty()) {
++            if (this.channel.eventLoop().inEventLoop()) {
++                // 如果当前碰巧已经在 Netty 线程里，直接光速循环执行并冲刷
++                for (WrappedConsumer action : quantumBatch) {
++                    action.accept(this);
++                }
++                this.channel.flush();
++            } else {
++                // 在 Folia 区域线将一大坨包，封装成 1个 Runnable 提交给 Netty
++                this.channel.eventLoop().execute(() -> {
++                    for (WrappedConsumer action : quantumBatch) {
++                        // 在 EventLoop 内部执行，底层会自动转为极其高效的纯净 Write
++                        action.accept(this);
++                    }
++                    // 一大坨包写完后，只触发一次昂贵的系统调用 (Flush)
++                    this.channel.flush();
++                });
++            }
++        }
++        // Kitin end
+ 
+         return true;
+         // Folia end - region threading - connection fixes
+@@ -601,6 +639,7 @@ public class Connection extends SimpleChannelInboundHandler<Packet<?>> {
+     private static int joinAttemptsThisTick; // Paper - Buffer joins to world
+     private static int currTick; // Paper - Buffer joins to world
+     public void tick() {
++        this.pendingActions.resetBudget(); // Kitin Galaxy Scheduler
+         this.flushQueue();
+         // Folia - this is broken
+         // Folia start - region threading

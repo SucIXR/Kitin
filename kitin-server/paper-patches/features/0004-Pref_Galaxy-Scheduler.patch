@@ -1,0 +1,31 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: SucIXR <sasasa123456@foxmail.com>
+Date: Wed, 4 Mar 2026 21:42:18 +0800
+Subject: [PATCH] Pref_Galaxy-Scheduler
+
+
+diff --git a/src/main/java/io/papermc/paper/configuration/GlobalConfiguration.java b/src/main/java/io/papermc/paper/configuration/GlobalConfiguration.java
+index 8835cf8d9d1fb3b4930a50d002e0b426b155f4ac..61b3b6ad676f4f7b687b9831f3b946b138839ff6 100644
+--- a/src/main/java/io/papermc/paper/configuration/GlobalConfiguration.java
++++ b/src/main/java/io/papermc/paper/configuration/GlobalConfiguration.java
+@@ -410,10 +410,19 @@ public class GlobalConfiguration extends ConfigurationPart {
+ 
+         public int threads = -1;
+         public int gridExponent = 4;
+-        public io.papermc.paper.threadedregions.TickRegionScheduler.SchedulerType scheduler = io.papermc.paper.threadedregions.TickRegionScheduler.SchedulerType.EDF;
++        public io.papermc.paper.threadedregions.TickRegionScheduler.SchedulerType scheduler = io.papermc.paper.threadedregions.TickRegionScheduler.SchedulerType.GALAXY; // Kitin Galaxy Scheduler
++        public boolean alwaysUseKitinGalaxyScheduler = true; // Kitin Galaxy Scheduler
+ 
+         @PostProcess
+         public void postProcess() {
++            // Kitin start - Kitin Galaxy Scheduler
++            if (this.alwaysUseKitinGalaxyScheduler) {
++                if (this.scheduler != io.papermc.paper.threadedregions.TickRegionScheduler.SchedulerType.GALAXY) {
++                    LOGGER.warn("Default use Kitin Galaxy Scheduler, If you want to switch to another scheduler, please modify it in paper-global config");
++                    this.scheduler = io.papermc.paper.threadedregions.TickRegionScheduler.SchedulerType.GALAXY;
++                }
++            }
++            // Kitin end
+             io.papermc.paper.threadedregions.TickRegions.init(this);
+         }
+     }
