@@ -5,7 +5,7 @@ Subject: [PATCH] Network_Staggered-Metadata-Sync
 
 
 diff --git a/net/minecraft/network/syncher/SynchedEntityData.java b/net/minecraft/network/syncher/SynchedEntityData.java
-index 5d74c3e9938e5c6cc96f42b6df255e21aa925ed9..470d02c30523056eb0f912948a3c48c20a6b5804 100644
+index 5d74c3e9938e5c6cc96f42b6df255e21aa925ed9..28a9f5365da26075a3c02514077dba105e24ed29 100644
 --- a/net/minecraft/network/syncher/SynchedEntityData.java
 +++ b/net/minecraft/network/syncher/SynchedEntityData.java
 @@ -260,4 +260,21 @@ public class SynchedEntityData {
@@ -13,25 +13,25 @@ index 5d74c3e9938e5c6cc96f42b6df255e21aa925ed9..470d02c30523056eb0f912948a3c48c2
          }
      }
 +
-+    // Kitin start - Network_Staggered-Metadata-Sync
-+    public boolean kitin$hasCriticalDirtyData() {
-+        if (!this.isDirty) return false;
-+        boolean isPlayer = this.entity instanceof net.minecraft.world.entity.player.Player;
-+        for (SynchedEntityData.DataItem<?> dataItem : this.itemsById) {
-+            if (dataItem.isDirty()) {
-+                int id = dataItem.getAccessor().id();
-+                if (isPlayer && (id == 10 || id == 17)) {
-+                    continue;
-+                }
-+                return true;
-+            }
-+        }
-+        return false;
-+    }
-+    // Kitin end
++//    // Kitin start - Network_Staggered-Metadata-Sync
++//    public boolean kitin$hasCriticalDirtyData() {
++//        if (!this.isDirty) return false;
++//        boolean isPlayer = this.entity instanceof net.minecraft.world.entity.player.Player;
++//        for (SynchedEntityData.DataItem<?> dataItem : this.itemsById) {
++//            if (dataItem.isDirty()) {
++//                int id = dataItem.getAccessor().id();
++//                if (isPlayer && (id == 10 || id == 17)) {
++//                    continue;
++//                }
++//                return true;
++//            }
++//        }
++//        return false;
++//    }
++//    // Kitin end
  }
 diff --git a/net/minecraft/server/level/ServerEntity.java b/net/minecraft/server/level/ServerEntity.java
-index f9e50e63432f4d2d37701357729fad307806083c..e003b88b5dc8dcfe836eda16b153606cc501a507 100644
+index f9e50e63432f4d2d37701357729fad307806083c..b91fc7a2bcde5d010f0f3bdbfe1c608b0658b6d2 100644
 --- a/net/minecraft/server/level/ServerEntity.java
 +++ b/net/minecraft/server/level/ServerEntity.java
 @@ -431,6 +431,17 @@ public class ServerEntity {
@@ -39,15 +39,15 @@ index f9e50e63432f4d2d37701357729fad307806083c..e003b88b5dc8dcfe836eda16b153606c
          SynchedEntityData entityData = this.entity.getEntityData();
          List<SynchedEntityData.DataValue<?>> list = entityData.packDirty();
 +
-+        // Kitin start - Network_Staggered-Metadata-Sync
-+        if (!entityData.isDirty()) {
-+            return;
-+        }
-+        boolean isStaggerTick = (this.tickCount + this.entity.getId()) % 20 == 0;
-+        if (!isStaggerTick && !entityData.kitin$hasCriticalDirtyData()) {
-+            return;
-+        }
-+        // Kitin end
++//        // Kitin start - Network_Staggered-Metadata-Sync
++//        if (!entityData.isDirty()) {
++//            return;
++//        }
++//        boolean isStaggerTick = (this.tickCount + this.entity.getId()) % 20 == 0;
++//        if (!isStaggerTick && !entityData.kitin$hasCriticalDirtyData()) {
++//            return;
++//        }
++//        // Kitin end
 +
          if (list != null) {
              this.trackedDataValues = entityData.getNonDefaultValues();
