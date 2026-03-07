@@ -14,7 +14,12 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 
 /**
- * Kitin Pure GALAXY Scheduler (纯净版银河调度器)
+ * Kitin GALAXY Scheduler
+ * <p>
+ * 遵循天体物理与计算机底层的绝对同构：
+ * 1. 万有引力 (Cache Affinity): O(1) 哈希绑核，L3 缓存命中率极值化。
+ * 2. 波粒二象 (Wave-Particle): runTick 与 runTasks 的无锁时空分离，光速发包。
+ * 3. 洛希跃迁 (Roche Stealing): 基于 64位掩码矩阵 (Bit-Scan) 的 O(1) 极速工作窃取。
  */
 public class GalaxySchedulerThreadPool extends Scheduler {
     private static final Logger LOGGER = LogUtils.getLogger();
@@ -106,7 +111,6 @@ public class GalaxySchedulerThreadPool extends Scheduler {
         private final GalaxySchedulerThreadPool pool;
 
         public final PriorityBlockingQueue<SchedulableTick> localOrbit = new PriorityBlockingQueue<>(11, (t1, t2) -> {
-            // 跳板类调用
             return Long.compare(GalaxyTaskAccessor.getScheduledStart(t1), GalaxyTaskAccessor.getScheduledStart(t2));
         });
 
@@ -176,7 +180,7 @@ public class GalaxySchedulerThreadPool extends Scheduler {
                 }
             } catch (Throwable t) {
                 state.state.set(GalaxyTaskState.STATE_IDLE);
-                LOGGER.error("[Kitin Galaxy] Cosmic anomaly in orbital calculation!", t);
+                LOGGER.error("[Kitin Galaxy Scheduler] Unhandled exception during region task execution", t);
             }
         }
 
@@ -214,7 +218,6 @@ public class GalaxySchedulerThreadPool extends Scheduler {
     }
 
     private static GalaxyTaskState getOrInitializeState(SchedulableTick task) {
-        // 利用跳板类读取
         Object rawState = GalaxyTaskAccessor.getState(task);
         if (rawState instanceof GalaxyTaskState) {
             return (GalaxyTaskState) rawState;
@@ -225,7 +228,6 @@ public class GalaxySchedulerThreadPool extends Scheduler {
                 return (GalaxyTaskState) rawState;
             }
             GalaxyTaskState newState = new GalaxyTaskState();
-            // 利用跳板类写入
             GalaxyTaskAccessor.setState(task, newState);
             return newState;
         }
