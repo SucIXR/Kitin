@@ -28,13 +28,19 @@ public class GalaxySchedulerThreadPool extends Scheduler {
     private final Thread[] threads;
     private final GalaxyTickRunner[] runners;
 
-    private final AtomicLong overloadedStarsMask = new AtomicLong(0);
+    private final OverloadMatrix matrix;
     private volatile boolean halted = false;
 
     public GalaxySchedulerThreadPool(int threads, ThreadFactory threadFactory) {
         this.threadCount = Math.max(1, threads);
         this.threads = new Thread[this.threadCount];
         this.runners = new GalaxyTickRunner[this.threadCount];
+
+        if (this.threadCount <= 64) {
+            this.matrix = new SingleLongMatrix();
+        } else {
+            this.matrix = new MultiLongMatrix(this.threadCount);
+        }
 
         for (int i = 0; i < this.threadCount; i++) {
             this.runners[i] = new GalaxyTickRunner(i, this);
@@ -96,16 +102,6 @@ public class GalaxySchedulerThreadPool extends Scheduler {
         return false;
     }
 
-    private void markOverloaded(int id) {
-        long bit = 1L << id;
-        this.overloadedStarsMask.updateAndGet(mask -> mask | bit);
-    }
-
-    private void clearOverloaded(int id) {
-        long bit = 1L << id;
-        this.overloadedStarsMask.updateAndGet(mask -> mask & ~bit);
-    }
-
     public static class GalaxyTickRunner implements Runnable {
         private final int id;
         private final GalaxySchedulerThreadPool pool;
@@ -130,9 +126,9 @@ public class GalaxySchedulerThreadPool extends Scheduler {
                     long delay = now - sched;
 
                     if (delay > 2_000_000L) {
-                        this.pool.markOverloaded(this.id);
+                        this.pool.matrix.markOverloaded(this.id);
                     } else {
-                        this.pool.clearOverloaded(this.id);
+                        this.pool.matrix.clearOverloaded(this.id);
                     }
 
                     if (now >= sched) {
@@ -149,7 +145,7 @@ public class GalaxySchedulerThreadPool extends Scheduler {
                         }
                     }
                 } else {
-                    this.pool.clearOverloaded(this.id);
+                    this.pool.matrix.clearOverloaded(this.id);
                     SchedulableTick stolen = this.stealFromMatrix();
                     if (stolen != null) {
                         this.executeTask(stolen, true);
@@ -185,24 +181,20 @@ public class GalaxySchedulerThreadPool extends Scheduler {
         }
 
         private SchedulableTick stealFromMatrix() {
-            long mask = this.pool.overloadedStarsMask.get();
-            if (mask == 0) return null;
+            int targetId = this.pool.matrix.findTarget(this.id, this.pool.threadCount);
+            if (targetId == -1) return null;
 
-            int targetId = Long.numberOfTrailingZeros(mask);
+            GalaxyTickRunner target = this.pool.runners[targetId];
+            SchedulableTick stolen = target.localOrbit.peek();
 
-            if (targetId < this.pool.threadCount && targetId != this.id) {
-                GalaxyTickRunner target = this.pool.runners[targetId];
-                SchedulableTick stolen = target.localOrbit.peek();
-
-                if (stolen != null) {
-                    if (System.nanoTime() - GalaxyTaskAccessor.getScheduledStart(stolen) > 2_000_000L) {
-                        if (target.localOrbit.remove(stolen)) {
-                            return stolen;
-                        }
+            if (stolen != null) {
+                if (System.nanoTime() - GalaxyTaskAccessor.getScheduledStart(stolen) > 2_000_000L) {
+                    if (target.localOrbit.remove(stolen)) {
+                        return stolen;
                     }
-                } else {
-                    this.pool.clearOverloaded(targetId);
                 }
+            } else {
+                this.pool.matrix.clearOverloaded(targetId);
             }
             return null;
         }
@@ -238,4 +230,51 @@ public class GalaxySchedulerThreadPool extends Scheduler {
     @Override public boolean joinInterruptable(long ms) { return true; }
     @Override public Thread[] getCoreThreads() { return this.threads.clone(); }
     @Override public Thread[] getAliveThreads() { return getCoreThreads(); }
+
+    // ==========================================
+    // 自适应矩阵引擎 (支持 64+ 核心无限扩展)
+    // ==========================================
+    private interface OverloadMatrix {
+        void markOverloaded(int id);
+        void clearOverloaded(int id);
+        int findTarget(int currentId, int maxThreads);
+    }
+
+    private static final class SingleLongMatrix implements OverloadMatrix {
+        private final AtomicLong mask = new AtomicLong(0);
+
+        @Override public void markOverloaded(int id) { this.mask.updateAndGet(m -> m | (1L << id)); }
+        @Override public void clearOverloaded(int id) { this.mask.updateAndGet(m -> m & ~(1L << id)); }
+        @Override public int findTarget(int currentId, int maxThreads) {
+            long m = this.mask.get();
+            if (m == 0) return -1;
+            int targetId = Long.numberOfTrailingZeros(m);
+            return (targetId < maxThreads && targetId != currentId) ? targetId : -1;
+        }
+    }
+
+    private static final class MultiLongMatrix implements OverloadMatrix {
+        private final java.util.concurrent.atomic.AtomicLongArray masks;
+
+        public MultiLongMatrix(int threadCount) {
+            this.masks = new java.util.concurrent.atomic.AtomicLongArray((threadCount + 63) >>> 6);
+        }
+
+        @Override public void markOverloaded(int id) {
+            this.masks.updateAndGet(id >>> 6, m -> m | (1L << (id & 63)));
+        }
+        @Override public void clearOverloaded(int id) {
+            this.masks.updateAndGet(id >>> 6, m -> m & ~(1L << (id & 63)));
+        }
+        @Override public int findTarget(int currentId, int maxThreads) {
+            for (int i = 0; i < this.masks.length(); i++) {
+                long m = this.masks.get(i);
+                if (m != 0) {
+                    int targetId = (i << 6) + Long.numberOfTrailingZeros(m);
+                    if (targetId < maxThreads && targetId != currentId) return targetId;
+                }
+            }
+            return -1;
+        }
+    }
 }
