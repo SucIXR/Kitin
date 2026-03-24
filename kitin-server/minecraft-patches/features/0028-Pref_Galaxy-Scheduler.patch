@@ -66,10 +66,10 @@ index 439c5a222fcf51c9dc5bfef9cdb23f419fffc28c..f7a4138c3cbc132e11bd1ae718db6cdc
  
      public void setThreads(final int threads) {
 diff --git a/io/papermc/paper/threadedregions/TickRegions.java b/io/papermc/paper/threadedregions/TickRegions.java
-index b75293fea5dc029374c1c03361e859f0ddb58e83..ff5cc8413ce5e9e7e8e126b27ee168b252f736e3 100644
+index b75293fea5dc029374c1c03361e859f0ddb58e83..f377eac5e0e9db73694dea30eaab155c455a05d9 100644
 --- a/io/papermc/paper/threadedregions/TickRegions.java
 +++ b/io/papermc/paper/threadedregions/TickRegions.java
-@@ -45,11 +45,11 @@ public final class TickRegions implements ThreadedRegionizer.RegionCallbacks<Tic
+@@ -45,11 +45,14 @@ public final class TickRegions implements ThreadedRegionizer.RegionCallbacks<Tic
          int tickThreads;
          if (config.threads <= 0) {
              tickThreads = OSNuma.getNativeInstance().getTotalCores() / 2;
@@ -78,11 +78,14 @@ index b75293fea5dc029374c1c03361e859f0ddb58e83..ff5cc8413ce5e9e7e8e126b27ee168b2
 -            } else {
 -                tickThreads =  tickThreads / 4;
 -            }
++            // Kitin start - Adjust default thread allocation
++              if (tickThreads <=1) tickThreads=1;
 +//            if (tickThreads <= 4) {
 +//                tickThreads = 1;
 +//            } else {
 +//                tickThreads =  tickThreads / 4;
-+//            } // Kitin off - Kitin Galaxy Scheduler
++//            }
++            //Kitin off
          } else {
              tickThreads = config.threads;
          }
