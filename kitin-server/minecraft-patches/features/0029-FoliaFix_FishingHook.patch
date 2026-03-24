@@ -1,0 +1,103 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: SucIXR <sasasa123456@foxmail.com>
+Date: Tue, 24 Mar 2026 22:50:49 +0800
+Subject: [PATCH] FoliaFix_FishingHook
+
+
+diff --git a/net/minecraft/world/entity/projectile/FishingHook.java b/net/minecraft/world/entity/projectile/FishingHook.java
+index 71f6acc07d222fe512bf8d9fbaad35cb36bcf2d6..713697d60826aa3a2d651c746fc76d183c1e42e0 100644
+--- a/net/minecraft/world/entity/projectile/FishingHook.java
++++ b/net/minecraft/world/entity/projectile/FishingHook.java
+@@ -65,6 +65,13 @@ public class FishingHook extends Projectile {
+     private boolean openWater = true;
+     public @Nullable Entity hookedIn;
+     public FishingHook.FishHookState currentState = FishingHook.FishHookState.FLYING;
++
++    // Kitin start - FoliaFix_FishingHook
++    public static final java.util.Map<java.util.UUID, FishingHook> KITIN_GLOBAL_BOBBERS = new java.util.concurrent.ConcurrentHashMap<>();
++    public volatile boolean kitinForceDiscard = false;
++    public java.util.UUID kitinOwnerUUID = null;
++    // Kitin end
++
+     private final int luck;
+     private final int lureSpeed;
+     private final InterpolationHandler interpolationHandler = new InterpolationHandler(this);
+@@ -98,6 +105,18 @@ public class FishingHook extends Projectile {
+     public FishingHook(Player owner, Level level, int luck, int lureSpeed) {
+         this(EntityType.FISHING_BOBBER, level, luck, lureSpeed);
+         this.setOwner(owner);
++        // Kitin start - FoliaFix_FishingHook
++        if (owner != null) {
++            FishingHook oldBobber = KITIN_GLOBAL_BOBBERS.get(owner.getUUID());
++            if (oldBobber != null && oldBobber != this && !oldBobber.isRemoved()) {
++                me.sucixr.kitin.fixes.util.CrossRegionEntityUtil.wakeUpAndDiscard(oldBobber);
++                oldBobber.kitinForceDiscard = true;
++                this.kitinForceDiscard = true;
++            } else {
++                KITIN_GLOBAL_BOBBERS.put(owner.getUUID(), this);
++            }
++        }
++        // Kitin end
+         float xRot = owner.getXRot();
+         float yRot = owner.getYRot();
+         float cos = Mth.cos(-yRot * (float) (Math.PI / 180.0) - (float) Math.PI);
+@@ -163,10 +182,24 @@ public class FishingHook extends Projectile {
+ 
+     @Override
+     public void tick() {
++        // Kitin start - FoliaFix_FishingHook
++        if (this.kitinForceDiscard) {
++            this.discard();
++            return;
++        }
++        // Kitin end
+         this.syncronizedRandom.setSeed(this.getUUID().getLeastSignificantBits() ^ this.level().getGameTime());
+         this.getInterpolation().interpolate();
+         super.tick();
+         Player playerOwner = this.getPlayerOwner();
++        // Kitin start - FoliaFix_FishingHook
++        if (playerOwner == null && this.kitinOwnerUUID != null) {
++            double simDistanceRadius = this.level().getServer().getPlayerList().getSimulationDistance() * 16.0D;
++            if (!this.level().hasNearbyAlivePlayer(this.getX(), this.getY(), this.getZ(), simDistanceRadius)) {
++                playerOwner = me.sucixr.kitin.fixes.util.CrossRegionEntityUtil.getGlobalPlayer(this.level().getServer(), this.kitinOwnerUUID);
++            }
++        }
++        // Kitin end
+         if (playerOwner == null) {
+             this.discard(org.bukkit.event.entity.EntityRemoveEvent.Cause.DESPAWN); // CraftBukkit - add Bukkit remove cause
+         } else if (this.level().isClientSide() || !this.shouldStopFishing(playerOwner)) {
+@@ -271,8 +304,8 @@ public class FishingHook extends Projectile {
+ 
+     private boolean shouldStopFishing(Player player) {
+         // Folia start - region threading
+-        if (!ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(player)) {
+-            return true;
++        if (me.sucixr.kitin.fixes.util.CrossRegionEntityUtil.isPlayerCrossRegion(player)) {
++            return false;
+         }
+         // Folia end - region threading
+         if (player.canInteractWithLevel()) {
+@@ -621,6 +654,11 @@ public class FishingHook extends Projectile {
+     public void remove(Entity.RemovalReason reason, org.bukkit.event.entity.EntityRemoveEvent.@Nullable Cause cause) { // CraftBukkit - add Bukkit remove cause
+         //this.updateOwnerInfo(null); // Folia - region threading - move into preRemove
+         super.remove(reason, cause); // CraftBukkit - add Bukkit remove cause
++        // Kitin start - FoliaFix_FishingHook
++        if (this.kitinOwnerUUID != null) {
++            KITIN_GLOBAL_BOBBERS.remove(this.kitinOwnerUUID, this);
++        }
++        // Kitin end
+     }
+ 
+     // Folia start - region threading
+@@ -639,6 +677,11 @@ public class FishingHook extends Projectile {
+     @Override
+     public void setOwner(@Nullable Entity owner) {
+         super.setOwner(owner);
++        // Kitin start - FoliaFix_FishingHook
++        if (owner != null) {
++            this.kitinOwnerUUID = owner.getUUID();
++        }
++        // Kitin end
+         this.updateOwnerInfo(this);
+     }
+ 
