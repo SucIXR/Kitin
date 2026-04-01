@@ -3,6 +3,7 @@
   - 刷沙机 ok 开启方式遵循Paper配置文件，附带了更多可配置功能且相比其他核心的修复方式，更加高效且线程安全
   - 珍珠加载器 ok 附带了更多可配置功能，
   - spark ok 使用Folia适配的完整版本
+  - [钓鱼竿鱼钩区域传送后消失的问题](https://github.com/PaperMC/Folia/issues/435) ok 使用类似珍珠加载器的修复方式修复
 
 - 命令
   - spreadplayers
