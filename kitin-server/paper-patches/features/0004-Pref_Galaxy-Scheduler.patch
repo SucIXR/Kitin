@@ -5,7 +5,7 @@ Subject: [PATCH] Pref_Galaxy-Scheduler
 
 
 diff --git a/src/main/java/io/papermc/paper/configuration/GlobalConfiguration.java b/src/main/java/io/papermc/paper/configuration/GlobalConfiguration.java
-index 8835cf8d9d1fb3b4930a50d002e0b426b155f4ac..61b3b6ad676f4f7b687b9831f3b946b138839ff6 100644
+index 8835cf8d9d1fb3b4930a50d002e0b426b155f4ac..14ae812264355cfc3e5792cdee985fc927fb9489 100644
 --- a/src/main/java/io/papermc/paper/configuration/GlobalConfiguration.java
 +++ b/src/main/java/io/papermc/paper/configuration/GlobalConfiguration.java
 @@ -410,10 +410,19 @@ public class GlobalConfiguration extends ConfigurationPart {
@@ -14,7 +14,7 @@ index 8835cf8d9d1fb3b4930a50d002e0b426b155f4ac..61b3b6ad676f4f7b687b9831f3b946b1
          public int gridExponent = 4;
 -        public io.papermc.paper.threadedregions.TickRegionScheduler.SchedulerType scheduler = io.papermc.paper.threadedregions.TickRegionScheduler.SchedulerType.EDF;
 +        public io.papermc.paper.threadedregions.TickRegionScheduler.SchedulerType scheduler = io.papermc.paper.threadedregions.TickRegionScheduler.SchedulerType.GALAXY; // Kitin Galaxy Scheduler
-+        public boolean alwaysUseKitinGalaxyScheduler = true; // Kitin Galaxy Scheduler
++        public boolean alwaysUseKitinGalaxyScheduler = false; // Kitin Galaxy Scheduler // 暂时禁用
  
          @PostProcess
          public void postProcess() {

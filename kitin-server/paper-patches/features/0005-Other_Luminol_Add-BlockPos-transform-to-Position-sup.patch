@@ -1,0 +1,36 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: SucIXR <sasasa123456@foxmail.com>
+Date: Mon, 20 Apr 2026 23:10:36 +0800
+Subject: [PATCH] Other_Luminol_Add-BlockPos-transform-to-Position-support
+
+
+diff --git a/src/main/java/io/papermc/paper/SparksFly.java b/src/main/java/io/papermc/paper/SparksFly.java
+index 78d53b3887fa0e45cc8fa8d87041f03913b4f18b..8929b68f8ac4a3d9849252b17cdfab1c751b02b2 100644
+--- a/src/main/java/io/papermc/paper/SparksFly.java
++++ b/src/main/java/io/papermc/paper/SparksFly.java
+@@ -194,7 +194,7 @@ public final class SparksFly implements SparkPlugin { // Kitin
+ 
+     @Override
+     public String getVersion() {
+-        return "Unknown-version-Kitin-Internal"; // Kitin - Hardcoded version
++        return "1.10.152-Kitin-Internal"; // Kitin - Hardcoded version
+     }
+ 
+     @Override
+diff --git a/src/main/java/io/papermc/paper/util/MCUtil.java b/src/main/java/io/papermc/paper/util/MCUtil.java
+index 6b3bfe5f1b7e02e5f91406e7bbc53974fe801af3..9e408395885bf063807040110ac46e186d330d70 100644
+--- a/src/main/java/io/papermc/paper/util/MCUtil.java
++++ b/src/main/java/io/papermc/paper/util/MCUtil.java
+@@ -168,6 +168,12 @@ public final class MCUtil {
+         return CraftLocation.toBukkit(pos, world);
+     }
+ 
++    // Luminol start - add BlockPos support
++    public static Location toLocation(Level world, BlockPos pos) {
++        return new Location(world.getWorld(), pos.getX(), pos.getY(), pos.getZ());
++    }
++    // Luminol end - add BlockPos support
++
+     /**
+      * Converts a NMS World/Vector to Bukkit Location
+      *
