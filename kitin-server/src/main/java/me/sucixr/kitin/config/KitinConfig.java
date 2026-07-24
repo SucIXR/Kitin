@@ -254,14 +254,14 @@ public class KitinConfig {
 
     //----------------------------------------
 
-    public static volatile boolean disableMaxTntPerTickAndOptimize = false;
+    //public static volatile boolean disableMaxTntPerTickAndOptimize = false;
     public static volatile boolean pearlFixEnabled = true;
     public static volatile int pearlFixMaxSave = -1;
     private static void fixesSettings() {
         pearlFixEnabled = getBoolean("fixes.ender-pearl-chunk-loading.enabled", true);
         pearlFixMaxSave = getInt("fixes.ender-pearl-chunk-loading.player-max-save-ender-pearl", -1);
         //
-        disableMaxTntPerTickAndOptimize = getBoolean("fixes.disable-max-tnt-per-tick-and-optimize", disableMaxTntPerTickAndOptimize);
+        //disableMaxTntPerTickAndOptimize = getBoolean("fixes.disable-max-tnt-per-tick-and-optimize", disableMaxTntPerTickAndOptimize);
     }
 
     //----------------------------------------
@@ -391,11 +391,11 @@ public class KitinConfig {
     }
 
     public static volatile boolean useSimplerEntityPush = true;
-    public static volatile boolean optimizeDropper = false;
+    //public static volatile boolean optimizeDropper = false;
     private static void performanceSettings() {
         useSimplerEntityPush = getBoolean("performance.use-simpler-entity-push", useSimplerEntityPush);
         //
-        optimizeDropper = getBoolean("performance.optimize-dropper", false); //可以加入if (!isReloading)判断来拒绝重载
+        //optimizeDropper = getBoolean("performance.optimize-dropper", false); //可以加入if (!isReloading)判断来拒绝重载
     }
 
     //----------------------------------------

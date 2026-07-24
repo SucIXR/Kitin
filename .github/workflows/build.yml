@@ -10,7 +10,7 @@ on:
       - '.gitignore'
       - 'LICENSE'
       - 'readme/**'
-      - '.github/**'
+      #- '.github/**'
 
 jobs:
   build:

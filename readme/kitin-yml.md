@@ -31,12 +31,6 @@ This page explains the configuration options found in `config/kitin.yml`.
     - 设为正整数时，玩家抛出的末影珍珠数据将只会将最后的指定数量保存到NBT(如果不是这次登录时的珍珠，则随机保存)
     - **效果:** 这可以防止玩家的珍珠数量不断增加导致的数据膨胀。如果一直在线，那珍珠加载效果将保留
 
-### `disable-max-tnt-per-tick-and-optimize`
-- **默认值:** `false`
-- **说明:** 
-    - 设为 `true` 时，服务器将不再限制每Tick引爆的TNT数量，而是优化超限的TNT
-    - 这可以让世吞等高TNT使用量的机器能够正常运行
-
 ---
 
 ## 📡 Network / 网络带宽
@@ -213,13 +207,6 @@ This page explains the configuration options found in `config/kitin.yml`.
 - **说明:** 
     - 启用简化的实体推挤算法
     - **效果:** 貌似性能优化幅度很低，但能显著减少密集实体堆叠时的带宽占用，目前没找到什么需要非常精密的挤压逻辑的生电机器
-
-### `optimize-dropper`
-- **默认值:** `false`
-- **说明:** 
-    - **警告:** 开启此选项会导致 Bukkit API `InventoryMoveItemEvent` 对投掷器失效！
-    - 当投掷器装满潜影盒并且拥堵时，依旧会计算NBT等，这造成了大量无意义卡顿
-    - 设为 `true` 时，投掷器将跳过复杂的 Bukkit 事件系统和 Hopper 逻辑，直接操作底层库存，并且当投掷器状态未发生变化时不进行冗余的NBT计算
 
 ---
 
