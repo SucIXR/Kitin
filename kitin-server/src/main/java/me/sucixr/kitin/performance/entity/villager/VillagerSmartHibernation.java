@@ -56,7 +56,7 @@ public class VillagerSmartHibernation {
     }
 
     private static void performLifeSupport(Villager villager, ServerLevel level) {
-        long timeOfDay = level.getDayTime() % 24000;
+        long timeOfDay = level.getGameTime() % 24000;
         boolean isWorkTime = timeOfDay >= 2000 && timeOfDay < 9000;
         if (isWorkTime && (level.getGameTime() + villager.getId()) % 200 == 0 && villager.shouldRestock(level)) {
             villager.restock();

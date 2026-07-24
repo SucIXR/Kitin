@@ -1,16 +1,16 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: SucIXR <sasasa123456@foxmail.com>
-Date: Thu, 1 Jan 2026 19:39:37 +0800
+Date: Fri, 24 Jul 2026 11:28:44 +0800
 Subject: [PATCH] FoliaFix_SafeSandDuper
 
 
 diff --git a/net/minecraft/world/level/block/EndPortalBlock.java b/net/minecraft/world/level/block/EndPortalBlock.java
-index 6bff1704203c2de91eb01bda5220f4ea4d49c6ec..fb7320ad2858b9689498b63d51c89cd6d454c9b0 100644
+index aab09feaa3c3c90e33701072e24ed144226e6d53..7b2b3fdeff4652e50bd6fca43332e9747e768ce0 100644
 --- a/net/minecraft/world/level/block/EndPortalBlock.java
 +++ b/net/minecraft/world/level/block/EndPortalBlock.java
-@@ -60,6 +60,11 @@ public class EndPortalBlock extends BaseEntityBlock implements Portal {
-     @Override
-     protected void entityInside(BlockState state, Level level, BlockPos pos, Entity entity, InsideBlockEffectApplier effectApplier, boolean pastEdges) {
+@@ -67,6 +67,11 @@ public class EndPortalBlock extends BaseEntityBlock implements Portal {
+         final boolean isPrecise
+     ) {
          if (!new io.papermc.paper.event.entity.EntityInsideBlockEvent(entity.getBukkitEntity(), org.bukkit.craftbukkit.block.CraftBlock.at(level, pos)).callEvent()) { return; } // Paper - Add EntityInsideBlockEvent
 +        // Kitin fix - SafeSandDuper
 +        if (me.sucixr.kitin.fixes.foliafix.SafeSandDuper.handle(entity)) {

@@ -1,57 +1,57 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: SucIXR <sasasa123456@foxmail.com>
-Date: Fri, 13 Feb 2026 18:40:56 +0800
+Date: Fri, 24 Jul 2026 12:23:19 +0800
 Subject: [PATCH] Safety_Leaf_Secure-seed-and-matter-seed-command
 
 
 diff --git a/net/minecraft/server/commands/SeedCommand.java b/net/minecraft/server/commands/SeedCommand.java
-index 68a27436bae245a31470483f92a116fa029f3d4e..9b0cb482a1dee14563a4acb37f757d9e54b701ad 100644
+index 86ee3b3ae028597576b9549bc4954dfcbaa6732c..bf0e03e4eede3e8689d35ee25224236864b27a8a 100644
 --- a/net/minecraft/server/commands/SeedCommand.java
 +++ b/net/minecraft/server/commands/SeedCommand.java
-@@ -15,6 +15,15 @@ public class SeedCommand {
-                     long seed = commandContext.getSource().getLevel().getSeed();
-                     Component component = ComponentUtils.copyOnClickText(String.valueOf(seed));
-                     commandContext.getSource().sendSuccess(() -> Component.translatable("commands.seed.success", component), false);
-+                    // Leaf start - Matter - SecureSeed Command
-+                    if (me.sucixr.kitin.config.KitinConfig.useSecureSeed) {
-+                        su.plo.matter.Globals.setupGlobals(commandContext.getSource().getLevel());
-+                        String seedStr = su.plo.matter.Globals.seedToString(su.plo.matter.Globals.worldSeed);
-+                        Component featureSeedComponent = ComponentUtils.copyOnClickText(seedStr);
+@@ -13,6 +13,15 @@ public class SeedCommand {
+                 long seed = c.getSource().getLevel().getSeed();
+                 Component seedText = ComponentUtils.copyOnClickText(String.valueOf(seed));
+                 c.getSource().sendSuccess(() -> Component.translatable("commands.seed.success", seedText), false);
++                // Leaf start - Matter - SecureSeed Command
++                if (me.sucixr.kitin.config.KitinConfig.useSecureSeed) {
++                    su.plo.matter.Globals.setupGlobals(c.getSource().getLevel());
++                    String seedStr = su.plo.matter.Globals.seedToString(su.plo.matter.Globals.worldSeed);
++                    Component featureSeedComponent = ComponentUtils.copyOnClickText(seedStr);
 +
-+                        commandContext.getSource().sendSuccess(() -> Component.translatable(("Feature seed: %s"), featureSeedComponent), false);
-+                    }
-+                    // Leaf end - Matter - SecureSeed Command
-                     return (int)seed;
-                 })
++                    c.getSource().sendSuccess(() -> Component.translatable(("Feature seed: %s"), featureSeedComponent), false);
++                }
++                // Leaf end - Matter - SecureSeed Command
+                 return (int)seed;
+             })
          );
 diff --git a/net/minecraft/server/dedicated/DedicatedServerProperties.java b/net/minecraft/server/dedicated/DedicatedServerProperties.java
-index bbd8f68d166ebd0370f4b39362468fdc7d70f7f0..a6e36ad94ebd647ee62c9e94aa93c6776f224771 100644
+index 18d15b6200f03ef4482f734b7ea9a32fde3fb8a0..51d20b7f667493d83df4b9a65b2a576313669183 100644
 --- a/net/minecraft/server/dedicated/DedicatedServerProperties.java
 +++ b/net/minecraft/server/dedicated/DedicatedServerProperties.java
 @@ -137,7 +137,17 @@ public class DedicatedServerProperties extends Settings<DedicatedServerPropertie
-         String string = this.get("level-seed", "");
-         boolean flag = this.get("generate-structures", true);
-         long l = WorldOptions.parseSeed(string).orElse(WorldOptions.randomSeed());
--        this.worldOptions = new WorldOptions(l, flag, false);
+         String levelSeed = this.get("level-seed", "");
+         boolean generateStructures = this.get("generate-structures", true);
+         long seed = WorldOptions.parseSeed(levelSeed).orElse(WorldOptions.randomSeed());
+-        this.worldOptions = new WorldOptions(seed, generateStructures, false);
 +        // Leaf start - Matter - Secure Seed
 +        if (me.sucixr.kitin.config.KitinConfig.useSecureSeed) {
 +            String featureSeedStr = this.get("feature-level-seed", "");
 +            long[] featureSeed = su.plo.matter.Globals.parseSeed(featureSeedStr)
-+                .orElse(su.plo.matter.Globals.createRandomWorldSeed());
++                    .orElse(su.plo.matter.Globals.createRandomWorldSeed());
 +
-+            this.worldOptions = new WorldOptions(l, featureSeed, flag, false);
++            this.worldOptions = new WorldOptions(seed, featureSeed, generateStructures, false);
 +        } else {
-+            this.worldOptions = new WorldOptions(l, flag, false);
++            this.worldOptions = new WorldOptions(seed, generateStructures, false);
 +        }
 +        // Leaf end - Matter - Secure Seed
          this.worldDimensionData = new DedicatedServerProperties.WorldDimensionData(
-             this.get("generator-settings", property -> GsonHelper.parse(!property.isEmpty() ? property : "{}"), new JsonObject()),
-             this.get("level-type", property -> property.toLowerCase(Locale.ROOT), WorldPresets.NORMAL.identifier().toString())
+             this.get("generator-settings", s -> GsonHelper.parse(!s.isEmpty() ? s : "{}"), new JsonObject()),
+             this.get("level-type", v -> v.toLowerCase(Locale.ROOT), WorldPresets.NORMAL.identifier().toString())
 diff --git a/net/minecraft/server/level/ServerChunkCache.java b/net/minecraft/server/level/ServerChunkCache.java
-index 7400be75c5dae2b24cc327d23b703bf686ff2e5b..f4c9c551fc39bae38e283ccbbc3cd116f0536a64 100644
+index 022593220923b28d61b458bee827d21be4dd2f2c..27389ff98942e27c2a877ea5b671caa31353d18c 100644
 --- a/net/minecraft/server/level/ServerChunkCache.java
 +++ b/net/minecraft/server/level/ServerChunkCache.java
-@@ -664,6 +664,7 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
+@@ -673,6 +673,7 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
      }
  
      public ChunkGenerator getGenerator() {
@@ -60,40 +60,40 @@ index 7400be75c5dae2b24cc327d23b703bf686ff2e5b..f4c9c551fc39bae38e283ccbbc3cd116
      }
  
 diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
-index 7074c8bb9174cec9788743d0126ae5189987b353..8969d498ef841ae976ce630a43615f358d26ce5c 100644
+index 47154133f131ae64c8122f4f581cb70f5c7ab64e..ace62b469d997a39c61be1885aa7ad254eaedd05 100644
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
-@@ -599,6 +599,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
-             chunkGenerator = new org.bukkit.craftbukkit.generator.CustomChunkGenerator(this, chunkGenerator, gen);
+@@ -630,6 +630,7 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
+             generator = new org.bukkit.craftbukkit.generator.CustomChunkGenerator(this, generator, gen);
          }
          // CraftBukkit end
 +        su.plo.matter.Globals.setupGlobals(this); // Leaf - Matter - Secure Seed
-         boolean flag = server.forceSynchronousWrites();
+         boolean syncWrites = server.forceSynchronousWrites();
          DataFixer fixerUpper = server.getFixerUpper();
          // Paper - rewrite chunk system
 diff --git a/net/minecraft/world/entity/monster/Slime.java b/net/minecraft/world/entity/monster/Slime.java
-index f1eb8c9120a4794b1b70777c272e1a0491fa5164..1aa80da13077d299843a66cfdfc15aa3a7130b8e 100644
+index e19da253db0b1840f582b09a45d73638438afcfd..4fa88fbf9c7a93b63d75a2ccd4ce95f082a02dec 100644
 --- a/net/minecraft/world/entity/monster/Slime.java
 +++ b/net/minecraft/world/entity/monster/Slime.java
-@@ -323,7 +323,12 @@ public class Slime extends Mob implements Enemy {
+@@ -320,7 +320,12 @@ public class Slime extends Mob implements Enemy {
              }
  
-             ChunkPos chunkPos = new ChunkPos(pos);
--            boolean flag = level.getMinecraftWorld().paperConfig().entities.spawning.allChunksAreSlimeChunks || WorldgenRandom.seedSlimeChunk(chunkPos.x, chunkPos.z, ((WorldGenLevel) level).getSeed(), level.getMinecraftWorld().spigotConfig.slimeSeed).nextInt(10) == 0; // Paper
+             ChunkPos chunkPos = ChunkPos.containing(pos);
+-            boolean slimeChunk = level.getMinecraftWorld().paperConfig().entities.spawning.allChunksAreSlimeChunks || WorldgenRandom.seedSlimeChunk(chunkPos.x(), chunkPos.z(), ((WorldGenLevel) level).getSeed(), level.getMinecraftWorld().spigotConfig.slimeSeed).nextInt(10) == 0; // Paper
 +            // Leaf start - Matter - Secure Seed
 +            boolean isSlimeChunk = me.sucixr.kitin.config.KitinConfig.useSecureSeed
-+                ? level.getChunk(chunkPos.x, chunkPos.z).isSlimeChunk()
-+                : WorldgenRandom.seedSlimeChunk(chunkPos.x, chunkPos.z, ((WorldGenLevel) level).getSeed(), level.getMinecraftWorld().spigotConfig.slimeSeed).nextInt(10) == 0; // Spigot // Paper
-+            boolean flag = level.getMinecraftWorld().paperConfig().entities.spawning.allChunksAreSlimeChunks || isSlimeChunk;
++                    ? level.getChunk(chunkPos.x(), chunkPos.z()).isSlimeChunk()
++                    : WorldgenRandom.seedSlimeChunk(chunkPos.x(), chunkPos.z(), ((WorldGenLevel) level).getSeed(), level.getMinecraftWorld().spigotConfig.slimeSeed).nextInt(10) == 0; // Paper
++            boolean slimeChunk = level.getMinecraftWorld().paperConfig().entities.spawning.allChunksAreSlimeChunks || isSlimeChunk;
 +            // Leaf end - Matter - Secure Seed
                  // Paper start - Replace rules for Height in Slime Chunks
                  final double maxHeightSlimeChunk = level.getMinecraftWorld().paperConfig().entities.spawning.slimeSpawnHeight.slimeChunk.maximum;
-                 if (random.nextInt(10) == 0 && flag && pos.getY() < maxHeightSlimeChunk) {
+                 if (random.nextInt(10) == 0 && slimeChunk && pos.getY() < maxHeightSlimeChunk) {
 diff --git a/net/minecraft/world/level/chunk/ChunkAccess.java b/net/minecraft/world/level/chunk/ChunkAccess.java
-index 54ddcf92e72b9cbd0eb442e5d0faa83c0cf3b33b..157e5c16bc177f378fa7b0f01282c65c05ae8e98 100644
+index c73b9871faa87493e081cb54e1bf1dce487359c6..f6e140c950f02e1a7c46274f9f68561f2622d7db 100644
 --- a/net/minecraft/world/level/chunk/ChunkAccess.java
 +++ b/net/minecraft/world/level/chunk/ChunkAccess.java
-@@ -83,6 +83,10 @@ public abstract class ChunkAccess implements BiomeManager.NoiseBiomeSource, Ligh
+@@ -83,6 +83,10 @@ public abstract class ChunkAccess implements LightChunk, StructureAccess, BiomeM
      private static final org.bukkit.craftbukkit.persistence.CraftPersistentDataTypeRegistry DATA_TYPE_REGISTRY = new org.bukkit.craftbukkit.persistence.CraftPersistentDataTypeRegistry();
      public org.bukkit.craftbukkit.persistence.DirtyCraftPersistentDataContainer persistentDataContainer = new org.bukkit.craftbukkit.persistence.DirtyCraftPersistentDataContainer(ChunkAccess.DATA_TYPE_REGISTRY);
      // CraftBukkit end
@@ -104,7 +104,7 @@ index 54ddcf92e72b9cbd0eb442e5d0faa83c0cf3b33b..157e5c16bc177f378fa7b0f01282c65c
  
      // Paper start - rewrite chunk system
      private volatile ca.spottedleaf.moonrise.patches.starlight.light.SWMRNibbleArray[] blockNibbles;
-@@ -186,6 +190,17 @@ public abstract class ChunkAccess implements BiomeManager.NoiseBiomeSource, Ligh
+@@ -186,6 +190,17 @@ public abstract class ChunkAccess implements LightChunk, StructureAccess, BiomeM
          return GameEventListenerRegistry.NOOP;
      }
  
@@ -112,7 +112,7 @@ index 54ddcf92e72b9cbd0eb442e5d0faa83c0cf3b33b..157e5c16bc177f378fa7b0f01282c65c
 +    public boolean isSlimeChunk() {
 +        if (!hasComputedSlimeChunk) {
 +            hasComputedSlimeChunk = true;
-+            slimeChunk = su.plo.matter.WorldgenCryptoRandom.seedSlimeChunk(chunkPos.x, chunkPos.z).nextInt(10) == 0;
++            slimeChunk = su.plo.matter.WorldgenCryptoRandom.seedSlimeChunk(chunkPos.x(), chunkPos.z()).nextInt(10) == 0;
 +        }
 +
 +        return slimeChunk;
@@ -121,85 +121,85 @@ index 54ddcf92e72b9cbd0eb442e5d0faa83c0cf3b33b..157e5c16bc177f378fa7b0f01282c65c
 +
      public abstract BlockState getBlockState(final int x, final int y, final int z); // Paper
  
-     public @Nullable BlockState setBlockState(BlockPos pos, BlockState state) {
+     public @Nullable BlockState setBlockState(final BlockPos pos, final BlockState state) {
 diff --git a/net/minecraft/world/level/chunk/ChunkGenerator.java b/net/minecraft/world/level/chunk/ChunkGenerator.java
-index d57b3ed1c53d2818caf420004296297f006f36d7..ab766669f9a5beb7e8a99f318f261612b4e89f5e 100644
+index 7e7b096b6e6be0481313105d68d8457915a1baba..8e13fefea5bf13e835bb3f797dbf4e893705254c 100644
 --- a/net/minecraft/world/level/chunk/ChunkGenerator.java
 +++ b/net/minecraft/world/level/chunk/ChunkGenerator.java
-@@ -342,7 +342,11 @@ public abstract class ChunkGenerator {
-             Registry<Structure> registry = level.registryAccess().lookupOrThrow(Registries.STRUCTURE);
-             Map<Integer, List<Structure>> map = registry.stream().collect(Collectors.groupingBy(structure1 -> structure1.step().ordinal()));
-             List<FeatureSorter.StepFeatureData> list = this.featuresPerStep.get();
--            WorldgenRandom worldgenRandom = new WorldgenRandom(new XoroshiroRandomSource(RandomSupport.generateUniqueSeed()));
+@@ -345,7 +345,11 @@ public abstract class ChunkGenerator {
+             Map<Integer, List<Structure>> structuresByStep = structuresRegistry.stream()
+                 .collect(Collectors.groupingBy(structure -> structure.step().ordinal()));
+             List<FeatureSorter.StepFeatureData> featureList = this.featuresPerStep.get();
+-            WorldgenRandom random = new WorldgenRandom(new XoroshiroRandomSource(RandomSupport.generateUniqueSeed()));
 +            // Leaf start - Matter - Secure Seed
-+            WorldgenRandom worldgenRandom = me.sucixr.kitin.config.KitinConfig.useSecureSeed
-+                ? new su.plo.matter.WorldgenCryptoRandom(blockPos.getX(), blockPos.getZ(), su.plo.matter.Globals.Salt.UNDEFINED, 0)
-+                : new WorldgenRandom(new XoroshiroRandomSource(RandomSupport.generateUniqueSeed()));
++            WorldgenRandom random = me.sucixr.kitin.config.KitinConfig.useSecureSeed
++                    ? new su.plo.matter.WorldgenCryptoRandom(origin.getX(), origin.getZ(), su.plo.matter.Globals.Salt.UNDEFINED, 0)
++                    : new WorldgenRandom(new XoroshiroRandomSource(RandomSupport.generateUniqueSeed()));
 +            // Leaf end - Matter - Secure Seed
-             long l = worldgenRandom.setDecorationSeed(level.getSeed(), blockPos.getX(), blockPos.getZ());
-             Set<Holder<Biome>> set = new ObjectArraySet<>();
+             long decorationSeed = random.setDecorationSeed(level.getSeed(), origin.getX(), origin.getZ());
+             Set<Holder<Biome>> possibleBiomes = new ObjectArraySet<>();
              ChunkPos.rangeClosed(sectionPos.chunk(), 1).forEach(chunkPos -> {
-@@ -557,8 +561,15 @@ public abstract class ChunkGenerator {
+@@ -569,8 +573,15 @@ public abstract class ChunkGenerator {
                              } else {
-                                 ArrayList<StructureSet.StructureSelectionEntry> list1 = new ArrayList<>(list.size());
-                                 list1.addAll(list);
--                                WorldgenRandom worldgenRandom = new WorldgenRandom(new LegacyRandomSource(0L));
--                                worldgenRandom.setLargeFeatureSeed(structureState.getLevelSeed(), pos.x, pos.z);
+                                 ArrayList<StructureSet.StructureSelectionEntry> options = new ArrayList<>(structures.size());
+                                 options.addAll(structures);
+-                                WorldgenRandom random = new WorldgenRandom(new LegacyRandomSource(0L));
+-                                random.setLargeFeatureSeed(state.getLevelSeed(), sourceChunkPos.x(), sourceChunkPos.z());
 +                                // Leaf start - Matter - Secure Seed
-+                                WorldgenRandom worldgenRandom;
++                                WorldgenRandom random;
 +                                if (me.sucixr.kitin.config.KitinConfig.useSecureSeed) {
-+                                    worldgenRandom = new su.plo.matter.WorldgenCryptoRandom(pos.x, pos.z, su.plo.matter.Globals.Salt.GENERATE_FEATURE, 0);
++                                    random = new su.plo.matter.WorldgenCryptoRandom(sourceChunkPos.x(), sourceChunkPos.z(), su.plo.matter.Globals.Salt.GENERATE_FEATURE, 0);
 +                                } else {
-+                                    worldgenRandom = new WorldgenRandom(new LegacyRandomSource(0L));
-+                                    worldgenRandom.setLargeFeatureSeed(structureState.getLevelSeed(), pos.x, pos.z);
++                                    random = new WorldgenRandom(new LegacyRandomSource(0L));
++                                    random.setLargeFeatureSeed(state.getLevelSeed(), sourceChunkPos.x(), sourceChunkPos.z());
 +                                }
 +                                // Leaf end - Matter - Secure Seed
-                                 int i = 0;
+                                 int total = 0;
  
-                                 for (StructureSet.StructureSelectionEntry structureSelectionEntry1 : list1) {
+                                 for (StructureSet.StructureSelectionEntry option : options) {
 diff --git a/net/minecraft/world/level/chunk/ChunkGeneratorStructureState.java b/net/minecraft/world/level/chunk/ChunkGeneratorStructureState.java
-index 784d9de7abecd0816b2a5a6b256ad4e275791fff..abefd1c39f8c715172e3d2d9a12639bbfede9d1f 100644
+index d43105cf0c29cb86a5e3c7c59dc5e02d2ab8e53f..1e47925a5c8dcdf8f954eb56e99393c2c1236d91 100644
 --- a/net/minecraft/world/level/chunk/ChunkGeneratorStructureState.java
 +++ b/net/minecraft/world/level/chunk/ChunkGeneratorStructureState.java
-@@ -205,7 +205,12 @@ public class ChunkGeneratorStructureState {
-             List<CompletableFuture<ChunkPos>> list = new ArrayList<>(count);
+@@ -202,7 +202,12 @@ public class ChunkGeneratorStructureState {
+             List<CompletableFuture<ChunkPos>> tasks = new ArrayList<>(count);
              int spread = placement.spread();
-             HolderSet<Biome> holderSet = placement.preferredBiomes();
--            RandomSource randomSource = RandomSource.create();
+             HolderSet<Biome> preferredBiomes = placement.preferredBiomes();
+-            RandomSource random = RandomSource.create();
 +            // Leaf start - Matter - Secure Seed
-+            RandomSource randomSource = me.sucixr.kitin.config.KitinConfig.useSecureSeed
-+                ? new su.plo.matter.WorldgenCryptoRandom(0, 0, su.plo.matter.Globals.Salt.STRONGHOLDS, 0)
-+                : RandomSource.create();
++            RandomSource random = me.sucixr.kitin.config.KitinConfig.useSecureSeed
++                    ? new su.plo.matter.WorldgenCryptoRandom(0, 0, su.plo.matter.Globals.Salt.STRONGHOLDS, 0)
++                    : RandomSource.create();
 +            // Leaf end - Matter - Secure Seed
 +            if (!me.sucixr.kitin.config.KitinConfig.useSecureSeed) {
              // Paper start - Add missing structure set seed configs
              if (this.conf.strongholdSeed != null && structureSet.is(net.minecraft.world.level.levelgen.structure.BuiltinStructureSets.STRONGHOLDS)) {
-                 randomSource.setSeed(this.conf.strongholdSeed);
-@@ -213,6 +218,7 @@ public class ChunkGeneratorStructureState {
+                 random.setSeed(this.conf.strongholdSeed);
+@@ -210,6 +215,7 @@ public class ChunkGeneratorStructureState {
              // Paper end - Add missing structure set seed configs
-             randomSource.setSeed(this.concentricRingsSeed);
+             random.setSeed(this.concentricRingsSeed);
              } // Paper - Add missing structure set seed configs
 +            } // Leaf - Matter - Secure Seed
-             double d = randomSource.nextDouble() * Math.PI * 2.0;
-             int i = 0;
-             int i1 = 0;
+             double angle = random.nextDouble() * Math.PI * 2.0;
+             int positionInCircle = 0;
+             int circle = 0;
 diff --git a/net/minecraft/world/level/chunk/status/ChunkStep.java b/net/minecraft/world/level/chunk/status/ChunkStep.java
-index aa8c40d49756611537e2698b7f2a861c303ef842..df291819a7797428bf258787239667534bb6c094 100644
+index 554faa6ebfc7c7db11634fc9a8cac846df9b92fb..33c20f0d7550449462a8c722e6d2238fd39b042f 100644
 --- a/net/minecraft/world/level/chunk/status/ChunkStep.java
 +++ b/net/minecraft/world/level/chunk/status/ChunkStep.java
 @@ -60,6 +60,7 @@ public final class ChunkStep implements ca.spottedleaf.moonrise.patches.chunk_sy
      }
  
-     public CompletableFuture<ChunkAccess> apply(WorldGenContext worldGenContext, StaticCache2D<GenerationChunkHolder> cache, ChunkAccess chunk) {
-+        su.plo.matter.Globals.setupGlobals(worldGenContext.level()); // Leaf - Matter - Secure Seed
+     public CompletableFuture<ChunkAccess> apply(final WorldGenContext context, final StaticCache2D<GenerationChunkHolder> cache, final ChunkAccess chunk) {
++        su.plo.matter.Globals.setupGlobals(context.level()); // Leaf - Matter - Secure Seed
          if (chunk.getPersistedStatus().isBefore(this.targetStatus)) {
-             ProfiledDuration profiledDuration = JvmProfiler.INSTANCE
-                 .onChunkGenerate(chunk.getPos(), worldGenContext.level().dimension(), this.targetStatus.getName());
+             ProfiledDuration profiledDuration = JvmProfiler.INSTANCE.onChunkGenerate(chunk.getPos(), context.level().dimension(), this.targetStatus.getName());
+             return this.task.doWork(context, this, cache, chunk).thenApply(newCenterChunk -> this.completeChunkGeneration(newCenterChunk, profiledDuration));
 diff --git a/net/minecraft/world/level/levelgen/WorldOptions.java b/net/minecraft/world/level/levelgen/WorldOptions.java
-index c92508741439a8d0d833ea02d0104416adb83c92..a6468813fde2705623767aca5615ef525bbce3dd 100644
+index b98649c1c9c75a01a0ccfa036536e8b07c0c82a4..ba41f80285b1e4040fd64d9e80e4082916c615f0 100644
 --- a/net/minecraft/world/level/levelgen/WorldOptions.java
 +++ b/net/minecraft/world/level/levelgen/WorldOptions.java
-@@ -9,8 +9,20 @@ import net.minecraft.util.RandomSource;
+@@ -9,8 +9,22 @@ import net.minecraft.util.RandomSource;
  import org.apache.commons.lang3.StringUtils;
  
  public class WorldOptions {
@@ -207,23 +207,25 @@ index c92508741439a8d0d833ea02d0104416adb83c92..a6468813fde2705623767aca5615ef52
 +    private static final com.google.gson.Gson gson = new com.google.gson.Gson();
 +    private static final boolean isSecureSeedEnabled = me.sucixr.kitin.config.KitinConfig.useSecureSeed;
      public static final MapCodec<WorldOptions> CODEC = RecordCodecBuilder.mapCodec(
--        instance -> instance.group(
-+        instance -> isSecureSeedEnabled
-+            ? instance.group(
-+                Codec.LONG.fieldOf("seed").stable().forGetter(WorldOptions::seed),
-+                Codec.STRING.fieldOf("feature_seed").orElse(gson.toJson(su.plo.matter.Globals.createRandomWorldSeed())).stable().forGetter(WorldOptions::featureSeedSerialize),
-+                Codec.BOOL.fieldOf("generate_features").orElse(true).stable().forGetter(WorldOptions::generateStructures),
-+                Codec.BOOL.fieldOf("bonus_chest").orElse(false).stable().forGetter(WorldOptions::generateBonusChest),
-+                Codec.STRING.lenientOptionalFieldOf("legacy_custom_options").stable().forGetter(worldOptions -> worldOptions.legacyCustomOptions)
-+            )
-+            .apply(instance, instance.stable(WorldOptions::new))
-+            : instance.group(
+-        i -> i.group(
++            // Leaf start - Matter - Secure Seed
++            i -> isSecureSeedEnabled
++               ? i.group(
++                       Codec.LONG.fieldOf("seed").stable().forGetter(WorldOptions::seed),
++                       Codec.STRING.fieldOf("feature_seed").orElse(gson.toJson(su.plo.matter.Globals.createRandomWorldSeed())).stable().forGetter(WorldOptions::featureSeedSerialize),
++                       Codec.BOOL.fieldOf("generate_features").orElse(true).stable().forGetter(WorldOptions::generateStructures),
++                       Codec.BOOL.fieldOf("bonus_chest").orElse(false).stable().forGetter(WorldOptions::generateBonusChest),
++                       Codec.STRING.lenientOptionalFieldOf("legacy_custom_options").stable().forGetter(worldOptions -> worldOptions.legacyCustomOptions)
++               )
++               .apply(i, i.stable(WorldOptions::new))
++               : i.group(
++             // Leaf end
                  Codec.LONG.fieldOf("seed").stable().forGetter(WorldOptions::seed),
-                 Codec.BOOL.fieldOf("generate_features").orElse(true).stable().forGetter(WorldOptions::generateStructures),
+                 Codec.BOOL.fieldOf("generate_structures").orElse(true).stable().forGetter(WorldOptions::generateStructures),
                  Codec.BOOL.fieldOf("bonus_chest").orElse(false).stable().forGetter(WorldOptions::generateBonusChest),
-@@ -18,8 +30,14 @@ public class WorldOptions {
+@@ -18,8 +32,14 @@ public class WorldOptions {
              )
-             .apply(instance, instance.stable(WorldOptions::new))
+             .apply(i, i.stable(WorldOptions::new))
      );
 -    public static final WorldOptions DEMO_OPTIONS = new WorldOptions("North Carolina".hashCode(), true, true);
 +    // Leaf end - Matter - Secure Seed
@@ -237,7 +239,7 @@ index c92508741439a8d0d833ea02d0104416adb83c92..a6468813fde2705623767aca5615ef52
      private final boolean generateStructures;
      private final boolean generateBonusChest;
      private final Optional<String> legacyCustomOptions;
-@@ -28,14 +46,35 @@ public class WorldOptions {
+@@ -28,14 +48,35 @@ public class WorldOptions {
          this(seed, generateStructures, generateBonusChest, Optional.empty());
      }
  
@@ -271,10 +273,10 @@ index c92508741439a8d0d833ea02d0104416adb83c92..a6468813fde2705623767aca5615ef52
 +    }
 +    // Leaf end - Matter - Secure Seed
 +
-     private WorldOptions(long seed, boolean generateStructures, boolean generateBonusChest, Optional<String> legacyCustomOptions) {
+     private WorldOptions(final long seed, final boolean generateStructures, final boolean generateBonusChest, final Optional<String> legacyCustomOptions) {
          this.seed = seed;
          this.generateStructures = generateStructures;
-@@ -47,6 +86,16 @@ public class WorldOptions {
+@@ -47,6 +88,16 @@ public class WorldOptions {
          return this.seed;
      }
  
@@ -291,26 +293,26 @@ index c92508741439a8d0d833ea02d0104416adb83c92..a6468813fde2705623767aca5615ef52
      public boolean generateStructures() {
          return this.generateStructures;
      }
-@@ -59,17 +108,25 @@ public class WorldOptions {
+@@ -59,17 +110,25 @@ public class WorldOptions {
          return this.legacyCustomOptions.isPresent();
      }
  
 +    // Leaf start - Matter -  Secure Seed
-     public WorldOptions withBonusChest(boolean generateBonusChest) {
+     public WorldOptions withBonusChest(final boolean generateBonusChest) {
 -        return new WorldOptions(this.seed, this.generateStructures, generateBonusChest, this.legacyCustomOptions);
 +        return isSecureSeedEnabled
 +                ? new WorldOptions(this.seed, this.featureSeed, this.generateStructures, generateBonusChest, this.legacyCustomOptions)
 +                : new WorldOptions(this.seed, this.generateStructures, generateBonusChest, this.legacyCustomOptions);
      }
  
-     public WorldOptions withStructures(boolean generateStructures) {
+     public WorldOptions withStructures(final boolean generateStructures) {
 -        return new WorldOptions(this.seed, generateStructures, this.generateBonusChest, this.legacyCustomOptions);
 +        return isSecureSeedEnabled
 +                ? new WorldOptions(this.seed, this.featureSeed, generateStructures, this.generateBonusChest, this.legacyCustomOptions)
 +                : new WorldOptions(this.seed, generateStructures, this.generateBonusChest, this.legacyCustomOptions);
      }
  
-     public WorldOptions withSeed(OptionalLong seed) {
+     public WorldOptions withSeed(final OptionalLong seed) {
 -        return new WorldOptions(seed.orElse(randomSeed()), this.generateStructures, this.generateBonusChest, this.legacyCustomOptions);
 +        return isSecureSeedEnabled
 +                ? new WorldOptions(seed.orElse(randomSeed()), su.plo.matter.Globals.createRandomWorldSeed(), this.generateStructures, this.generateBonusChest, this.legacyCustomOptions)
@@ -318,100 +320,100 @@ index c92508741439a8d0d833ea02d0104416adb83c92..a6468813fde2705623767aca5615ef52
      }
 +    // Leaf end - Matter - Secure Seed
  
-     public static OptionalLong parseSeed(String seed) {
-         seed = seed.trim();
+     public static OptionalLong parseSeed(String seedString) {
+         seedString = seedString.trim();
 diff --git a/net/minecraft/world/level/levelgen/feature/GeodeFeature.java b/net/minecraft/world/level/levelgen/feature/GeodeFeature.java
-index 1489328395e212fc34e6e5462dba9d7a167c9a81..86e751c25677fe22b80691679c199f7ea1104853 100644
+index 80e95123e4485eddb17c9720dbb36799eeed943e..9cea12d9ba982e31319e31bb4e297b4203afc6b7 100644
 --- a/net/minecraft/world/level/levelgen/feature/GeodeFeature.java
 +++ b/net/minecraft/world/level/levelgen/feature/GeodeFeature.java
 @@ -41,7 +41,11 @@ public class GeodeFeature extends Feature<GeodeConfiguration> {
-         int i1 = geodeConfiguration.maxGenOffset;
-         List<Pair<BlockPos, Integer>> list = Lists.newLinkedList();
-         int i2 = geodeConfiguration.distributionPoints.sample(randomSource);
--        WorldgenRandom worldgenRandom = new WorldgenRandom(new LegacyRandomSource(worldGenLevel.getSeed()));
+         int maxGenOffset = config.maxGenOffset;
+         List<Pair<BlockPos, Integer>> points = Lists.newLinkedList();
+         int numPoints = config.distributionPoints.sample(random);
+-        WorldgenRandom random1 = new WorldgenRandom(new LegacyRandomSource(level.getSeed()));
 +        // Leaf start - Matter - Secure Seed
-+        WorldgenRandom worldgenRandom = me.sucixr.kitin.config.KitinConfig.useSecureSeed
++        WorldgenRandom random1 = me.sucixr.kitin.config.KitinConfig.useSecureSeed
 +                ? new su.plo.matter.WorldgenCryptoRandom(0, 0, su.plo.matter.Globals.Salt.GEODE_FEATURE, 0)
-+                : new WorldgenRandom(new LegacyRandomSource(worldGenLevel.getSeed()));
++                : new WorldgenRandom(new LegacyRandomSource(level.getSeed()));
 +        // Leaf end - Matter - Secure Seed
-         NormalNoise normalNoise = NormalNoise.create(worldgenRandom, -4, 1.0);
-         List<BlockPos> list1 = Lists.newLinkedList();
-         double d = (double)i2 / geodeConfiguration.outerWallDistance.getMaxValue();
+         NormalNoise noise = NormalNoise.create(random1, -4, 1.0);
+         List<BlockPos> crackPoints = Lists.newLinkedList();
+         double crackSizeAdjustment = (double)numPoints / config.outerWallDistance.maxInclusive();
 diff --git a/net/minecraft/world/level/levelgen/structure/Structure.java b/net/minecraft/world/level/levelgen/structure/Structure.java
-index 8328e864c72b7a358d6bb1f33459b8c4df2ecb1a..1b080cdc99c85184b78df262cc6576b4deaae267 100644
+index f1e13ede1f7345089ece8d8ef391f7fd5e55c445..bd2351a9f450ee4949f10f01ae830b04fc3aa065 100644
 --- a/net/minecraft/world/level/levelgen/structure/Structure.java
 +++ b/net/minecraft/world/level/levelgen/structure/Structure.java
-@@ -249,6 +249,11 @@ public abstract class Structure {
+@@ -248,6 +248,11 @@ public abstract class Structure {
          }
  
-         private static WorldgenRandom makeRandom(long seed, ChunkPos chunkPos) {
+         private static WorldgenRandom makeRandom(final long seed, final ChunkPos chunkPos) {
 +            // Leaf start - Matter - Secure Seed
 +            if (me.sucixr.kitin.config.KitinConfig.useSecureSeed) {
-+                return new su.plo.matter.WorldgenCryptoRandom(chunkPos.x, chunkPos.z, su.plo.matter.Globals.Salt.GENERATE_FEATURE, seed);
++                return new su.plo.matter.WorldgenCryptoRandom(chunkPos.x(), chunkPos.z(), su.plo.matter.Globals.Salt.GENERATE_FEATURE, seed);
 +            }
 +            // Leaf end - Matter - Secure Seed
-             WorldgenRandom worldgenRandom = new WorldgenRandom(new LegacyRandomSource(0L));
-             worldgenRandom.setLargeFeatureSeed(seed, chunkPos.x, chunkPos.z);
-             return worldgenRandom;
+             WorldgenRandom random = new WorldgenRandom(new LegacyRandomSource(0L));
+             random.setLargeFeatureSeed(seed, chunkPos.x(), chunkPos.z());
+             return random;
 diff --git a/net/minecraft/world/level/levelgen/structure/placement/RandomSpreadStructurePlacement.java b/net/minecraft/world/level/levelgen/structure/placement/RandomSpreadStructurePlacement.java
-index ee0d9dddb36b6879fa113299e24f1aa3b2b151cc..64be5f4b7bb05b744f744704a03dbcd8760cf51d 100644
+index 1310b2ca994b8f6d3d92bdc676fe44de3619cc09..6a63968bf3bf0ced2e3fe69445121a63f8a2b543 100644
 --- a/net/minecraft/world/level/levelgen/structure/placement/RandomSpreadStructurePlacement.java
 +++ b/net/minecraft/world/level/levelgen/structure/placement/RandomSpreadStructurePlacement.java
 @@ -67,8 +67,15 @@ public class RandomSpreadStructurePlacement extends StructurePlacement {
-     public ChunkPos getPotentialStructureChunk(long seed, int regionX, int regionZ) {
-         int i = Math.floorDiv(regionX, this.spacing);
-         int i1 = Math.floorDiv(regionZ, this.spacing);
--        WorldgenRandom worldgenRandom = new WorldgenRandom(new LegacyRandomSource(0L));
--        worldgenRandom.setLargeFeatureWithSalt(seed, i, i1, this.salt());
+     public ChunkPos getPotentialStructureChunk(final long seed, final int sourceX, final int sourceZ) {
+         int spacedGridX = Math.floorDiv(sourceX, this.spacing);
+         int spacedGridZ = Math.floorDiv(sourceZ, this.spacing);
+-        WorldgenRandom random = new WorldgenRandom(new LegacyRandomSource(0L));
+-        random.setLargeFeatureWithSalt(seed, spacedGridX, spacedGridZ, this.salt());
 +        // Leaf start - Matter - Secure Seed
-+        WorldgenRandom worldgenRandom;
++        WorldgenRandom random;
 +        if (me.sucixr.kitin.config.KitinConfig.useSecureSeed) {
-+            worldgenRandom = new su.plo.matter.WorldgenCryptoRandom(i, i1, su.plo.matter.Globals.Salt.POTENTIONAL_FEATURE, this.salt);
++            random = new su.plo.matter.WorldgenCryptoRandom(spacedGridX, spacedGridZ, su.plo.matter.Globals.Salt.POTENTIONAL_FEATURE, this.salt);
 +        } else {
-+            worldgenRandom = new WorldgenRandom(new LegacyRandomSource(0L));
-+            worldgenRandom.setLargeFeatureWithSalt(seed, i, i1, this.salt());
++            random = new WorldgenRandom(new LegacyRandomSource(0L));
++            random.setLargeFeatureWithSalt(seed, spacedGridX, spacedGridZ, this.salt());
 +        }
 +        // Leaf end - Matter - Secure Seed
-         int i2 = this.spacing - this.separation;
-         int i3 = this.spreadType.evaluate(worldgenRandom, i2);
-         int i4 = this.spreadType.evaluate(worldgenRandom, i2);
+         int limit = this.spacing - this.separation;
+         int spreadX = this.spreadType.evaluate(random, limit);
+         int spreadZ = this.spreadType.evaluate(random, limit);
 diff --git a/net/minecraft/world/level/levelgen/structure/placement/StructurePlacement.java b/net/minecraft/world/level/levelgen/structure/placement/StructurePlacement.java
-index b3a538f9aebf5b6e965e1140b8fc558eb394605b..93824031c8d95cc506237be44bd0816e50b3d02a 100644
+index e14b27b36cdceb43c4c313e8487c63c011b68e06..b17c927cd641043cb90b50960fa7ea269ec0af68 100644
 --- a/net/minecraft/world/level/levelgen/structure/placement/StructurePlacement.java
 +++ b/net/minecraft/world/level/levelgen/structure/placement/StructurePlacement.java
-@@ -119,8 +119,16 @@ public abstract class StructurePlacement {
-     public abstract StructurePlacementType<?> type();
+@@ -137,8 +137,16 @@ public abstract class StructurePlacement {
+     }
  
-     private static boolean probabilityReducer(long levelSeed, int regionX, int regionZ, int salt, float frequency, @javax.annotation.Nullable Integer saltOverride) { // Paper - Add missing structure set seed configs; ignore here
--        WorldgenRandom worldgenRandom = new WorldgenRandom(new LegacyRandomSource(0L));
--        worldgenRandom.setLargeFeatureWithSalt(levelSeed, regionX, regionZ, salt);
+     private static boolean legacyArbitrarySaltProbabilityReducer(final long seed, final int salt, final int sourceX, final int sourceZ, final float probability, final @org.jspecify.annotations.Nullable Integer saltOverride) { // Paper - Add missing structure set seed configs
+-        WorldgenRandom random = new WorldgenRandom(new LegacyRandomSource(0L));
+-        random.setLargeFeatureWithSalt(seed, sourceX, sourceZ, saltOverride != null ? saltOverride : HIGHLY_ARBITRARY_RANDOM_SALT); // Paper - Add missing structure set seed configs
 +        // Leaf start - Matter - Secure Seed
-+        WorldgenRandom worldgenRandom;
++        WorldgenRandom random;
 +        if (me.sucixr.kitin.config.KitinConfig.useSecureSeed) {
-+            worldgenRandom = new su.plo.matter.WorldgenCryptoRandom(regionX, regionZ, su.plo.matter.Globals.Salt.UNDEFINED, salt);
++            random = new su.plo.matter.WorldgenCryptoRandom(sourceX, sourceZ, su.plo.matter.Globals.Salt.UNDEFINED, saltOverride != null ? saltOverride : HIGHLY_ARBITRARY_RANDOM_SALT);
 +        } else {
-+            worldgenRandom = new WorldgenRandom(new LegacyRandomSource(0L));
-+            worldgenRandom.setLargeFeatureWithSalt(levelSeed, salt, regionX, regionZ);
++            random = new WorldgenRandom(new LegacyRandomSource(0L));
++            random.setLargeFeatureWithSalt(seed, sourceX, sourceZ, saltOverride != null ? saltOverride : HIGHLY_ARBITRARY_RANDOM_SALT); // Paper - Add missing structure set seed configs
 +        }
 +        // Leaf end - Matter - Secure Seed
 +
-         return worldgenRandom.nextFloat() < frequency;
+         return random.nextFloat() < probability;
      }
  
 diff --git a/net/minecraft/world/level/levelgen/structure/pools/JigsawPlacement.java b/net/minecraft/world/level/levelgen/structure/pools/JigsawPlacement.java
-index 12a8c5d85c9b6a433b90ae98743e78a48bf1e7d4..5d0740a24f5e41dab2a58c7073656ab2c1ae251f 100644
+index 499e1c76a8ff6fdff2f1f95a50fbc22c1c750556..32c3f26d05be743b2fcb8e9c082d73d43771feb9 100644
 --- a/net/minecraft/world/level/levelgen/structure/pools/JigsawPlacement.java
 +++ b/net/minecraft/world/level/levelgen/structure/pools/JigsawPlacement.java
 @@ -64,7 +64,11 @@ public class JigsawPlacement {
          ChunkGenerator chunkGenerator = context.chunkGenerator();
          StructureTemplateManager structureTemplateManager = context.structureTemplateManager();
-         LevelHeightAccessor levelHeightAccessor = context.heightAccessor();
--        WorldgenRandom worldgenRandom = context.random();
+         LevelHeightAccessor heightAccessor = context.heightAccessor();
+-        WorldgenRandom random = context.random();
 +        // Leaf start - Matter - Secure Seed
-+        WorldgenRandom worldgenRandom = me.sucixr.kitin.config.KitinConfig.useSecureSeed
-+            ? new su.plo.matter.WorldgenCryptoRandom(context.chunkPos().x, context.chunkPos().z, su.plo.matter.Globals.Salt.JIGSAW_PLACEMENT, 0)
-+            : context.random();
++        WorldgenRandom random = me.sucixr.kitin.config.KitinConfig.useSecureSeed
++                ? new su.plo.matter.WorldgenCryptoRandom(context.chunkPos().x(), context.chunkPos().z(), su.plo.matter.Globals.Salt.JIGSAW_PLACEMENT, 0)
++                : context.random();
 +        // Leaf end - Matter - Secure Seed
-         Registry<StructureTemplatePool> registry = registryAccess.lookupOrThrow(Registries.TEMPLATE_POOL);
-         Rotation random = Rotation.getRandom(worldgenRandom);
-         StructureTemplatePool structureTemplatePool = startPool.unwrapKey()
+         Registry<StructureTemplatePool> pools = registryAccess.lookupOrThrow(Registries.TEMPLATE_POOL);
+         Rotation centerRotation = Rotation.getRandom(random);
+         StructureTemplatePool centerPool = startPool.unwrapKey()

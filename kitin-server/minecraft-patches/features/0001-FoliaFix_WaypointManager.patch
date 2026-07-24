@@ -1,27 +1,27 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: SucIXR <sasasa123456@foxmail.com>
-Date: Sat, 20 Dec 2025 20:22:57 +0800
+Date: Fri, 24 Jul 2026 10:55:23 +0800
 Subject: [PATCH] FoliaFix_WaypointManager
 
 
 diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
-index 3471200d54b938ef82f142efc2fcb096d72ec7b4..7074c8bb9174cec9788743d0126ae5189987b353 100644
+index a51a9e7a0fa5727690046d814eb0b26d5742cd74..47154133f131ae64c8122f4f581cb70f5c7ab64e 100644
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
-@@ -649,7 +649,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+@@ -680,7 +680,7 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
+ 
          this.sleepStatus = new SleepStatus();
          this.gameEventDispatcher = new GameEventDispatcher(this);
-         this.randomSequences = Objects.requireNonNullElseGet(randomSequences, () -> this.getDataStorage().computeIfAbsent(RandomSequences.TYPE));
--        this.waypointManager = new ServerWaypointManager();
-+        this.waypointManager = new me.sucixr.kitin.fixes.foliafix.waypoint.KitinServerWaypointManager(this);
+-        this.waypointManager = new ServerWaypointManager(this); // Paper - optimize ServerWaypointManager with locator bar disabled
++        this.waypointManager = new me.sucixr.kitin.fixes.foliafix.waypoint.KitinServerWaypointManager(this); // Paper - optimize ServerWaypointManager with locator bar disabled // Kitin WaypointManager
          this.environmentAttributes = EnvironmentAttributeSystem.builder().addDefaultLayers(this).build();
          //this.updateSkyBrightness(); // Folia - region threading - delay until first tick
          // Paper start - rewrite chunk system
 diff --git a/net/minecraft/server/level/ServerPlayer.java b/net/minecraft/server/level/ServerPlayer.java
-index 01e067a0045e59094bf271c448f158f932199aa3..512997e6fc481589770364d069c62fe551fae556 100644
+index 5d4310dab55cc960ccfce279e656e7b740f3d5c0..63a021a47ca928d7ee3ab0089b6799d594d035ef 100644
 --- a/net/minecraft/server/level/ServerPlayer.java
 +++ b/net/minecraft/server/level/ServerPlayer.java
-@@ -875,6 +875,9 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+@@ -897,6 +897,9 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
  
      @Override
      public void tick() {
@@ -31,7 +31,7 @@ index 01e067a0045e59094bf271c448f158f932199aa3..512997e6fc481589770364d069c62fe5
          // CraftBukkit start
          if (this.joining) {
              this.joining = false;
-@@ -3635,5 +3638,37 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+@@ -3687,5 +3690,37 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
      public org.bukkit.craftbukkit.entity.CraftPlayer getBukkitEntity() {
          return (org.bukkit.craftbukkit.entity.CraftPlayer) super.getBukkitEntity();
      }

@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: SucIXR <sasasa123456@foxmail.com>
-Date: Mon, 20 Apr 2026 23:10:36 +0800
-Subject: [PATCH] Other_Luminol_Add-BlockPos-transform-to-Position-support
+Date: Fri, 24 Jul 2026 12:59:37 +0800
+Subject: [PATCH] Other_Luminol_Add-missing-teleportation-event-APIs-for-folia
 
 
 diff --git a/src/main/java/io/papermc/paper/SparksFly.java b/src/main/java/io/papermc/paper/SparksFly.java
@@ -18,7 +18,7 @@ index 78d53b3887fa0e45cc8fa8d87041f03913b4f18b..8929b68f8ac4a3d9849252b17cdfab1c
  
      @Override
 diff --git a/src/main/java/io/papermc/paper/util/MCUtil.java b/src/main/java/io/papermc/paper/util/MCUtil.java
-index 6b3bfe5f1b7e02e5f91406e7bbc53974fe801af3..9e408395885bf063807040110ac46e186d330d70 100644
+index 08367eaa9f93d6213502d76be2acfe95c723c556..56c4e46f348cfbe02b04f93f73894e0ba7d761a3 100644
 --- a/src/main/java/io/papermc/paper/util/MCUtil.java
 +++ b/src/main/java/io/papermc/paper/util/MCUtil.java
 @@ -168,6 +168,12 @@ public final class MCUtil {

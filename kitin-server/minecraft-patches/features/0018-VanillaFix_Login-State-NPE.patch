@@ -1,33 +1,33 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: SucIXR <sasasa123456@foxmail.com>
-Date: Sun, 8 Feb 2026 01:29:33 +0800
+Date: Fri, 24 Jul 2026 12:08:10 +0800
 Subject: [PATCH] VanillaFix_Login-State-NPE
 
 
 diff --git a/net/minecraft/server/players/PlayerList.java b/net/minecraft/server/players/PlayerList.java
-index 10b159a61480b790a9fd320876ff731ab0897507..616b938a0f273cbd7c2bc47692860f07e42cfe53 100644
+index 4da7d5201ede250de14e6e6004bcc1230b67427f..ad5b1b827a74b0171da8a2ce7e41268d10547d20 100644
 --- a/net/minecraft/server/players/PlayerList.java
 +++ b/net/minecraft/server/players/PlayerList.java
-@@ -260,16 +260,34 @@ public abstract class PlayerList {
+@@ -262,16 +262,34 @@ public abstract class PlayerList {
              )
          );
          player.getBukkitEntity().sendSupportedChannels(); // CraftBukkit
--        serverGamePacketListenerImpl.send(new ClientboundChangeDifficultyPacket(levelData.getDifficulty(), levelData.isDifficultyLocked()));
--        serverGamePacketListenerImpl.send(new ClientboundPlayerAbilitiesPacket(player.getAbilities()));
--        serverGamePacketListenerImpl.send(new ClientboundSetHeldSlotPacket(player.getInventory().getSelectedSlot()));
+-        playerConnection.send(new ClientboundChangeDifficultyPacket(levelData.getDifficulty(), levelData.isDifficultyLocked()));
+-        playerConnection.send(new ClientboundPlayerAbilitiesPacket(player.getAbilities()));
+-        playerConnection.send(new ClientboundSetHeldSlotPacket(player.getInventory().getSelectedSlot()));
 -        RecipeManager recipeManager = this.server.getRecipeManager();
--        serverGamePacketListenerImpl.send(
+-        playerConnection.send(
 -            new ClientboundUpdateRecipesPacket(recipeManager.getSynchronizedItemProperties(), recipeManager.getSynchronizedStonecutterRecipes())
 -        );
 -        this.sendPlayerPermissionLevel(player);
-+//        serverGamePacketListenerImpl.send(new ClientboundChangeDifficultyPacket(levelData.getDifficulty(), levelData.isDifficultyLocked()));
-+//        serverGamePacketListenerImpl.send(new ClientboundPlayerAbilitiesPacket(player.getAbilities()));
-+//        serverGamePacketListenerImpl.send(new ClientboundSetHeldSlotPacket(player.getInventory().getSelectedSlot())); // Kitin off The code has been migrated MojangFix_Login-State-NPE
++//        playerConnection.send(new ClientboundChangeDifficultyPacket(levelData.getDifficulty(), levelData.isDifficultyLocked()));
++//        playerConnection.send(new ClientboundPlayerAbilitiesPacket(player.getAbilities()));
++//        playerConnection.send(new ClientboundSetHeldSlotPacket(player.getInventory().getSelectedSlot()));
 +//        RecipeManager recipeManager = this.server.getRecipeManager();
-+//        serverGamePacketListenerImpl.send(
++//        playerConnection.send(
 +//            new ClientboundUpdateRecipesPacket(recipeManager.getSynchronizedItemProperties(), recipeManager.getSynchronizedStonecutterRecipes())
 +//        );
-+        //this.sendPlayerPermissionLevel(player); // Kitin off The code has been migrated MojangFix_Login-State-NPE
++//        this.sendPlayerPermissionLevel(player); // Kitin off
 +
 +        // Kitin start - MojangFix_Login-State-NPE
 +        // 修复 Mod 客户端进服网络协议错误 (NPE) 问题
@@ -49,6 +49,6 @@ index 10b159a61480b790a9fd320876ff731ab0897507..616b938a0f273cbd7c2bc47692860f07
          player.getStats().markAllDirty();
 -        player.getRecipeBook().sendInitialRecipeBook(player);
 +        //player.getRecipeBook().sendInitialRecipeBook(player); // Kitin off
-         //this.updateEntireScoreboard(serverLevel.getScoreboard(), player); // Folia - region threading
+         //this.updateEntireScoreboard(level.getScoreboard(), player); // Folia - region threading
          this.server.invalidateStatus();
-         MutableComponent mutableComponent;
+         MutableComponent component;

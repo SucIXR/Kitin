@@ -1,11 +1,11 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: SucIXR <sasasa123456@foxmail.com>
-Date: Tue, 13 Jan 2026 20:36:17 +0800
+Date: Fri, 24 Jul 2026 11:35:11 +0800
 Subject: [PATCH] Safety_LazyChunkBarrier
 
 
 diff --git a/net/minecraft/world/entity/item/ItemEntity.java b/net/minecraft/world/entity/item/ItemEntity.java
-index 7d8748fd4bdd523a7cf37ef86729da4277416f9a..36071c2c46b27eef322d5c5228f2dd2368fa23ea 100644
+index 4f39b96a4af8865af6a968d64643712840359851..7ed1d6c5fe341185b713ff786834c7935d2381b8 100644
 --- a/net/minecraft/world/entity/item/ItemEntity.java
 +++ b/net/minecraft/world/entity/item/ItemEntity.java
 @@ -60,6 +60,14 @@ public class ItemEntity extends Entity implements TraceableEntity {
@@ -20,6 +20,6 @@ index 7d8748fd4bdd523a7cf37ef86729da4277416f9a..36071c2c46b27eef322d5c5228f2dd23
 +    }
 +    //Kitin end
 +
-     public ItemEntity(Level level, double posX, double posY, double posZ, ItemStack stack) {
-         // Paper start - Don't use level random in entity constructors (to make them thread-safe)
+     public ItemEntity(final Level level, final double x, final double y, final double z, final ItemStack itemStack) {
          this(EntityType.ITEM, level);
+         this.setPos(x, y, z);

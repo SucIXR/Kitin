@@ -1,24 +1,24 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: SucIXR <sasasa123456@foxmail.com>
-Date: Wed, 21 Jan 2026 22:28:33 +0800
+Date: Fri, 24 Jul 2026 11:52:09 +0800
 Subject: [PATCH] Perf_dropper-container-transfer
 
 
 diff --git a/net/minecraft/world/level/block/DropperBlock.java b/net/minecraft/world/level/block/DropperBlock.java
-index 0d950a6b32524d0d982d7856fc4791bf3670938e..ef9c58e3eae1ce376ac8c36eb0eb8391c67c836d 100644
+index 733a7573c0eb545a257690c005ca9632906604e2..7a6d6cd0118b6f9a24e0afab21911d1e93946591 100644
 --- a/net/minecraft/world/level/block/DropperBlock.java
 +++ b/net/minecraft/world/level/block/DropperBlock.java
 @@ -65,6 +65,36 @@ public class DropperBlock extends DispenserBlock {
-                         if (!org.bukkit.craftbukkit.event.CraftEventFactory.handleBlockPreDispenseEvent(level, pos, item, randomSlot)) return; // Paper - Add BlockPreDispenseEvent
-                         itemStack = DISPENSE_BEHAVIOUR.dispense(blockSource, item);
+                         if (!org.bukkit.craftbukkit.event.CraftEventFactory.handleBlockPreDispenseEvent(level, pos, itemStack, slot)) return; // Paper - Add BlockPreDispenseEvent
+                         remaining = DISPENSE_BEHAVIOUR.dispense(source, itemStack);
                      } else {
 +                        // Kitin start
 +                        if (me.sucixr.kitin.config.KitinConfig.optimizeDropper){
 +                            // 1. 预检
 +                            int freeSlot = -1;
-+                            for (int i = 0; i < containerAt.getContainerSize(); i++) {
-+                                ItemStack target = containerAt.getItem(i);
-+                                if (target.isEmpty() || (ItemStack.isSameItemSameComponents(target, item) && target.getCount() < target.getMaxStackSize())) {
++                            for (int i = 0; i < into.getContainerSize(); i++) {
++                                ItemStack target = into.getItem(i);
++                                if (target.isEmpty() || (ItemStack.isSameItemSameComponents(target, itemStack) && target.getCount() < target.getMaxStackSize())) {
 +                                    freeSlot = i;
 +                                    break;
 +                                }
@@ -28,20 +28,20 @@ index 0d950a6b32524d0d982d7856fc4791bf3670938e..ef9c58e3eae1ce376ac8c36eb0eb8391
 +                                return;
 +                            }
 +                            // 3. 零拷贝移动
-+                            ItemStack toMove = item.split(1);
-+                            ItemStack targetAtSlot = containerAt.getItem(freeSlot);
++                            ItemStack toMove = itemStack.split(1);
++                            ItemStack targetAtSlot = into.getItem(freeSlot);
 +
 +                            if (targetAtSlot.isEmpty()) {
-+                                containerAt.setItem(freeSlot, toMove);
++                                into.setItem(freeSlot, toMove);
 +                            } else {
 +                                targetAtSlot.grow(1);
 +                            }
 +
-+                            dispenserBlockEntity.setItem(randomSlot, item);
++                            blockEntity.setItem(slot, itemStack);
 +                            return;
 +                        }
 +                        // Kitin end
 +
                          // CraftBukkit start - Fire event when pushing items into other inventories
-                         org.bukkit.craftbukkit.inventory.CraftItemStack oitemstack = org.bukkit.craftbukkit.inventory.CraftItemStack.asCraftMirror(item.copyWithCount(1));
+                         org.bukkit.craftbukkit.inventory.CraftItemStack oitemstack = org.bukkit.craftbukkit.inventory.CraftItemStack.asCraftMirror(itemStack.copyWithCount(1));
  

@@ -47,7 +47,7 @@ jobs:
 
       - name: CreateJar
         run: |
-          ./gradlew createMojmapPaperclipJar
+          ./gradlew createPaperclipJar
 
       - name: Push to API
         continue-on-error: true

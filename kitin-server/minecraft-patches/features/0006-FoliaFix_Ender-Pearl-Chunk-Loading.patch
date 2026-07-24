@@ -1,35 +1,35 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: SucIXR <sasasa123456@foxmail.com>
-Date: Thu, 1 Jan 2026 05:17:26 +0800
+Date: Fri, 24 Jul 2026 11:26:44 +0800
 Subject: [PATCH] FoliaFix_Ender-Pearl-Chunk-Loading
 
 
 diff --git a/net/minecraft/server/level/ServerPlayer.java b/net/minecraft/server/level/ServerPlayer.java
-index 512997e6fc481589770364d069c62fe551fae556..a14690b1bbdef99107d59b19c17af9d5584005fd 100644
+index 63a021a47ca928d7ee3ab0089b6799d594d035ef..e7ac42475927a6588366df7030fe6c9318079478 100644
 --- a/net/minecraft/server/level/ServerPlayer.java
 +++ b/net/minecraft/server/level/ServerPlayer.java
-@@ -757,6 +757,10 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+@@ -778,6 +778,10 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
      }
  
-     private void saveEnderPearls(ValueOutput output) {
+     private void saveEnderPearls(final ValueOutput playerOutput) {
 +        // Kitin start - fix Pearl Chunk Loading
-+        if (me.sucixr.kitin.config.KitinConfig.pearlFixEnabled)me.sucixr.kitin.fixes.foliafix.pearl.PearlChunkLoading.saveEnderPearls(this, output);
++        if (me.sucixr.kitin.config.KitinConfig.pearlFixEnabled) me.sucixr.kitin.fixes.foliafix.pearl.PearlChunkLoading.saveEnderPearls(this, playerOutput);
 +        else {
 +        // Kitin end
          if (!this.enderPearls.isEmpty()) {
-             ValueOutput.ValueOutputList valueOutputList = output.childrenList("ender_pearls");
+             ValueOutput.ValueOutputList pearlsOutput = playerOutput.childrenList("ender_pearls");
  
-@@ -770,7 +774,7 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
-                     valueOutput.store("ender_pearl_dimension", Level.RESOURCE_KEY_CODEC, thrownEnderpearl.level().dimension());
+@@ -791,7 +795,7 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+                     pearlTag.store("ender_pearl_dimension", Level.RESOURCE_KEY_CODEC, enderPearl.level().dimension());
                  }
              }
 -        }
 +        }} //Kitin
      }
  
-     public void loadAndSpawnEnderPearls(ValueInput input) {
+     public void loadAndSpawnEnderPearls(final ValueInput playerInput) {
 diff --git a/net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.java b/net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.java
-index 7d8c528a76e6a95d27368bc459d654c6ef66dd8f..d01a111be9592cf231cecc4ff72a6cfeafcff542 100644
+index 8dc8c6cfc01be3787142a117ef2b98f5294a8cef..adc38f851c249fcb485655389f10aaa70e7d4953 100644
 --- a/net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.java
 +++ b/net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.java
 @@ -174,9 +174,17 @@ public class ThrownEnderpearl extends ThrowableItemProjectile {
@@ -38,7 +38,7 @@ index 7d8c528a76e6a95d27368bc459d654c6ef66dd8f..d01a111be9592cf231cecc4ff72a6cfe
                  }
 -                Entity entity = this.getOwnerRaw();
 +                //Kitin start - fix Pearl Chunk Loading
-+                Entity entity = me.sucixr.kitin.fixes.util.CrossRegionEntityUtil.getGlobalPlayer(serverLevel.getServer(), this.owner != null ? this.owner.getUUID() : null);
++                Entity entity = me.sucixr.kitin.fixes.util.CrossRegionEntityUtil.getGlobalPlayer(level.getServer(), this.owner != null ? this.owner.getUUID() : null);
 +                //Kitin end
                  if (entity != null) {
                      attemptTeleport(entity, (ServerLevel)this.level(), this.position());
@@ -51,7 +51,7 @@ index 7d8c528a76e6a95d27368bc459d654c6ef66dd8f..d01a111be9592cf231cecc4ff72a6cfe
                  }
                  this.discard(org.bukkit.event.entity.EntityRemoveEvent.Cause.HIT);
                  return;
-@@ -253,11 +261,21 @@ public class ThrownEnderpearl extends ThrowableItemProjectile {
+@@ -258,11 +266,21 @@ public class ThrownEnderpearl extends ThrowableItemProjectile {
      @Override
      public void tick() {
          if (this.level() instanceof ServerLevel serverLevel) {
@@ -65,38 +65,38 @@ index 7d8c528a76e6a95d27368bc459d654c6ef66dd8f..d01a111be9592cf231cecc4ff72a6cfe
 +            }
 +            // Kitin end
              int var7 = SectionPos.blockToSectionCoord(this.position().x());
-             int sectionPosZ = SectionPos.blockToSectionCoord(this.position().z());
--            Entity entity = this.owner != null ? findOwnerIncludingDeadPlayer(serverLevel, this.owner.getUUID()) : null;
-+            Entity entity = me.sucixr.kitin.fixes.util.CrossRegionEntityUtil.getGlobalPlayer(serverLevel.getServer(), this.owner != null ? this.owner.getUUID() : null); //Kitin fix Pearl Chunk Loading
-             if (entity instanceof ServerPlayer serverPlayer
-                 && !entity.isAlive()
+             int previousChunkZ = SectionPos.blockToSectionCoord(this.position().z());
+-            Entity owner = this.owner != null ? findOwnerIncludingDeadPlayer(serverLevel, this.owner.getUUID()) : null;
++            Entity owner = me.sucixr.kitin.fixes.util.CrossRegionEntityUtil.getGlobalPlayer(serverLevel.getServer(), this.owner != null ? this.owner.getUUID() : null); //Kitin fix Pearl Chunk Loading
+             if (owner instanceof ServerPlayer serverPlayer
+                 && !owner.isAlive()
 +                && serverPlayer.getHealth() <= 0.0F //Kitin fix - Pearl Chunk Loading
                  && !serverPlayer.wonGame
                  && serverPlayer.level().getGameRules().get(GameRules.ENDER_PEARLS_VANISH_ON_DEATH)) {
                  this.discard(org.bukkit.event.entity.EntityRemoveEvent.Cause.DESPAWN); // CraftBukkit - add Bukkit remove cause
-@@ -272,9 +290,17 @@ public class ThrownEnderpearl extends ThrowableItemProjectile {
-                             || var7 != SectionPos.blockToSectionCoord(blockPos.getX())
-                             || sectionPosZ != SectionPos.blockToSectionCoord(blockPos.getZ())
+@@ -277,9 +295,17 @@ public class ThrownEnderpearl extends ThrowableItemProjectile {
+                             || var7 != SectionPos.blockToSectionCoord(currentPos.getX())
+                             || previousChunkZ != SectionPos.blockToSectionCoord(currentPos.getZ())
                      )
--                    && entity instanceof ServerPlayer serverPlayer1) {
--                    this.ticketTimer = serverPlayer1.registerAndUpdateEnderPearlTicket(this);
+-                    && owner instanceof ServerPlayer serverPlayer) {
+-                    this.ticketTimer = serverPlayer.registerAndUpdateEnderPearlTicket(this);
 -                }
 +                    //Kitin start - fix Pearl Chunk Loading
 +                )
-+                    //&& entity instanceof ServerPlayer serverPlayer1) {
++                    //&& owner instanceof ServerPlayer serverPlayer) {
 +                    if (me.sucixr.kitin.config.KitinConfig.pearlFixEnabled && !this.isRemoved()){
 +                        serverLevel.resetEmptyTime(); // 防止维度卸载
 +                        net.minecraft.server.level.ServerPlayer.placeEnderPearlTicket(serverLevel, this.chunkPosition());
 +                        this.ticketTimer = net.minecraft.server.level.TicketType.ENDER_PEARL.timeout();
-+                    } else if (entity instanceof ServerPlayer serverPlayer1) {
++                    } else if (owner instanceof ServerPlayer serverPlayer1) {
 +                        this.ticketTimer = serverPlayer1.registerAndUpdateEnderPearlTicket(this);
 +                    }
 +                //Kitin end
              }
          } else {
              super.tick();
-@@ -322,6 +348,12 @@ public class ThrownEnderpearl extends ThrowableItemProjectile {
-     public void onRemoval(Entity.RemovalReason reason) {
+@@ -327,6 +353,12 @@ public class ThrownEnderpearl extends ThrowableItemProjectile {
+     public void onRemoval(final Entity.RemovalReason reason) {
          if (reason != Entity.RemovalReason.UNLOADED_WITH_PLAYER) {
              this.deregisterFromCurrentOwner();
 +            //Kitin start - fix Pearl Chunk Loading

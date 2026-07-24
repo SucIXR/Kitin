@@ -1,11 +1,11 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: SucIXR <sasasa123456@foxmail.com>
-Date: Fri, 13 Feb 2026 18:40:57 +0800
+Date: Fri, 24 Jul 2026 12:23:21 +0800
 Subject: [PATCH] Safety_Leaf_Secure-seed-and-matter-seed-command
 
 
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftChunk.java b/src/main/java/org/bukkit/craftbukkit/CraftChunk.java
-index 09baa8c13a56e0f503815a436042b7b79b1698e4..2e6f68b38a0c7f45047d9c11a98af0a61c3e38ab 100644
+index c8d179d936d57e8222d87b7fd943dbddfa8446a0..fb984b0072def2ac061c9f1e1dd7e87a1d58821f 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftChunk.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftChunk.java
 @@ -193,7 +193,12 @@ public class CraftChunk implements Chunk {
@@ -23,19 +23,19 @@ index 09baa8c13a56e0f503815a436042b7b79b1698e4..2e6f68b38a0c7f45047d9c11a98af0a6
  
      @Override
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-index db1440b09e620ce2aa9441e92b43b0d1ab8ee7a8..26f392f02240338aa9bb068942d5180ee1a0d02b 100644
+index 9583ff67f17f60883f0c0564eb95c700c85674b4..474b7094277cabf60676038475501ab673e2c773 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-@@ -1268,7 +1268,11 @@ public final class CraftServer implements Server {
-             registryAccess = levelDataAndDimensions.dimensions().dimensionsRegistryAccess();
-         } else {
-             LevelSettings levelSettings;
+@@ -1265,7 +1265,11 @@ public final class CraftServer implements Server {
+             .result()
+             .orElse(null);
+         if (worldGenSettings == null) {
 -            WorldOptions worldOptions = new WorldOptions(creator.seed(), creator.generateStructures(), creator.bonusChest());
 +            // Leaf start - Matter - Secure Seed
 +            WorldOptions worldOptions = me.sucixr.kitin.config.KitinConfig.useSecureSeed
-+                ? new WorldOptions(creator.seed(), su.plo.matter.Globals.createRandomWorldSeed(), creator.generateStructures(), false)
-+                : new WorldOptions(creator.seed(), creator.generateStructures(), creator.bonusChest());
++                    ? new WorldOptions(creator.seed(), su.plo.matter.Globals.createRandomWorldSeed(), creator.generateStructures(), false)
++                    : new WorldOptions(creator.seed(), creator.generateStructures(), creator.bonusChest());
 +            // Leaf end - Matter - Secure Seed
-             WorldDimensions worldDimensions;
  
              DedicatedServerProperties.WorldDimensionData properties = new DedicatedServerProperties.WorldDimensionData(GsonHelper.parse((creator.generatorSettings().isEmpty()) ? "{}" : creator.generatorSettings()), creator.type().name().toLowerCase(Locale.ROOT));
+             WorldDimensions worldDimensions = properties.create(context.datapackWorldgen());

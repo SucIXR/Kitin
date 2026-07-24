@@ -1,14 +1,14 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: SucIXR <sasasa123456@foxmail.com>
-Date: Fri, 23 Jan 2026 20:13:03 +0800
+Date: Fri, 24 Jul 2026 11:56:33 +0800
 Subject: [PATCH] Other_add-Config
 
 
 diff --git a/net/minecraft/commands/Commands.java b/net/minecraft/commands/Commands.java
-index b83e83cb0c202a6f0ac91397e1593e1042a666d3..759d4336b11d3e8f40efa3731e53f03b5d64baf0 100644
+index be983c34af84f6f939ea90467d723b95d35ecd31..35faf643df73bdd6fbddd250e5626d3dd1d88fe0 100644
 --- a/net/minecraft/commands/Commands.java
 +++ b/net/minecraft/commands/Commands.java
-@@ -221,6 +221,7 @@ public class Commands {
+@@ -223,6 +223,7 @@ public class Commands {
          //ItemCommands.register(this.dispatcher, context); // Folia - region threading - TODO later
          KickCommand.register(this.dispatcher);
          KillCommand.register(this.dispatcher);
@@ -17,10 +17,10 @@ index b83e83cb0c202a6f0ac91397e1593e1042a666d3..759d4336b11d3e8f40efa3731e53f03b
          LocateCommand.register(this.dispatcher, context);
          //LootCommand.register(this.dispatcher, context); // Folia - region threading - TODO later
 diff --git a/net/minecraft/server/dedicated/DedicatedServer.java b/net/minecraft/server/dedicated/DedicatedServer.java
-index 3d8290b952e4341211ef8e669372bf7ea1c4bf62..86d7221529de106215477d89a092c5a4a605383b 100644
+index 5f89d29eaeeb4c63b8b9e034d440204f518efec2..4632e1bc2ec38c802f0f31dde6719d29c015c726 100644
 --- a/net/minecraft/server/dedicated/DedicatedServer.java
 +++ b/net/minecraft/server/dedicated/DedicatedServer.java
-@@ -261,6 +261,7 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface
+@@ -282,6 +282,7 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface
          this.paperConfigurations.initializeGlobalConfiguration(this.registryAccess());
          this.paperConfigurations.initializeWorldDefaultsConfiguration(this.registryAccess());
          // Paper end - initialize global and world-defaults configuration

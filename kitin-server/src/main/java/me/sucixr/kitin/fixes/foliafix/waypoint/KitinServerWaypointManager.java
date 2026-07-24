@@ -30,6 +30,7 @@ public final class KitinServerWaypointManager extends ServerWaypointManager {
     private final Map<UUID, PlayerEntry> entries = new ConcurrentHashMap<>();
 
     public KitinServerWaypointManager(ServerLevel world) {
+        super(world); // 显式调用父类带 ServerLevel 的构造函数,26.1.2
         this.world = world;
         GlobalPositionProbe.getInstance();
     }

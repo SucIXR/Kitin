@@ -37,8 +37,8 @@ public final class PlayerMovementProbe {
         long now = System.currentTimeMillis();
 
         if (!s.initialized) {
-            s.lastX = pos.x;
-            s.lastZ = pos.z;
+            s.lastX = pos.x();
+            s.lastZ = pos.z();
             s.lastCheckTime = now;
             s.initialized = true;
 
@@ -48,8 +48,8 @@ public final class PlayerMovementProbe {
             return out;
         }
 
-        int dx = Math.abs(pos.x - s.lastX);
-        int dz = Math.abs(pos.z - s.lastZ);
+        int dx = Math.abs(pos.x() - s.lastX);
+        int dz = Math.abs(pos.z() - s.lastZ);
         int maxDist = Math.max(dx, dz);
 
         // 状态 A：原地 / 小范围晃动
@@ -65,8 +65,8 @@ public final class PlayerMovementProbe {
             if (s.resistance < 0) s.resistance = 0;
 
             if (s.resistance == 0) {
-                s.lastX = pos.x;
-                s.lastZ = pos.z;
+                s.lastX = pos.x(); // Changed from s.lastX = pos.x;
+                s.lastZ = pos.z();
                 s.lastCheckTime = now;
             }
         }

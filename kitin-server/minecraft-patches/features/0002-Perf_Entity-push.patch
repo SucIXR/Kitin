@@ -1,14 +1,14 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: SucIXR <sasasa123456@foxmail.com>
-Date: Thu, 25 Dec 2025 11:24:56 +0800
+Date: Fri, 24 Jul 2026 10:58:09 +0800
 Subject: [PATCH] Perf_Entity-push
 
 
 diff --git a/net/minecraft/world/entity/Entity.java b/net/minecraft/world/entity/Entity.java
-index a298b9babb6b42ff31781808821acd28918d7cb7..a7bac5430032727af274c7c646a628d53276334b 100644
+index 13f23918b6a9db52742a01bf16c69389a1c16dc9..ec4d3f6cbf659090da515f6db89478e1aa1cd77b 100644
 --- a/net/minecraft/world/entity/Entity.java
 +++ b/net/minecraft/world/entity/Entity.java
-@@ -2313,6 +2313,14 @@ public abstract class Entity implements SyncedDataHolder, DebugValueSource, Name
+@@ -2334,6 +2334,14 @@ public abstract class Entity
          if (!this.isPassengerOfSameVehicle(entity)) {
              if (!entity.noPhysics && !this.noPhysics) {
                  if (this.level.paperConfig().collisions.onlyPlayersCollide && !(entity instanceof ServerPlayer || this instanceof ServerPlayer)) return; // Paper - Collision option for requiring a player participant
@@ -20,6 +20,6 @@ index a298b9babb6b42ff31781808821acd28918d7cb7..a7bac5430032727af274c7c646a628d5
 +                    return;
 +                }
 +                //Kitin end
-                 double d = entity.getX() - this.getX();
-                 double d1 = entity.getZ() - this.getZ();
-                 double max = Mth.absMax(d, d1);
+                 double xa = entity.getX() - this.getX();
+                 double za = entity.getZ() - this.getZ();
+                 double dd = Mth.absMax(xa, za);

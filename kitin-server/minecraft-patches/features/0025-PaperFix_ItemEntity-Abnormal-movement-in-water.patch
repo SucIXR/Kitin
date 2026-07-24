@@ -1,11 +1,11 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: SucIXR <sasasa123456@foxmail.com>
-Date: Thu, 26 Feb 2026 22:07:12 +0800
+Date: Fri, 24 Jul 2026 12:37:16 +0800
 Subject: [PATCH] PaperFix_ItemEntity-Abnormal-movement-in-water
 
 
 diff --git a/io/papermc/paper/entity/activation/ActivationRange.java b/io/papermc/paper/entity/activation/ActivationRange.java
-index e22bd0f080fa2de8b17aa4d79e1228e7cfa16fdd..e3b0d2f9a20cc6c2c7dfd9dfec6d7017fd5924f3 100644
+index 36aabbd42cd89f8894c400bf6d26e18172508241..027dac78a51302c6c5c4508906bbc2f3404e08ff 100644
 --- a/io/papermc/paper/entity/activation/ActivationRange.java
 +++ b/io/papermc/paper/entity/activation/ActivationRange.java
 @@ -299,7 +299,7 @@ public final class ActivationRange {

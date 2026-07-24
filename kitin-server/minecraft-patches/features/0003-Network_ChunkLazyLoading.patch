@@ -1,14 +1,14 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: SucIXR <sasasa123456@foxmail.com>
-Date: Thu, 25 Dec 2025 13:23:09 +0800
+Date: Fri, 24 Jul 2026 10:59:37 +0800
 Subject: [PATCH] Network_ChunkLazyLoading
 
 
 diff --git a/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java b/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
-index d94c0d15f62b67378669d4ce7252d99b8f743fa5..31b028bc07a1100014894fa8e3ab539a66b96ab4 100644
+index 120b54334774d41fd1d42c97ddbb7a7c2e9c39f7..809fba0c2fd88aa4150c8cb25cd8ef9c49c6564f 100644
 --- a/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
 +++ b/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
-@@ -908,6 +908,13 @@ public final class RegionizedPlayerChunkLoader {
+@@ -919,6 +919,13 @@ public final class RegionizedPlayerChunkLoader {
          }
  
          void update() {

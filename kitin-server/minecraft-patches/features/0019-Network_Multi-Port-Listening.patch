@@ -1,14 +1,14 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: SucIXR <sasasa123456@foxmail.com>
-Date: Wed, 11 Feb 2026 17:22:35 +0800
+Date: Fri, 24 Jul 2026 12:10:47 +0800
 Subject: [PATCH] Network_Multi-Port-Listening
 
 
 diff --git a/net/minecraft/server/network/ServerConnectionListener.java b/net/minecraft/server/network/ServerConnectionListener.java
-index 7f86b3538449616a7fa8423e86897364563af957..cd19b90d06e5a7479f8d8cc83417f7a57fddd15b 100644
+index e917afa054136967bca6e712237a8b3671ad5db2..db4993ee4b9f57438cb070267b21dc25b5ba24f4 100644
 --- a/net/minecraft/server/network/ServerConnectionListener.java
 +++ b/net/minecraft/server/network/ServerConnectionListener.java
-@@ -67,11 +67,28 @@ public class ServerConnectionListener {
+@@ -69,11 +69,28 @@ public class ServerConnectionListener {
      }
  
      public void startTcpServerListener(SocketAddress address) throws IOException {
@@ -39,12 +39,12 @@ index 7f86b3538449616a7fa8423e86897364563af957..cd19b90d06e5a7479f8d8cc83417f7a5
                  LOGGER.warn("Using HAProxy, please ensure the server port is adequately firewalled.");
              }
              // Paper end - Warn people with console access that HAProxy is in use.
-@@ -105,7 +122,7 @@ public class ServerConnectionListener {
+@@ -110,7 +127,7 @@ public class ServerConnectionListener {
                                          ? new RateKickingConnection(rateLimitPacketsPerSecond)
                                          : new Connection(PacketFlow.SERVERBOUND));
                                      // Paper start - Add support for Proxy Protocol
 -                                    if (io.papermc.paper.configuration.GlobalConfiguration.get().proxies.proxyProtocol) {
 +                                    if (useProxyProtocol) { // Kitin - use parameter
-                                         channel.pipeline().addAfter("timeout", "haproxy-decoder", new io.netty.handler.codec.haproxy.HAProxyMessageDecoder());
+                                         channel.pipeline().addAfter(HandlerNames.TIMEOUT, "haproxy-decoder", new io.netty.handler.codec.haproxy.HAProxyMessageDecoder());
                                          channel.pipeline().addAfter("haproxy-decoder", "haproxy-handler", new ChannelInboundHandlerAdapter() {
                                              @Override

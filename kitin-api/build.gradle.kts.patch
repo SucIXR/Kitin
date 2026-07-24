@@ -1,14 +1,5 @@
 --- a/folia-api/build.gradle.kts
 +++ b/folia-api/build.gradle.kts
-@@ -12,7 +_,7 @@
- }
- 
- val annotationsVersion = "26.0.2"
--val adventureVersion = "4.26.1"
-+val adventureVersion = "4.25.0"
- val bungeeCordChatVersion = "1.21-R0.2-deprecated+build.21"
- val slf4jVersion = "2.0.16"
- val log4jVersion = "2.24.1"
 @@ -102,17 +_,21 @@
          java {
              srcDir(generatedDir)
@@ -31,3 +22,16 @@
          }
      }
  }
+@@ -263,3 +_,12 @@
+ tasks.check {
+     dependsOn(scanJarForBadCalls)
+ }
++
++// Kitin start - Hide unnecessary warnings
++tasks.withType<JavaCompile> {
++    val compilerArgs = options.compilerArgs
++    compilerArgs.add("-Xlint:-module")
++    compilerArgs.add("-Xlint:-removal")
++    compilerArgs.add("-Xlint:-dep-ann")
++}
++// Kitin end - Hide unnecessary warnings

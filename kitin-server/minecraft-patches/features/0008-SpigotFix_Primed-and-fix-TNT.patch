@@ -1,14 +1,14 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: SucIXR <sasasa123456@foxmail.com>
-Date: Sun, 11 Jan 2026 22:16:17 +0800
+Date: Fri, 24 Jul 2026 11:33:46 +0800
 Subject: [PATCH] SpigotFix_Primed-and-fix-TNT
 
 
 diff --git a/net/minecraft/world/entity/item/PrimedTnt.java b/net/minecraft/world/entity/item/PrimedTnt.java
-index fd1db18764be58bc5ed5983b98e669c76f7ff427..cee670f7ccd315c5d55e71e88feff8ba2cb62e96 100644
+index 42aff39d537aa6b138bc4a76304d49f423212acd..0a1e1716457445048dad5bf39fb0c1b824d5e897 100644
 --- a/net/minecraft/world/entity/item/PrimedTnt.java
 +++ b/net/minecraft/world/entity/item/PrimedTnt.java
-@@ -99,11 +99,12 @@ public class PrimedTnt extends Entity implements TraceableEntity {
+@@ -101,7 +101,8 @@ public class PrimedTnt extends Entity implements TraceableEntity {
  
      @Override
      public void tick() {
@@ -18,29 +18,10 @@ index fd1db18764be58bc5ed5983b98e669c76f7ff427..cee670f7ccd315c5d55e71e88feff8ba
          //this.handlePortal(); // Folia - region threading
          this.applyGravity();
          this.move(MoverType.SELF, this.getDeltaMovement());
--        this.applyEffectsFromBlocks();
-+        if (!me.sucixr.kitin.config.KitinConfig.disableMaxTntPerTickAndOptimize ||!isOverloaded) this.applyEffectsFromBlocks();//Kitin TNT不计算环境，水流岩浆，气泡柱等
-         // Paper start - Configurable TNT height nerf
-         if (this.level().paperConfig().fixes.tntEntityHeightNerf.test(v -> this.getY() > v)) {
-             this.discard(EntityRemoveEvent.Cause.OUT_OF_WORLD);
-@@ -114,12 +115,11 @@ public class PrimedTnt extends Entity implements TraceableEntity {
-         if (this.onGround()) {
-             this.setDeltaMovement(this.getDeltaMovement().multiply(0.7, -0.5, 0.7));
-         }
--
-         int i = this.getFuse() - 1;
-         this.setFuse(i);
-         if (i <= 0) {
-             // CraftBukkit start - Need to reverse the order of the explosion and the entity death so we have a location for the event
--            //this.discard();
-+            if(me.sucixr.kitin.config.KitinConfig.disableMaxTntPerTickAndOptimize) this.discard();//Kitin re
-             if (!this.level().isClientSide()) {
-                 this.explode();
-             }
-@@ -127,7 +127,8 @@ public class PrimedTnt extends Entity implements TraceableEntity {
+@@ -129,7 +130,8 @@ public class PrimedTnt extends Entity implements TraceableEntity {
              // CraftBukkit end
          } else {
-             this.updateInWaterStateAndDoFluidPushing();
+             this.updateFluidInteraction();
 -            if (this.level().isClientSide()) {
 +            //if (!isOverloaded) {this.updateInWaterStateAndDoFluidPushing();} //Kitin TNT水流推力计算去除,暂时注释，部分复制机需要水
 +            if (!me.sucixr.kitin.config.KitinConfig.disableMaxTntPerTickAndOptimize || !isOverloaded && this.level().isClientSide()) {//Kitin TNT爆炸粒子去除

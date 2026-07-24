@@ -1,15 +1,15 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: SucIXR <sasasa123456@foxmail.com>
-Date: Sat, 28 Feb 2026 13:04:26 +0800
+Date: Fri, 24 Jul 2026 12:41:07 +0800
 Subject: [PATCH] Network_Staggered-Metadata-Sync
 
 
 diff --git a/net/minecraft/network/syncher/SynchedEntityData.java b/net/minecraft/network/syncher/SynchedEntityData.java
-index 5d74c3e9938e5c6cc96f42b6df255e21aa925ed9..28a9f5365da26075a3c02514077dba105e24ed29 100644
+index 48e3b67adf9c889363fed6a79c0eb7744806f681..bff468dae929d92c22aa44cef789ce2c14a2e017 100644
 --- a/net/minecraft/network/syncher/SynchedEntityData.java
 +++ b/net/minecraft/network/syncher/SynchedEntityData.java
 @@ -260,4 +260,21 @@ public class SynchedEntityData {
-             return new SynchedEntityData.DataValue<>(id, serializer, serializer.codec().decode(buffer));
+             return new SynchedEntityData.DataValue<>(id, serializer, serializer.codec().decode(input));
          }
      }
 +
@@ -31,13 +31,13 @@ index 5d74c3e9938e5c6cc96f42b6df255e21aa925ed9..28a9f5365da26075a3c02514077dba10
 +//    // Kitin end
  }
 diff --git a/net/minecraft/server/level/ServerEntity.java b/net/minecraft/server/level/ServerEntity.java
-index f9e50e63432f4d2d37701357729fad307806083c..b91fc7a2bcde5d010f0f3bdbfe1c608b0658b6d2 100644
+index 86e8cb60fedc7f046412e07708912521b61ac588..4b4d84eda77424a2f0abe9187273f4c36b617656 100644
 --- a/net/minecraft/server/level/ServerEntity.java
 +++ b/net/minecraft/server/level/ServerEntity.java
-@@ -431,6 +431,17 @@ public class ServerEntity {
+@@ -433,6 +433,17 @@ public class ServerEntity {
      private void sendDirtyEntityData() {
          SynchedEntityData entityData = this.entity.getEntityData();
-         List<SynchedEntityData.DataValue<?>> list = entityData.packDirty();
+         List<SynchedEntityData.DataValue<?>> packedValues = entityData.packDirty();
 +
 +//        // Kitin start - Network_Staggered-Metadata-Sync
 +//        if (!entityData.isDirty()) {
@@ -49,6 +49,6 @@ index f9e50e63432f4d2d37701357729fad307806083c..b91fc7a2bcde5d010f0f3bdbfe1c608b
 +//        }
 +//        // Kitin end
 +
-         if (list != null) {
+         if (packedValues != null) {
              this.trackedDataValues = entityData.getNonDefaultValues();
-             this.synchronizer.sendToTrackingPlayersAndSelf(new ClientboundSetEntityDataPacket(this.entity.getId(), list));
+             this.synchronizer.sendToTrackingPlayersAndSelf(new ClientboundSetEntityDataPacket(this.entity.getId(), packedValues));

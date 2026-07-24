@@ -23,8 +23,8 @@ public class LazyChunkSyncController {
         ChunkPos currentPos = player.chunkPosition();
         long now = System.currentTimeMillis();
 
-        int dx = Math.abs(currentPos.x - state.lastX);
-        int dz = Math.abs(currentPos.z - state.lastZ);
+        int dx = Math.abs(currentPos.x() - state.lastX);
+        int dz = Math.abs(currentPos.z() - state.lastZ);
         int maxDist = Math.max(dx, dz);
 
         // --- 极简逻辑门 ---
@@ -55,8 +55,9 @@ public class LazyChunkSyncController {
     }
 
     private void updateState(SyncState state, ChunkPos pos, long time) {
-        state.lastX = pos.x;
-        state.lastZ = pos.z;
+        state.lastX = pos.x();
+        state.lastZ = pos.z();
+        // state.lastZ = pos.z(); // Changed from state.lastZ = pos.z;
         state.lastCheckTime = time;
     }
 }

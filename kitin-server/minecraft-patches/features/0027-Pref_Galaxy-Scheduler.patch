@@ -1,33 +1,9 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: SucIXR <sasasa123456@foxmail.com>
-Date: Wed, 4 Mar 2026 21:42:17 +0800
+Date: Fri, 24 Jul 2026 12:54:07 +0800
 Subject: [PATCH] Pref_Galaxy-Scheduler
 
 
-diff --git a/ca/spottedleaf/concurrentutil/scheduler/GalaxyTaskAccessor.java b/ca/spottedleaf/concurrentutil/scheduler/GalaxyTaskAccessor.java
-new file mode 100644
-index 0000000000000000000000000000000000000000..c94f9e04e2ecb63f9c292a1af6a5d7ae2aa72250
---- /dev/null
-+++ b/ca/spottedleaf/concurrentutil/scheduler/GalaxyTaskAccessor.java
-@@ -0,0 +1,17 @@
-+package ca.spottedleaf.concurrentutil.scheduler;
-+
-+
-+//Kitin Galaxy Scheduler 跳板类
-+public final class GalaxyTaskAccessor {
-+    public static Object getState(SchedulableTick tick) {
-+        return tick.state;
-+    }
-+
-+    public static void setState(SchedulableTick tick, Object state) {
-+        tick.state = state;
-+    }
-+
-+    public static long getScheduledStart(SchedulableTick tick) {
-+        return tick.scheduledStart;
-+    }
-+}
-\ No newline at end of file
 diff --git a/io/papermc/paper/threadedregions/TickRegionScheduler.java b/io/papermc/paper/threadedregions/TickRegionScheduler.java
 index 439c5a222fcf51c9dc5bfef9cdb23f419fffc28c..f7a4138c3cbc132e11bd1ae718db6cdcb40f3161 100644
 --- a/io/papermc/paper/threadedregions/TickRegionScheduler.java

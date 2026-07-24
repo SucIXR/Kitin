@@ -1,11 +1,11 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: SucIXR <sasasa123456@foxmail.com>
-Date: Wed, 14 Jan 2026 17:29:39 +0800
+Date: Fri, 24 Jul 2026 11:41:19 +0800
 Subject: [PATCH] FoliaFix_ScheduleCommand
 
 
 diff --git a/io/papermc/paper/threadedregions/RegionizedServer.java b/io/papermc/paper/threadedregions/RegionizedServer.java
-index 17108636a5728efe98a064001e00e3ca098b1f51..f63bb81004deffb8c4b1ac3ce7b6507852ad0ae2 100644
+index d5ff949f4f459c4358b0130cd20f8ed9cf24b42d..6c554a6e3a79f5a87833640696dce09d57ed8e6f 100644
 --- a/io/papermc/paper/threadedregions/RegionizedServer.java
 +++ b/io/papermc/paper/threadedregions/RegionizedServer.java
 @@ -32,6 +32,8 @@ import java.util.function.BooleanSupplier;
@@ -30,14 +30,14 @@ index 17108636a5728efe98a064001e00e3ca098b1f51..f63bb81004deffb8c4b1ac3ce7b65078
          ++this.tickCount;
          // expire invalid click command callbacks
          io.papermc.paper.adventure.providers.ClickCallbackProviderImpl.ADVENTURE_CLICK_MANAGER.handleQueue((int)this.tickCount); // Paper // Folia - region threading - moved to global tick
-@@ -342,6 +350,17 @@ public final class RegionizedServer {
+@@ -345,6 +353,17 @@ public final class RegionizedServer {
          // commands
          ((DedicatedServer)MinecraftServer.getServer()).handleConsoleInputs();
  
 +        //Kitin start - fix TimerQueue FoliaFix_ScheduleCommand use it
 +        ServerLevel overworld = MinecraftServer.getServer().overworld();
 +        if (overworld != null) {
-+            overworld.serverLevelData.overworldData().getScheduledEvents().tick(MinecraftServer.getServer(), overworld.getGameTime());
++            overworld.serverLevelData.getGameTime(); // Paper - removed tick call
 +        }
 +        //Kitin end
 +
@@ -48,7 +48,7 @@ index 17108636a5728efe98a064001e00e3ca098b1f51..f63bb81004deffb8c4b1ac3ce7b65078
          // needs
          // player ping sample
          // world global tick
-@@ -360,6 +379,11 @@ public final class RegionizedServer {
+@@ -363,6 +382,11 @@ public final class RegionizedServer {
  
          // player list
          MinecraftServer.getServer().getPlayerList().tick();
@@ -61,30 +61,29 @@ index 17108636a5728efe98a064001e00e3ca098b1f51..f63bb81004deffb8c4b1ac3ce7b65078
  
      private void tickPlayerSample() {
 diff --git a/net/minecraft/commands/Commands.java b/net/minecraft/commands/Commands.java
-index 26dc5beee346400d0a3293da978b3141f9184316..77037040bee23934dd3c98eeba045536bfe6d2b5 100644
+index 1d7fb8ef08b0457be5c08cfb079cf2d7cb8bcc9f..131dc1b78a37ad0bb8942915a87a998b7a7daac3 100644
 --- a/net/minecraft/commands/Commands.java
 +++ b/net/minecraft/commands/Commands.java
-@@ -236,7 +236,7 @@ public class Commands {
+@@ -239,7 +239,7 @@ public class Commands {
          RideCommand.register(this.dispatcher);
          RotateCommand.register(this.dispatcher);
          SayCommand.register(this.dispatcher);
 -        //ScheduleCommand.register(this.dispatcher); // Folia - region threading
 +        ScheduleCommand.register(this.dispatcher); // Folia - region threading //Kitin re
          //ScoreboardCommand.register(this.dispatcher, context); // Folia - region threading
-         SeedCommand.register(this.dispatcher, selection != Commands.CommandSelection.INTEGRATED);
-         VersionCommand.register(this.dispatcher, selection != Commands.CommandSelection.INTEGRATED);
+         SeedCommand.register(this.dispatcher, commandSelection != Commands.CommandSelection.INTEGRATED);
+         VersionCommand.register(this.dispatcher, commandSelection != Commands.CommandSelection.INTEGRATED);
 diff --git a/net/minecraft/server/ServerFunctionManager.java b/net/minecraft/server/ServerFunctionManager.java
-index 747e51132cfddc0c1d619dca81a4dd34605475bd..1591ba3046e731efb4d0d309ec23462ab454b525 100644
+index a8aef0e78447520530e4c831ef198027b492e35d..ced7d335d31259edc2ef3b7a2c4d313b9693f226 100644
 --- a/net/minecraft/server/ServerFunctionManager.java
 +++ b/net/minecraft/server/ServerFunctionManager.java
-@@ -66,10 +66,23 @@ public class ServerFunctionManager {
+@@ -66,9 +66,22 @@ public class ServerFunctionManager {
  
          try {
-             InstantiatedFunction<CommandSourceStack> instantiatedFunction = function.instantiate(null, this.getDispatcher());
+             InstantiatedFunction<CommandSourceStack> function = functionIn.instantiate(null, this.getDispatcher());
 +            try{ // Kitin - FoliaFix_ScheduleCommand
              Commands.executeCommandInContext(
-                 source,
-                 contextConsumer -> ExecutionContext.queueInitialFunctionCall(contextConsumer, instantiatedFunction, source, CommandResultCallback.EMPTY)
+                 sender, context -> ExecutionContext.queueInitialFunctionCall(context, function, sender, CommandResultCallback.EMPTY)
              );
 +            // Kitin start - FoliaFix_ScheduleCommand
 +            }catch (RuntimeException e) {
@@ -100,14 +99,14 @@ index 747e51132cfddc0c1d619dca81a4dd34605475bd..1591ba3046e731efb4d0d309ec23462a
 +            // Kitin end
          } catch (FunctionInstantiationException var9) {
          } catch (Exception var10) {
-             LOGGER.warn("Failed to execute function {}", function.id(), var10);
+             LOGGER.warn("Failed to execute function {}", functionIn.id(), var10);
 diff --git a/net/minecraft/world/level/Level.java b/net/minecraft/world/level/Level.java
-index 2c3d36a9d4bf361c516fe1fe6e29d225002b303c..fe2bc49ed3cb098bafdf251399e5ad479dfe3900 100644
+index 35305205047240dc91ed1bb60e742411a76e2a22..0b01d14f1a8d7957fb3fa7b900b888689dc4a991 100644
 --- a/net/minecraft/world/level/Level.java
 +++ b/net/minecraft/world/level/Level.java
-@@ -1335,8 +1335,9 @@ public abstract class Level implements LevelAccessor, AutoCloseable, ca.spottedl
+@@ -1352,8 +1352,9 @@ public abstract class Level implements LevelAccessor, AutoCloseable, ca.spottedl
      @Override
-     public BlockState getBlockState(BlockPos pos) {
+     public BlockState getBlockState(final BlockPos pos) {
          // CraftBukkit start - tree generation
 -        if (this.getCurrentWorldData().captureTreeGeneration) { // Folia - region threading
 -            CraftBlockState previous = this.getCurrentWorldData().capturedBlockStates.get(pos); // Paper // Folia - region threading
@@ -117,7 +116,7 @@ index 2c3d36a9d4bf361c516fe1fe6e29d225002b303c..fe2bc49ed3cb098bafdf251399e5ad47
              if (previous != null) {
                  return previous.getHandle();
              }
-@@ -1759,6 +1760,23 @@ public abstract class Level implements LevelAccessor, AutoCloseable, ca.spottedl
+@@ -1850,6 +1851,23 @@ public abstract class Level implements LevelAccessor, AutoCloseable, ca.spottedl
      public <T extends Entity> void getEntities(final EntityTypeTest<Entity, T> entityTypeTest,
                                                 final AABB boundingBox, final Predicate<? super T> predicate,
                                                 final List<? super T> into, final int maxCount) {

@@ -1,11 +1,11 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: SucIXR <sasasa123456@foxmail.com>
-Date: Fri, 23 Jan 2026 20:12:58 +0800
+Date: Fri, 24 Jul 2026 11:53:09 +0800
 Subject: [PATCH] Network_globalMaxChunkSendRate
 
 
 diff --git a/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java b/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
-index 8c544157cd360cc2cb5c019a1bd456b5fd6b0946..3c7b15d53eed0e374e9ed3bf848e1f9b5283b14e 100644
+index 7daeaa1915625b8c8a465996768552283763d1da..bf002fcdb27a579f622d2836f908fe9238505f4a 100644
 --- a/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
 +++ b/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
 @@ -303,16 +303,54 @@ public final class RegionizedPlayerChunkLoader {
@@ -65,10 +65,10 @@ index 8c544157cd360cc2cb5c019a1bd456b5fd6b0946..3c7b15d53eed0e374e9ed3bf848e1f9b
              loader.updateQueues(currTime);
          }
      }
-@@ -830,6 +868,11 @@ public final class RegionizedPlayerChunkLoader {
-             final int maxSendsThisTick = Math.min((int)this.chunkSendLimiter.takeAllocation(time, sendRate, maxSends), this.sendQueue.size());
+@@ -847,6 +885,11 @@ public final class RegionizedPlayerChunkLoader {
+             final long maxSendsThisTick = this.chunkSendLimiter.takeAllocation(maxSends);
              // we do not return sends that we took from the allocation back because we want to limit the max send rate, not target it
-             for (int i = 0; i < maxSendsThisTick; ++i) {
+             for (long i = 0; i < maxSendsThisTick; ++i) {
 +                // Kitin - QoS globalMaxChunkSendRate
 +                if (!me.sucixr.kitin.network.qos.GlobalChunkLimiter.tryAcquire(this.player)) {
 +                    break;
@@ -78,10 +78,10 @@ index 8c544157cd360cc2cb5c019a1bd456b5fd6b0946..3c7b15d53eed0e374e9ed3bf848e1f9b
                  final int pendingSendX = CoordinateUtils.getChunkX(pendingSend);
                  final int pendingSendZ = CoordinateUtils.getChunkZ(pendingSend);
 diff --git a/net/minecraft/server/players/PlayerList.java b/net/minecraft/server/players/PlayerList.java
-index 8274afe0d07c50ece420b1d3cb20165ed0162acb..10b159a61480b790a9fd320876ff731ab0897507 100644
+index 2088a409b60a1dc160e523e8920b2b0b39dab23b..4da7d5201ede250de14e6e6004bcc1230b67427f 100644
 --- a/net/minecraft/server/players/PlayerList.java
 +++ b/net/minecraft/server/players/PlayerList.java
-@@ -579,6 +579,10 @@ public abstract class PlayerList {
+@@ -584,6 +584,10 @@ public abstract class PlayerList {
              this.server.notificationManager().playerLeft(player);
          }
  

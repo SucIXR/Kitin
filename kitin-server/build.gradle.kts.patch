@@ -7,16 +7,16 @@
 +val sparkVersion = providers.gradleProperty("sparkVersion").get() // Spark Version from gradle.properties
  
  dependencies {
-     mache("io.papermc:mache:1.21.11+build.1")
-@@ -23,6 +_,7 @@
+     mache("io.papermc:mache:26.1.2+build.1")
+@@ -24,6 +_,7 @@
      gitFilePatches = false
-     
+ 
      val fork = forks.register("folia") {
 +        rootDirectory = upstreamsDirectory().map { it.dir("folia") }
          upstream.patchDir("paperServer") {
              upstreamPath = "paper-server"
              excludes = setOf("src/minecraft", "patches", "build.gradle.kts")
-@@ -31,7 +_,21 @@
+@@ -32,7 +_,21 @@
          }
      }
  
@@ -38,8 +38,8 @@
 +    activeFork = kitin
  
  
-     spigot {
-@@ -120,10 +_,14 @@
+     updatingMinecraft {
+@@ -103,10 +_,14 @@
      main {
          java { srcDir("../paper-server/src/main/java"); srcDir("../paper-server/src/generated/java") }
          resources { srcDir("../paper-server/src/main/resources") }
@@ -54,16 +54,16 @@
      }
  }
  val log4jPlugins = sourceSets.create("log4jPlugins") {
-@@ -151,7 +_,7 @@
+@@ -134,7 +_,7 @@
  }
  
  dependencies {
 -    implementation(project(":folia-api"))
 +    implementation(project(":kitin-api"))
-     implementation("ca.spottedleaf:concurrentutil:0.0.8")
+     implementation("ca.spottedleaf:concurrentutil:0.0.10")
      implementation("org.jline:jline-terminal-ffm:3.27.1") // use ffm on java 22+
      implementation("org.jline:jline-terminal-jni:3.27.1") // fall back to jni on java 21
-@@ -207,7 +_,8 @@
+@@ -181,7 +_,8 @@
  
      // Spark
      implementation("me.lucko:spark-api:0.1-20240720.200737-2")
@@ -73,7 +73,7 @@
  }
  
  tasks.jar {
-@@ -222,14 +_,14 @@
+@@ -196,14 +_,14 @@
          val gitBranch = git.exec(providers, "rev-parse", "--abbrev-ref", "HEAD").get().trim()
          attributes(
              "Main-Class" to "org.bukkit.craftbukkit.Main",
@@ -93,7 +93,23 @@
              "Build-Number" to (build ?: ""),
              "Build-Time" to buildTime.toString(),
              "Git-Branch" to gitBranch,
-@@ -395,4 +_,33 @@
+@@ -215,6 +_,15 @@
+     }
+ }
+ 
++// Kitin start - Hide unnecessary warnings
++tasks.withType<JavaCompile> {
++    val compilerArgs = options.compilerArgs
++    compilerArgs.add("-Xlint:-module")
++    compilerArgs.add("-Xlint:-removal")
++    compilerArgs.add("-Xlint:-dep-ann")
++}
++// Kitin end - Hide unnecessary warnings
++
+ // Compile tests with -parameters for better junit parameterized test names
+ tasks.compileTestJava {
+     options.compilerArgs.add("-parameters")
+@@ -355,4 +_,33 @@
              }
          }
      }

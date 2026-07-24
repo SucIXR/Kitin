@@ -1,11 +1,11 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: SucIXR <sasasa123456@foxmail.com>
-Date: Tue, 27 Jan 2026 01:52:33 +0800
+Date: Fri, 24 Jul 2026 12:03:10 +0800
 Subject: [PATCH] Network_Particle-throttling-and-packing
 
 
 diff --git a/net/minecraft/server/network/ServerGamePacketListenerImpl.java b/net/minecraft/server/network/ServerGamePacketListenerImpl.java
-index bdd3062d0e2cca647c749259c8d497d05f7fed86..f1aeb213c4f2a8b7dee45b259744b665ef1c9d4f 100644
+index 4924915ec3adf4d68ca537518fdffa52ec926bf7..374a6a22871e9a126f10753a039e8f8fa2afc730 100644
 --- a/net/minecraft/server/network/ServerGamePacketListenerImpl.java
 +++ b/net/minecraft/server/network/ServerGamePacketListenerImpl.java
 @@ -27,6 +27,7 @@ import java.util.function.BiFunction;
@@ -16,7 +16,7 @@ index bdd3062d0e2cca647c749259c8d497d05f7fed86..f1aeb213c4f2a8b7dee45b259744b665
  import net.minecraft.ChatFormatting;
  import net.minecraft.advancements.AdvancementHolder;
  import net.minecraft.advancements.CriteriaTriggers;
-@@ -328,6 +329,16 @@ public class ServerGamePacketListenerImpl
+@@ -336,6 +337,17 @@ public class ServerGamePacketListenerImpl
      public final Long disconnectTicketId = Long.valueOf(DISCONNECT_TICKET_ID_GENERATOR.getAndIncrement());
      // Folia end - region threading
  
@@ -29,11 +29,12 @@ index bdd3062d0e2cca647c749259c8d497d05f7fed86..f1aeb213c4f2a8b7dee45b259744b665
 +        }
 +        super.send(packet);
 +    }
++    //Kitin end
 +
-     public ServerGamePacketListenerImpl(MinecraftServer server, Connection connection, ServerPlayer player, CommonListenerCookie cookie) {
+     public ServerGamePacketListenerImpl(final MinecraftServer server, final Connection connection, final ServerPlayer player, final CommonListenerCookie cookie) {
          super(server, connection, cookie);
          this.restartClientLoadTimerAfterRespawn();
-@@ -339,6 +350,7 @@ public class ServerGamePacketListenerImpl
+@@ -347,6 +359,7 @@ public class ServerGamePacketListenerImpl
          this.chatMessageChain = new FutureChain(server.chatExecutor); // CraftBukkit - async chat
          this.tickEndEvent = new io.papermc.paper.event.packet.ClientTickEndEvent(player.getBukkitEntity()); // Paper - add client tick end event
          this.playerGameConnection =  new io.papermc.paper.connection.PaperPlayerGameConnection(this); // Paper
@@ -41,11 +42,11 @@ index bdd3062d0e2cca647c749259c8d497d05f7fed86..f1aeb213c4f2a8b7dee45b259744b665
      }
  
      // Paper start - configuration phase API
-@@ -356,6 +368,7 @@ public class ServerGamePacketListenerImpl
+@@ -364,6 +377,7 @@ public class ServerGamePacketListenerImpl
      @Override
      public void tick() {
          // Folia start - region threading
 +        this.kitin$particleOptimizer.tick(this); // Kitin - ParticleOptimizer
          this.keepConnectionAlive();
-         if (this.processedDisconnect || this.player.wonGame) {
+         if (this.player.wonGame) {
              return;

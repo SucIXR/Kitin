@@ -1,151 +1,151 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: SucIXR <sasasa123456@foxmail.com>
-Date: Wed, 14 Jan 2026 18:29:36 +0800
+Date: Fri, 24 Jul 2026 11:49:58 +0800
 Subject: [PATCH] FoliaFix_ScoreboardCommand
 
 
 diff --git a/net/minecraft/commands/Commands.java b/net/minecraft/commands/Commands.java
-index 77037040bee23934dd3c98eeba045536bfe6d2b5..b83e83cb0c202a6f0ac91397e1593e1042a666d3 100644
+index 131dc1b78a37ad0bb8942915a87a998b7a7daac3..be983c34af84f6f939ea90467d723b95d35ecd31 100644
 --- a/net/minecraft/commands/Commands.java
 +++ b/net/minecraft/commands/Commands.java
-@@ -237,7 +237,7 @@ public class Commands {
+@@ -240,7 +240,7 @@ public class Commands {
          RotateCommand.register(this.dispatcher);
          SayCommand.register(this.dispatcher);
          ScheduleCommand.register(this.dispatcher); // Folia - region threading //Kitin re
 -        //ScoreboardCommand.register(this.dispatcher, context); // Folia - region threading
 +        ScoreboardCommand.register(this.dispatcher, context); // Folia - region threading //Kitin re
-         SeedCommand.register(this.dispatcher, selection != Commands.CommandSelection.INTEGRATED);
-         VersionCommand.register(this.dispatcher, selection != Commands.CommandSelection.INTEGRATED);
+         SeedCommand.register(this.dispatcher, commandSelection != Commands.CommandSelection.INTEGRATED);
+         VersionCommand.register(this.dispatcher, commandSelection != Commands.CommandSelection.INTEGRATED);
          SetBlockCommand.register(this.dispatcher, context);
 diff --git a/net/minecraft/server/commands/ScoreboardCommand.java b/net/minecraft/server/commands/ScoreboardCommand.java
-index 931c38aaa4e49437ad8a7b68b8f2f60e39d457c2..b752b3d7cfb92502ef2014e4d54814569450bf94 100644
+index a4fa358bf6bb3c84a024620ee77f90b6ac68089b..5ed2f40ebdc534abac800dc40470350a225544f2 100644
 --- a/net/minecraft/server/commands/ScoreboardCommand.java
 +++ b/net/minecraft/server/commands/ScoreboardCommand.java
-@@ -479,7 +479,7 @@ public class ScoreboardCommand {
+@@ -463,7 +463,7 @@ public class ScoreboardCommand {
      ) throws CommandSyntaxException {
          Scoreboard scoreboard = source.getServer().getScoreboard();
-         int i = 0;
+         int result = 0;
 -
 +        synchronized (scoreboard){//Kitin 加锁
-         for (ScoreHolder scoreHolder : targets) {
-             ScoreAccess playerScore = scoreboard.getOrCreatePlayerScore(scoreHolder, targetObjectives);
+         for (ScoreHolder target : targets) {
+             ScoreAccess score = scoreboard.getOrCreatePlayerScore(target, targetObjective);
  
-@@ -489,7 +489,7 @@ public class ScoreboardCommand {
+@@ -473,7 +473,7 @@ public class ScoreboardCommand {
              }
  
-             i += playerScore.get();
+             result += score.get();
 -        }
 +        }}//Kitin
  
          if (targets.size() == 1) {
-             int i1 = i;
-@@ -518,13 +518,14 @@ public class ScoreboardCommand {
+             int finalResult = result;
+@@ -502,13 +502,14 @@ public class ScoreboardCommand {
              Scoreboard scoreboard = source.getServer().getScoreboard();
-             int i = 0;
+             int count = 0;
  
 +            synchronized (scoreboard){//Kitin 加锁
-             for (ScoreHolder scoreHolder : targets) {
-                 ScoreAccess playerScore = scoreboard.getOrCreatePlayerScore(scoreHolder, objective);
-                 if (playerScore.locked()) {
-                     playerScore.unlock();
-                     i++;
+             for (ScoreHolder name : names) {
+                 ScoreAccess score = scoreboard.getOrCreatePlayerScore(name, objective);
+                 if (score.locked()) {
+                     score.unlock();
+                     count++;
                  }
 -            }
 +            }}//Kitin
  
-             if (i == 0) {
+             if (count == 0) {
                  throw ERROR_TRIGGER_ALREADY_ENABLED.create();
-@@ -551,9 +552,10 @@ public class ScoreboardCommand {
-     private static int resetScores(CommandSourceStack source, Collection<ScoreHolder> targets) {
+@@ -535,9 +536,10 @@ public class ScoreboardCommand {
+     private static int resetScores(final CommandSourceStack source, final Collection<ScoreHolder> names) {
          Scoreboard scoreboard = source.getServer().getScoreboard();
  
 +        synchronized (scoreboard){//Kitin 加锁
-         for (ScoreHolder scoreHolder : targets) {
-             scoreboard.resetAllPlayerScores(scoreHolder);
+         for (ScoreHolder name : names) {
+             scoreboard.resetAllPlayerScores(name);
 -        }
 +        }}//Kitin
  
-         if (targets.size() == 1) {
-             source.sendSuccess(() -> Component.translatable("commands.scoreboard.players.reset.all.single", getFirstTargetName(targets)), true);
-@@ -567,9 +569,10 @@ public class ScoreboardCommand {
-     private static int resetScore(CommandSourceStack source, Collection<ScoreHolder> targets, Objective objective) {
+         if (names.size() == 1) {
+             source.sendSuccess(() -> Component.translatable("commands.scoreboard.players.reset.all.single", getFirstTargetName(names)), true);
+@@ -551,9 +553,10 @@ public class ScoreboardCommand {
+     private static int resetScore(final CommandSourceStack source, final Collection<ScoreHolder> names, final Objective objective) {
          Scoreboard scoreboard = source.getServer().getScoreboard();
  
 +        synchronized (scoreboard){//Kitin 加锁
-         for (ScoreHolder scoreHolder : targets) {
-             scoreboard.resetSinglePlayerScore(scoreHolder, objective);
+         for (ScoreHolder name : names) {
+             scoreboard.resetSinglePlayerScore(name, objective);
 -        }
 +        }}//Kitin
  
-         if (targets.size() == 1) {
+         if (names.size() == 1) {
              source.sendSuccess(
-@@ -590,9 +593,10 @@ public class ScoreboardCommand {
-     private static int setScore(CommandSourceStack source, Collection<ScoreHolder> targets, Objective objective, int newValue) {
+@@ -574,9 +577,10 @@ public class ScoreboardCommand {
+     private static int setScore(final CommandSourceStack source, final Collection<ScoreHolder> names, final Objective objective, final int value) {
          Scoreboard scoreboard = source.getServer().getScoreboard();
  
 +        synchronized (scoreboard){//Kitin 加锁
-         for (ScoreHolder scoreHolder : targets) {
-             scoreboard.getOrCreatePlayerScore(scoreHolder, objective).set(newValue);
+         for (ScoreHolder name : names) {
+             scoreboard.getOrCreatePlayerScore(name, objective).set(value);
 -        }
 +        }}//Kitin
  
-         if (targets.size() == 1) {
+         if (names.size() == 1) {
              source.sendSuccess(
-@@ -614,9 +618,10 @@ public class ScoreboardCommand {
-     private static int setScoreDisplay(CommandSourceStack source, Collection<ScoreHolder> targets, Objective objective, @Nullable Component displayName) {
-         Scoreboard scoreboard = source.getServer().getScoreboard();
- 
-+        synchronized (scoreboard){//Kitin 加锁
-         for (ScoreHolder scoreHolder : targets) {
-             scoreboard.getOrCreatePlayerScore(scoreHolder, objective).display(displayName);
--        }
-+        }}//Kitin
- 
-         if (displayName == null) {
-             if (targets.size() == 1) {
-@@ -661,9 +666,10 @@ public class ScoreboardCommand {
+@@ -600,9 +604,10 @@ public class ScoreboardCommand {
      ) {
          Scoreboard scoreboard = source.getServer().getScoreboard();
  
 +        synchronized (scoreboard){//Kitin 加锁
-         for (ScoreHolder scoreHolder : targets) {
-             scoreboard.getOrCreatePlayerScore(scoreHolder, objective).numberFormatOverride(numberFormat);
+         for (ScoreHolder name : names) {
+             scoreboard.getOrCreatePlayerScore(name, objective).display(display);
+-        }
++        }}//Kitin
+ 
+         if (display == null) {
+             if (names.size() == 1) {
+@@ -644,9 +649,10 @@ public class ScoreboardCommand {
+     ) {
+         Scoreboard scoreboard = source.getServer().getScoreboard();
+ 
++        synchronized (scoreboard){//Kitin 加锁
+         for (ScoreHolder name : names) {
+             scoreboard.getOrCreatePlayerScore(name, objective).numberFormatOverride(numberFormat);
 -        }
 +        }}//Kitin
  
          if (numberFormat == null) {
-             if (targets.size() == 1) {
-@@ -706,11 +712,12 @@ public class ScoreboardCommand {
+             if (names.size() == 1) {
+@@ -687,11 +693,12 @@ public class ScoreboardCommand {
          Scoreboard scoreboard = source.getServer().getScoreboard();
-         int i = 0;
+         int result = 0;
  
 +        synchronized (scoreboard){//Kitin 加锁
-         for (ScoreHolder scoreHolder : targets) {
-             ScoreAccess playerScore = scoreboard.getOrCreatePlayerScore(scoreHolder, objective);
-             playerScore.set(playerScore.get() + amount);
-             i += playerScore.get();
+         for (ScoreHolder name : names) {
+             ScoreAccess score = scoreboard.getOrCreatePlayerScore(name, objective);
+             score.set(score.get() + value);
+             result += score.get();
 -        }
 +        }}//Kitin
  
-         if (targets.size() == 1) {
-             int i1 = i;
-@@ -734,11 +741,12 @@ public class ScoreboardCommand {
+         if (names.size() == 1) {
+             int finalResult = result;
+@@ -715,11 +722,12 @@ public class ScoreboardCommand {
          Scoreboard scoreboard = source.getServer().getScoreboard();
-         int i = 0;
+         int result = 0;
  
 +        synchronized (scoreboard){//Kitin 加锁
-         for (ScoreHolder scoreHolder : targets) {
-             ScoreAccess playerScore = scoreboard.getOrCreatePlayerScore(scoreHolder, objective);
-             playerScore.set(playerScore.get() - amount);
-             i += playerScore.get();
+         for (ScoreHolder name : names) {
+             ScoreAccess score = scoreboard.getOrCreatePlayerScore(name, objective);
+             score.set(score.get() - value);
+             result += score.get();
 -        }
 +        }}//Kitin
  
-         if (targets.size() == 1) {
-             int i1 = i;
-@@ -800,17 +808,19 @@ public class ScoreboardCommand {
+         if (names.size() == 1) {
+             int finalResult = result;
+@@ -779,17 +787,19 @@ public class ScoreboardCommand {
  
-     private static int clearDisplaySlot(CommandSourceStack source, DisplaySlot slot) throws CommandSyntaxException {
+     private static int clearDisplaySlot(final CommandSourceStack source, final DisplaySlot slot) throws CommandSyntaxException {
          Scoreboard scoreboard = source.getServer().getScoreboard();
 +        synchronized (scoreboard) {//Kitin 加锁
          if (scoreboard.getDisplayObjective(slot) == null) {
@@ -158,13 +158,13 @@ index 931c38aaa4e49437ad8a7b68b8f2f60e39d457c2..b752b3d7cfb92502ef2014e4d5481456
 +        }}//Kitin
      }
  
-     private static int setDisplaySlot(CommandSourceStack source, DisplaySlot slot, Objective objective) throws CommandSyntaxException {
+     private static int setDisplaySlot(final CommandSourceStack source, final DisplaySlot slot, final Objective objective) throws CommandSyntaxException {
          Scoreboard scoreboard = source.getServer().getScoreboard();
 +        synchronized (scoreboard){//Kitin 加锁
          if (scoreboard.getDisplayObjective(slot) == objective) {
              throw ERROR_DISPLAY_SLOT_ALREADY_SET.create();
          } else {
-@@ -819,22 +829,26 @@ public class ScoreboardCommand {
+@@ -798,22 +808,26 @@ public class ScoreboardCommand {
                  () -> Component.translatable("commands.scoreboard.objectives.display.set", slot.getSerializedName(), objective.getDisplayName()), true
              );
              return 0;
@@ -172,7 +172,7 @@ index 931c38aaa4e49437ad8a7b68b8f2f60e39d457c2..b752b3d7cfb92502ef2014e4d5481456
 +        }}//Kitin
      }
  
-     private static int setDisplayName(CommandSourceStack source, Objective objective, Component displayName) {
+     private static int setDisplayName(final CommandSourceStack source, final Objective objective, final Component displayName) {
 +        Scoreboard scoreboard = source.getServer().getScoreboard(); //Kitin
 +        synchronized (scoreboard){//Kitin 加锁
          if (!objective.getDisplayName().equals(displayName)) {
@@ -187,13 +187,13 @@ index 931c38aaa4e49437ad8a7b68b8f2f60e39d457c2..b752b3d7cfb92502ef2014e4d5481456
          return 0;
      }
  
-     private static int setDisplayAutoUpdate(CommandSourceStack source, Objective objective, boolean displayAutoUpdate) {
+     private static int setDisplayAutoUpdate(final CommandSourceStack source, final Objective objective, final boolean displayAutoUpdate) {
 +        Scoreboard scoreboard = source.getServer().getScoreboard();//Kitin
 +        synchronized (scoreboard){//Kitin 加锁
          if (objective.displayAutoUpdate() != displayAutoUpdate) {
              objective.setDisplayAutoUpdate(displayAutoUpdate);
              if (displayAutoUpdate) {
-@@ -852,18 +866,20 @@ public class ScoreboardCommand {
+@@ -831,18 +845,20 @@ public class ScoreboardCommand {
                      true
                  );
              }
@@ -203,11 +203,11 @@ index 931c38aaa4e49437ad8a7b68b8f2f60e39d457c2..b752b3d7cfb92502ef2014e4d5481456
          return 0;
      }
  
-     private static int setObjectiveFormat(CommandSourceStack source, Objective objective, @Nullable NumberFormat format) {
-         objective.setNumberFormat(format);
+     private static int setObjectiveFormat(final CommandSourceStack source, final Objective objective, final @Nullable NumberFormat numberFormat) {
+         objective.setNumberFormat(numberFormat);
 +        Scoreboard scoreboard = source.getServer().getScoreboard();//Kitin
 +        synchronized (scoreboard){//Kitin 加锁
-         if (format != null) {
+         if (numberFormat != null) {
              source.sendSuccess(() -> Component.translatable("commands.scoreboard.objectives.modify.objectiveFormat.set", objective.getName()), true);
          } else {
              source.sendSuccess(() -> Component.translatable("commands.scoreboard.objectives.modify.objectiveFormat.clear", objective.getName()), true);
@@ -216,9 +216,9 @@ index 931c38aaa4e49437ad8a7b68b8f2f60e39d457c2..b752b3d7cfb92502ef2014e4d5481456
  
          return 0;
      }
-@@ -879,13 +895,15 @@ public class ScoreboardCommand {
+@@ -858,13 +874,15 @@ public class ScoreboardCommand {
  
-     private static int removeObjective(CommandSourceStack source, Objective objective) {
+     private static int removeObjective(final CommandSourceStack source, final Objective objective) {
          Scoreboard scoreboard = source.getServer().getScoreboard();
 +        synchronized (scoreboard){//Kitin 加锁
          scoreboard.removeObjective(objective);
@@ -227,13 +227,13 @@ index 931c38aaa4e49437ad8a7b68b8f2f60e39d457c2..b752b3d7cfb92502ef2014e4d5481456
 -    }
 +    }}//Kitin
  
-     private static int addObjective(CommandSourceStack source, String name, ObjectiveCriteria criteria, Component displayName) throws CommandSyntaxException {
+     private static int addObjective(final CommandSourceStack source, final String name, final ObjectiveCriteria criteria, final Component displayName) throws CommandSyntaxException {
          Scoreboard scoreboard = source.getServer().getScoreboard();
 +        synchronized (scoreboard){//Kitin 加锁
          if (scoreboard.getObjective(name) != null) {
              throw ERROR_OBJECTIVE_ALREADY_EXISTS.create();
          } else {
-@@ -893,7 +911,7 @@ public class ScoreboardCommand {
+@@ -872,7 +890,7 @@ public class ScoreboardCommand {
              Objective objective = scoreboard.getObjective(name);
              source.sendSuccess(() -> Component.translatable("commands.scoreboard.objectives.add.success", objective.getFormattedDisplayName()), true);
              return scoreboard.getObjectives().size();
@@ -241,4 +241,4 @@ index 931c38aaa4e49437ad8a7b68b8f2f60e39d457c2..b752b3d7cfb92502ef2014e4d5481456
 +        }}//Kitin
      }
  
-     private static int listObjectives(CommandSourceStack source) {
+     private static int listObjectives(final CommandSourceStack source) {
