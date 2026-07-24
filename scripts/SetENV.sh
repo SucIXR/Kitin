@@ -14,7 +14,13 @@ jarName="$project_id-$mcversion-$commitid"
 jarName_dir="kitin-server/build/libs/$jarName.jar"
 make_latest=$([ $preVersion = "true" ] && echo "false" || echo "true")
 
-mv kitin-server/build/libs/$project_id-paperclip-$grdversion-mojmap.jar $jarName_dir
+#mv kitin-server/build/libs/$project_id-paperclip-$grdversion-mojmap.jar $jarName_dir
+paperclip_jar=$(ls kitin-server/build/libs/$project_id-paperclip-*.jar 2>/dev/null | head -1)
+if [ -z "$paperclip_jar" ]; then
+  echo "ERROR: No paperclip jar found"
+  exit 1
+fi
+mv "$paperclip_jar" "$jarName_dir"
 
 echo "project_id=$project_id" >> $GITHUB_ENV
 echo "project_id_b=$project_id_b" >> $GITHUB_ENV
