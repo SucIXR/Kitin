@@ -61,7 +61,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: ${{ env.project_id_b }} CI Artifacts
-          path: kitin-server/build/libs/*-paperclip-*-mojmap.jar
+          path: kitin-server/build/libs/*-paperclip-*.jar
 
       - name : SetENV
         run: |
