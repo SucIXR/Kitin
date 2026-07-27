@@ -7,7 +7,7 @@
 +val sparkVersion = providers.gradleProperty("sparkVersion").get() // Spark Version from gradle.properties
  
  dependencies {
-     mache("io.papermc:mache:26.1.2+build.1")
+     mache("io.papermc:mache:26.2+build.1")
 @@ -24,6 +_,7 @@
      gitFilePatches = false
  
@@ -60,7 +60,7 @@
  dependencies {
 -    implementation(project(":folia-api"))
 +    implementation(project(":kitin-api"))
-     implementation("ca.spottedleaf:concurrentutil:0.0.10")
+     implementation("ca.spottedleaf:leafpile:1.0.0")
      implementation("org.jline:jline-terminal-ffm:3.27.1") // use ffm on java 22+
      implementation("org.jline:jline-terminal-jni:3.27.1") // fall back to jni on java 21
 @@ -181,7 +_,8 @@
@@ -109,7 +109,7 @@
  // Compile tests with -parameters for better junit parameterized test names
  tasks.compileTestJava {
      options.compilerArgs.add("-parameters")
-@@ -355,4 +_,33 @@
+@@ -366,4 +_,33 @@
              }
          }
      }
