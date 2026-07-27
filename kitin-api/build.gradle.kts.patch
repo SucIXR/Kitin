@@ -1,6 +1,6 @@
 --- a/folia-api/build.gradle.kts
 +++ b/folia-api/build.gradle.kts
-@@ -102,17 +_,21 @@
+@@ -105,17 +_,21 @@
          java {
              srcDir(generatedDir)
              srcDir(file("../paper-api/src/main/java"))
@@ -22,7 +22,7 @@
          }
      }
  }
-@@ -263,3 +_,12 @@
+@@ -259,3 +_,12 @@
  tasks.check {
      dependsOn(scanJarForBadCalls)
  }
