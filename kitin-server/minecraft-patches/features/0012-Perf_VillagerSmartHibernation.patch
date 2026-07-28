@@ -5,7 +5,7 @@ Subject: [PATCH] Perf_VillagerSmartHibernation
 
 
 diff --git a/net/minecraft/world/entity/npc/villager/Villager.java b/net/minecraft/world/entity/npc/villager/Villager.java
-index 07677108d5f11057f6bd5a02bda4e49d3b802869..6db45f54175362af80ee9dd22eca65542d5972c0 100644
+index f649c46cc9a34e646f8da3244866c6e011d30aa3..eff2023fd6470e7017418c4c1b3661f4375189e9 100644
 --- a/net/minecraft/world/entity/npc/villager/Villager.java
 +++ b/net/minecraft/world/entity/npc/villager/Villager.java
 @@ -171,6 +171,7 @@ public class Villager extends AbstractVillager implements VillagerDataHolder, Re
@@ -16,7 +16,7 @@ index 07677108d5f11057f6bd5a02bda4e49d3b802869..6db45f54175362af80ee9dd22eca6554
      public static final Map<MemoryModuleType<GlobalPos>, BiPredicate<Villager, Holder<PoiType>>> POI_MEMORIES = ImmutableMap.of(
          MemoryModuleType.HOME,
          (villager, poiType) -> poiType.is(PoiTypes.HOME),
-@@ -270,6 +271,7 @@ public class Villager extends AbstractVillager implements VillagerDataHolder, Re
+@@ -261,6 +262,7 @@ public class Villager extends AbstractVillager implements VillagerDataHolder, Re
      }
      protected void customServerAiStep(ServerLevel level, final boolean inactive) {
          // Paper end - EAR 2
@@ -24,7 +24,7 @@ index 07677108d5f11057f6bd5a02bda4e49d3b802869..6db45f54175362af80ee9dd22eca6554
          ProfilerFiller profiler = Profiler.get();
          profiler.push("villagerBrain");
          if (!inactive) this.getBrain().tick(level, this); // Paper - EAR 2
-@@ -309,6 +311,7 @@ public class Villager extends AbstractVillager implements VillagerDataHolder, Re
+@@ -300,6 +302,7 @@ public class Villager extends AbstractVillager implements VillagerDataHolder, Re
  
          if (inactive) return; // Paper - EAR 2
          super.customServerAiStep(level);

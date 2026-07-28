@@ -5,10 +5,10 @@ Subject: [PATCH] Network_Multi-Port-Listening
 
 
 diff --git a/net/minecraft/server/network/ServerConnectionListener.java b/net/minecraft/server/network/ServerConnectionListener.java
-index e917afa054136967bca6e712237a8b3671ad5db2..db4993ee4b9f57438cb070267b21dc25b5ba24f4 100644
+index b0e1153d74e6b17b807670667c9bae6b02bd37f3..05c4494a1996fa37037beb15e71bfa738c5aabd8 100644
 --- a/net/minecraft/server/network/ServerConnectionListener.java
 +++ b/net/minecraft/server/network/ServerConnectionListener.java
-@@ -69,11 +69,28 @@ public class ServerConnectionListener {
+@@ -72,11 +72,28 @@ public class ServerConnectionListener {
      }
  
      public void startTcpServerListener(SocketAddress address) throws IOException {
@@ -39,9 +39,9 @@ index e917afa054136967bca6e712237a8b3671ad5db2..db4993ee4b9f57438cb070267b21dc25
                  LOGGER.warn("Using HAProxy, please ensure the server port is adequately firewalled.");
              }
              // Paper end - Warn people with console access that HAProxy is in use.
-@@ -110,7 +127,7 @@ public class ServerConnectionListener {
+@@ -109,7 +126,7 @@ public class ServerConnectionListener {
                                          ? new RateKickingConnection(rateLimitPacketsPerSecond)
-                                         : new Connection(PacketFlow.SERVERBOUND));
+                                         : new Connection(PacketFlow.SERVERBOUND);
                                      // Paper start - Add support for Proxy Protocol
 -                                    if (io.papermc.paper.configuration.GlobalConfiguration.get().proxies.proxyProtocol) {
 +                                    if (useProxyProtocol) { // Kitin - use parameter

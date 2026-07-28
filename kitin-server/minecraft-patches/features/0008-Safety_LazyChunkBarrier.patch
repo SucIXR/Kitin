@@ -5,10 +5,10 @@ Subject: [PATCH] Safety_LazyChunkBarrier
 
 
 diff --git a/net/minecraft/world/entity/item/ItemEntity.java b/net/minecraft/world/entity/item/ItemEntity.java
-index 4f39b96a4af8865af6a968d64643712840359851..7ed1d6c5fe341185b713ff786834c7935d2381b8 100644
+index 223793bea54a483fefc66caa7e07b29ab351c339..04394ff59c7669ea600d907a39fe5197116a4783 100644
 --- a/net/minecraft/world/entity/item/ItemEntity.java
 +++ b/net/minecraft/world/entity/item/ItemEntity.java
-@@ -60,6 +60,14 @@ public class ItemEntity extends Entity implements TraceableEntity {
+@@ -61,6 +61,14 @@ public class ItemEntity extends Entity implements TraceableEntity {
          this.setYRot(this.random.nextFloat() * 360.0F);
      }
  
@@ -21,5 +21,5 @@ index 4f39b96a4af8865af6a968d64643712840359851..7ed1d6c5fe341185b713ff786834c793
 +    //Kitin end
 +
      public ItemEntity(final Level level, final double x, final double y, final double z, final ItemStack itemStack) {
-         this(EntityType.ITEM, level);
+         this(EntityTypes.ITEM, level);
          this.setPos(x, y, z);

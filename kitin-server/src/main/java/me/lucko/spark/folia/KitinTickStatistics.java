@@ -20,8 +20,7 @@
 
 package me.lucko.spark.folia;
 
-import ca.spottedleaf.moonrise.common.time.TickData;
-import ca.spottedleaf.moonrise.common.time.TickData.SegmentedAverage;
+import ca.spottedleaf.common.time.TickData;
 import io.papermc.paper.threadedregions.ThreadedRegionizer;
 import io.papermc.paper.threadedregions.ThreadedRegionizer.ThreadedRegion;
 import io.papermc.paper.threadedregions.TickRegions.TickRegionData;
@@ -125,7 +124,7 @@ public class KitinTickStatistics implements TickStatistics {
 
     public DoubleAverageInfo mspt(StatisticWindow.MillisPerTick window) {
         long nanoTime = System.nanoTime();
-        List<SegmentedAverage> averages = this.regionSupplier.get().stream()
+        List<TickData.SegmentedAverage> averages = this.regionSupplier.get().stream()
                 .map(region -> region.getData().getRegionSchedulingHandle())
                 .map(handle -> switch (window) {
                     case SECONDS_10 -> handle.getTickReport15s(nanoTime); // close enough!
@@ -138,7 +137,7 @@ public class KitinTickStatistics implements TickStatistics {
         return new SegmentedDoubleAverageInfo(averages);
     }
 
-    private record SegmentedDoubleAverageInfo(List<SegmentedAverage> averages) implements DoubleAverageInfo {
+    private record SegmentedDoubleAverageInfo(List<TickData.SegmentedAverage> averages) implements DoubleAverageInfo {
 
         @Override
         public double mean() {

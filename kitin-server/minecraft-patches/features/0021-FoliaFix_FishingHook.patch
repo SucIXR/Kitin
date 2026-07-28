@@ -5,12 +5,12 @@ Subject: [PATCH] FoliaFix_FishingHook
 
 
 diff --git a/net/minecraft/world/entity/projectile/FishingHook.java b/net/minecraft/world/entity/projectile/FishingHook.java
-index 0c8a48988c859669cf7e38816aaf32782c245244..0ee558e53f6c9385fb7e624f05f825026339c249 100644
+index d7217fd075c6d6fae3622c56e940e247008dcc27..9e490c2688159138f0e1e1abe6d86a93fa92dbcb 100644
 --- a/net/minecraft/world/entity/projectile/FishingHook.java
 +++ b/net/minecraft/world/entity/projectile/FishingHook.java
-@@ -65,6 +65,13 @@ public class FishingHook extends Projectile {
+@@ -66,6 +66,13 @@ public class FishingHook extends Projectile {
      private boolean openWater = true;
-     public @Nullable Entity hookedIn;
+     private @Nullable Entity hookedIn;
      public FishingHook.FishHookState currentState = FishingHook.FishHookState.FLYING;
 +
 +    // Kitin start - FoliaFix_FishingHook
@@ -22,9 +22,9 @@ index 0c8a48988c859669cf7e38816aaf32782c245244..0ee558e53f6c9385fb7e624f05f82502
      private final int luck;
      private final int lureSpeed;
      private final InterpolationHandler interpolationHandler = new InterpolationHandler(this);
-@@ -98,6 +105,18 @@ public class FishingHook extends Projectile {
+@@ -99,6 +106,18 @@ public class FishingHook extends Projectile {
      public FishingHook(final Player player, final Level level, final int luck, final int lureSpeed) {
-         this(EntityType.FISHING_BOBBER, level, luck, lureSpeed);
+         this(EntityTypes.FISHING_BOBBER, level, luck, lureSpeed);
          this.setOwner(player);
 +        // Kitin start - FoliaFix_FishingHook
 +        if (owner != null) {
@@ -41,7 +41,7 @@ index 0c8a48988c859669cf7e38816aaf32782c245244..0ee558e53f6c9385fb7e624f05f82502
          float xRot1 = player.getXRot();
          float yRot1 = player.getYRot();
          float yCos = Mth.cos(-yRot1 * Mth.DEG_TO_RAD - Mth.PI);
-@@ -163,10 +182,24 @@ public class FishingHook extends Projectile {
+@@ -164,10 +183,24 @@ public class FishingHook extends Projectile {
  
      @Override
      public void tick() {
@@ -66,7 +66,7 @@ index 0c8a48988c859669cf7e38816aaf32782c245244..0ee558e53f6c9385fb7e624f05f82502
          if (owner == null) {
              this.discard(org.bukkit.event.entity.EntityRemoveEvent.Cause.DESPAWN); // CraftBukkit - add Bukkit remove cause
          } else if (this.level().isClientSide() || !this.shouldStopFishing(owner)) {
-@@ -271,7 +304,7 @@ public class FishingHook extends Projectile {
+@@ -272,7 +305,7 @@ public class FishingHook extends Projectile {
  
      private boolean shouldStopFishing(final Player owner) {
          // Folia start - region threading
@@ -75,7 +75,7 @@ index 0c8a48988c859669cf7e38816aaf32782c245244..0ee558e53f6c9385fb7e624f05f82502
              return true;
          }
          // Folia end - region threading
-@@ -612,6 +645,11 @@ public class FishingHook extends Projectile {
+@@ -613,6 +646,11 @@ public class FishingHook extends Projectile {
      public void remove(final Entity.RemovalReason reason, final org.bukkit.event.entity.EntityRemoveEvent.@Nullable Cause cause) { // CraftBukkit - add Bukkit remove cause
          //this.updateOwnerInfo(null); // Folia - region threading - move into preRemove
          super.remove(reason, cause); // CraftBukkit - add Bukkit remove cause
@@ -87,7 +87,7 @@ index 0c8a48988c859669cf7e38816aaf32782c245244..0ee558e53f6c9385fb7e624f05f82502
      }
  
      // Folia start - region threading
-@@ -630,6 +668,11 @@ public class FishingHook extends Projectile {
+@@ -631,6 +669,11 @@ public class FishingHook extends Projectile {
      @Override
      public void setOwner(final @Nullable Entity owner) {
          super.setOwner(owner);

@@ -5,7 +5,7 @@ Subject: [PATCH] FoliaFix_SafeSandDuper
 
 
 diff --git a/net/minecraft/world/level/block/EndPortalBlock.java b/net/minecraft/world/level/block/EndPortalBlock.java
-index aab09feaa3c3c90e33701072e24ed144226e6d53..7b2b3fdeff4652e50bd6fca43332e9747e768ce0 100644
+index 123df098fa987030fe3789f36ff95aeee2979834..a2cac8534a5a22cec7e1083984d8501b6d318abb 100644
 --- a/net/minecraft/world/level/block/EndPortalBlock.java
 +++ b/net/minecraft/world/level/block/EndPortalBlock.java
 @@ -67,6 +67,11 @@ public class EndPortalBlock extends BaseEntityBlock implements Portal {

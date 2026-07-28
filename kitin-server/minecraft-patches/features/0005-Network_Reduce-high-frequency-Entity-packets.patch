@@ -5,7 +5,7 @@ Subject: [PATCH] Network_Reduce-high-frequency-Entity-packets
 
 
 diff --git a/net/minecraft/server/level/ServerEntity.java b/net/minecraft/server/level/ServerEntity.java
-index 19bb751d3e9c347fe2446412f85c9f28ec8212e6..86e8cb60fedc7f046412e07708912521b61ac588 100644
+index 60af82925d2f7e605bf7340cf01f1a5668f4d725..8a02f4fd34b99bb71f56d0d5e142f3b478955203 100644
 --- a/net/minecraft/server/level/ServerEntity.java
 +++ b/net/minecraft/server/level/ServerEntity.java
 @@ -99,7 +99,12 @@ public class ServerEntity {
@@ -22,7 +22,7 @@ index 19bb751d3e9c347fe2446412f85c9f28ec8212e6..86e8cb60fedc7f046412e07708912521
          }
          // Paper end - optimise collisions
          this.entity.updateDataBeforeSync();
-@@ -163,6 +168,23 @@ public class ServerEntity {
+@@ -168,6 +173,23 @@ public class ServerEntity {
                  double vec3_dz = currentPosition.z - base.z;
                  boolean positionChanged = (vec3_dx * vec3_dx + vec3_dy * vec3_dy + vec3_dz * vec3_dz) >= 7.62939453125E-6D;
                  // Paper end - reduce allocation of Vec3D here
@@ -46,7 +46,7 @@ index 19bb751d3e9c347fe2446412f85c9f28ec8212e6..86e8cb60fedc7f046412e07708912521
                  Packet<ClientGamePacketListener> packet = null;
                  boolean pos = positionChanged || this.tickCount % 60 == 0;
                  boolean sentPosition = false;
-@@ -175,22 +197,28 @@ public class ServerEntity {
+@@ -180,22 +202,28 @@ public class ServerEntity {
                      || deltaTooBig
                      || this.teleportDelay > 400
                      || this.wasRiding
@@ -79,7 +79,7 @@ index 19bb751d3e9c347fe2446412f85c9f28ec8212e6..86e8cb60fedc7f046412e07708912521
                      sentPosition = true;
                      sentRotation = true;
                  }
-@@ -211,7 +239,21 @@ public class ServerEntity {
+@@ -216,7 +244,21 @@ public class ServerEntity {
                                      )
                                  );
                          } else {
