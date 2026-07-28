@@ -1,0 +1,105 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: SucIXR <sasasa123456@foxmail.com>
+Date: Tue, 28 Jul 2026 18:17:40 +0800
+Subject: [PATCH] Network_Canvas_optimize-flush-calls-with-region-threading
+
+
+diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
+index 8ec86d7485efbb275c85d8226ea93a7bbd72342c..b094bee22a7309580eeb391388bd686737a0c43d 100644
+--- a/net/minecraft/server/MinecraftServer.java
++++ b/net/minecraft/server/MinecraftServer.java
+@@ -1764,7 +1764,31 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+         // Folia end - region threading
+         //this.tickCount++; // Folia - region threading
+         //this.tickRateManager.tick(); // Folia - region threading
+-        this.tickChildren(haveTime, region); // Folia - region threading
++        // Canvas start - optimize flush calls with region threading
++        try {
++            List<ServerPlayer> flushing = new java.util.ArrayList<>(region.world.getCurrentWorldData().getLocalPlayers());
++            for (final ServerPlayer localPlayer : flushing) {
++                // by suspending flushing, this will suspend flushing on the owning thread of the player
++                // however, if a diff thread sends a packet, it automatically flushes
++                localPlayer.connection.suspendFlushing();
++            }
++            this.tickChildren(haveTime, region);
++            for (final ServerPlayer localPlayer : flushing) {
++                // if this thread doesn't own the player for some reason, or they were marked to
++                // continue flushing, we don't even try and touch it
++                if (!ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(localPlayer)
++                        || !localPlayer.connection.suspendFlushingOnServerThread) {
++                    continue;
++                }
++                // note, this also flushes the channel
++                localPlayer.connection.resumeFlushing();
++            }
++        } catch (Throwable thrown) {
++            CrashReport crashReport = CrashReport.forThrowable(thrown, "Exception ticking region");
++            region.world.fillReportDetails(crashReport);
++            throw new ReportedException(crashReport);
++        }
++        // Canvas end - optimize flush calls with region threading
+         if (false && nano - this.lastServerStatus >= STATUS_EXPIRE_TIME_NANOS) { // Folia - region threading
+             this.lastServerStatus = nano;
+             this.status = this.buildServerStatus();
+diff --git a/net/minecraft/server/level/ServerPlayer.java b/net/minecraft/server/level/ServerPlayer.java
+index 47debd724aa925e0a242bac8840f56e471a2af78..45e1b0e87c8647bf5004e2e016286846eb3f3480 100644
+--- a/net/minecraft/server/level/ServerPlayer.java
++++ b/net/minecraft/server/level/ServerPlayer.java
+@@ -1855,6 +1855,9 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+     public void preChangeDimension() {
+         super.preChangeDimension();
+         this.stopUsingItem();
++        // if not suspending, we resume flushing. we check this on pre dimension change
++        // since this is called for portaling *and* cross-region teleports
++        if (!this.connection.suspendFlushingOnServerThread) this.connection.resumeFlushing(); // Canvas - optimize flush calls with region threading
+     }
+ 
+     @Override
+diff --git a/net/minecraft/server/network/ServerCommonPacketListenerImpl.java b/net/minecraft/server/network/ServerCommonPacketListenerImpl.java
+index cf4b5e436b8d81657d1deaa5b06645016d9dc3cc..b9690008e1de23130e15597b52427d2de1481b56 100644
+--- a/net/minecraft/server/network/ServerCommonPacketListenerImpl.java
++++ b/net/minecraft/server/network/ServerCommonPacketListenerImpl.java
+@@ -46,7 +46,7 @@ public abstract class ServerCommonPacketListenerImpl implements ServerCommonPack
+     private boolean closed = false;
+     private volatile int latency; // Paper - improve keepalives - make volatile
+     private final io.papermc.paper.util.KeepAlive keepAlive; // Paper - improve keepalives
+-    private volatile boolean suspendFlushingOnServerThread = false;
++    public volatile boolean suspendFlushingOnServerThread = false; // Canvas - optimize flush calls with region threading
+     // CraftBukkit start
+     public final org.bukkit.craftbukkit.CraftServer cserver;
+     // CraftBukkit end
+@@ -295,10 +295,17 @@ public abstract class ServerCommonPacketListenerImpl implements ServerCommonPack
+         this.suspendFlushingOnServerThread = true;
+     }
+ 
++    // Canvas start - optimize flush calls with region threading
++    private int lastSentNonFlushPacketCount = 0;
++    private int sentNonFlushPacketCount = 0;
+     public void resumeFlushing() {
+         this.suspendFlushingOnServerThread = false;
+-        this.connection.flushChannel();
++        if (lastSentNonFlushPacketCount != sentNonFlushPacketCount) {
++            connection.flushChannel();
++            lastSentNonFlushPacketCount = sentNonFlushPacketCount;
++        }
+     }
++    // Canvas end - optimize flush calls with region threading
+ 
+     public void send(final Packet<?> packet) {
+         this.send(packet, null);
+@@ -316,10 +323,13 @@ public abstract class ServerCommonPacketListenerImpl implements ServerCommonPack
+             this.close();
+         }
+ 
+-        boolean flush = !this.suspendFlushingOnServerThread || !this.server.isSameThread();
+-
++        // Canvas start - optimize flush calls with region threading
++        boolean flush = !this.suspendFlushingOnServerThread ||
++                !ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(connection.getPlayer());
++        if (!flush) sentNonFlushPacketCount++;
+         try {
+             this.connection.send(packet, listener, flush);
++        // Canvas end - optimize flush calls with region threading
+         } catch (Throwable var7) {
+             CrashReport report = CrashReport.forThrowable(var7, "Sending packet");
+             CrashReportCategory category = report.addCategory("Packet being sent");
