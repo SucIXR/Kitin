@@ -1,8 +1,9 @@
 package me.sucixr.kitin.fixes.foliafix;
 
+import ca.spottedleaf.common.time.TickData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.item.FallingBlockEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -14,7 +15,6 @@ import io.papermc.paper.configuration.GlobalConfiguration;
 import io.papermc.paper.threadedregions.TickRegionScheduler;
 import io.papermc.paper.threadedregions.TickRegions;
 import io.papermc.paper.threadedregions.ThreadedRegionizer;
-import ca.spottedleaf.moonrise.common.time.TickData;
 
 public class SafeSandDuper {
     public static boolean handle(net.minecraft.world.entity.Entity entity) {
@@ -104,7 +104,7 @@ public class SafeSandDuper {
                                     finalSpawnPos = Vec3.atBottomCenterOf(adjustedSpawn);
                                 }
 
-                                FallingBlockEntity dupe = new FallingBlockEntity(EntityType.FALLING_BLOCK, targetLevel);
+                                FallingBlockEntity dupe = new FallingBlockEntity(EntityTypes.FALLING_BLOCK, targetLevel);
                                 dupe.setPos(finalSpawnPos.x, finalSpawnPos.y, finalSpawnPos.z);
                                 dupe.blockState = state;
                                 dupe.time = 1;

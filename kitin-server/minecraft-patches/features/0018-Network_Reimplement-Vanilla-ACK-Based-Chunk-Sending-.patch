@@ -75,10 +75,10 @@ index bf002fcdb27a579f622d2836f908fe9238505f4a..3de72a3d31f45ea119404ef17ae00610
  
          void add() {
 diff --git a/net/minecraft/server/network/ServerGamePacketListenerImpl.java b/net/minecraft/server/network/ServerGamePacketListenerImpl.java
-index 374a6a22871e9a126f10753a039e8f8fa2afc730..b6d2f9d26fb3b7f029d0f56582e856124eff519d 100644
+index 1b8a5a2800ddb86d5c1fd304e2dbdcf8caad6503..4862f77e051978f02de846c851726505cb684ea0 100644
 --- a/net/minecraft/server/network/ServerGamePacketListenerImpl.java
 +++ b/net/minecraft/server/network/ServerGamePacketListenerImpl.java
-@@ -3806,6 +3806,12 @@ public class ServerGamePacketListenerImpl
+@@ -3808,6 +3808,12 @@ public class ServerGamePacketListenerImpl
      public void handleChunkBatchReceived(final ServerboundChunkBatchReceivedPacket packet) {
          PacketUtils.ensureRunningOnSameThread(packet, this, this.player.level());
          this.chunkSender.onChunkBatchReceivedByClient(packet.desiredChunksPerTick());

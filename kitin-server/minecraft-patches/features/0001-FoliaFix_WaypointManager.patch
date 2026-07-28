@@ -5,10 +5,10 @@ Subject: [PATCH] FoliaFix_WaypointManager
 
 
 diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
-index a51a9e7a0fa5727690046d814eb0b26d5742cd74..47154133f131ae64c8122f4f581cb70f5c7ab64e 100644
+index c6434ff2e5c211887c2e98c8462a49e0e1cb5b21..b6a6cef84f173587742de8b659e039c4a1ddf911 100644
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
-@@ -680,7 +680,7 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
+@@ -684,7 +684,7 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
  
          this.sleepStatus = new SleepStatus();
          this.gameEventDispatcher = new GameEventDispatcher(this);
@@ -18,10 +18,10 @@ index a51a9e7a0fa5727690046d814eb0b26d5742cd74..47154133f131ae64c8122f4f581cb70f
          //this.updateSkyBrightness(); // Folia - region threading - delay until first tick
          // Paper start - rewrite chunk system
 diff --git a/net/minecraft/server/level/ServerPlayer.java b/net/minecraft/server/level/ServerPlayer.java
-index 5d4310dab55cc960ccfce279e656e7b740f3d5c0..63a021a47ca928d7ee3ab0089b6799d594d035ef 100644
+index 57f93d978fe48fdf6e77b7bfb9f1de060e1a8524..cc9b535f0ea457eecf019375403f18bf967ba900 100644
 --- a/net/minecraft/server/level/ServerPlayer.java
 +++ b/net/minecraft/server/level/ServerPlayer.java
-@@ -897,6 +897,9 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+@@ -877,6 +877,9 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
  
      @Override
      public void tick() {
@@ -31,7 +31,7 @@ index 5d4310dab55cc960ccfce279e656e7b740f3d5c0..63a021a47ca928d7ee3ab0089b6799d5
          // CraftBukkit start
          if (this.joining) {
              this.joining = false;
-@@ -3687,5 +3690,37 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+@@ -3646,5 +3649,37 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
      public org.bukkit.craftbukkit.entity.CraftPlayer getBukkitEntity() {
          return (org.bukkit.craftbukkit.entity.CraftPlayer) super.getBukkitEntity();
      }

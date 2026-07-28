@@ -5,10 +5,10 @@ Subject: [PATCH] PaperFix_ItemEntity-Abnormal-movement-in-water
 
 
 diff --git a/io/papermc/paper/entity/activation/ActivationRange.java b/io/papermc/paper/entity/activation/ActivationRange.java
-index 36aabbd42cd89f8894c400bf6d26e18172508241..027dac78a51302c6c5c4508906bbc2f3404e08ff 100644
+index b4f9f41a56bbc40e90217c0344c070ebdd08c119..cac3d4e2c589bf2fa9709efb7b21a0235b86e084 100644
 --- a/io/papermc/paper/entity/activation/ActivationRange.java
 +++ b/io/papermc/paper/entity/activation/ActivationRange.java
-@@ -299,7 +299,7 @@ public final class ActivationRange {
+@@ -300,7 +300,7 @@ public final class ActivationRange {
       */
      public static boolean checkIfActive(final Entity entity) {
          // Never safe to skip fireworks or item gravity

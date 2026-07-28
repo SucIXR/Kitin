@@ -5,7 +5,7 @@ Subject: [PATCH] Other_add-Config
 
 
 diff --git a/net/minecraft/commands/Commands.java b/net/minecraft/commands/Commands.java
-index 1d7fb8ef08b0457be5c08cfb079cf2d7cb8bcc9f..d86e4660e9248af04d0b86ffe4045c8289282ef3 100644
+index c1f32978692effaeadfc36dd37a1e64c06a2abc3..a2245b2a3a961fbe1ca29610f2a3213ab7191fad 100644
 --- a/net/minecraft/commands/Commands.java
 +++ b/net/minecraft/commands/Commands.java
 @@ -223,6 +223,7 @@ public class Commands {
@@ -17,10 +17,10 @@ index 1d7fb8ef08b0457be5c08cfb079cf2d7cb8bcc9f..d86e4660e9248af04d0b86ffe4045c82
          LocateCommand.register(this.dispatcher, context);
          //LootCommand.register(this.dispatcher, context); // Folia - region threading - TODO later
 diff --git a/net/minecraft/server/dedicated/DedicatedServer.java b/net/minecraft/server/dedicated/DedicatedServer.java
-index 5f89d29eaeeb4c63b8b9e034d440204f518efec2..4632e1bc2ec38c802f0f31dde6719d29c015c726 100644
+index cd5551c0221ad2a7b5c7d452d8d91ffc9711c3ee..7e35eab3d94308c73396c5d541c269e4c9b24597 100644
 --- a/net/minecraft/server/dedicated/DedicatedServer.java
 +++ b/net/minecraft/server/dedicated/DedicatedServer.java
-@@ -282,6 +282,7 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface
+@@ -238,6 +238,7 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface
          this.paperConfigurations.initializeGlobalConfiguration(this.registryAccess());
          this.paperConfigurations.initializeWorldDefaultsConfiguration(this.registryAccess());
          // Paper end - initialize global and world-defaults configuration

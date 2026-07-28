@@ -1,0 +1,41 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: SucIXR <sasasa123456@foxmail.com>
+Date: Mon, 27 Jul 2026 18:06:11 +0800
+Subject: [PATCH] Safety_Leaf_Secure-seed-and-matter-seed-command
+
+
+diff --git a/src/main/java/org/bukkit/craftbukkit/CraftChunk.java b/src/main/java/org/bukkit/craftbukkit/CraftChunk.java
+index f020f310c4bca49a23de91bea72ccd9941c0b03c..99ffceca37cf453e4e295891a452c996f2413ffe 100644
+--- a/src/main/java/org/bukkit/craftbukkit/CraftChunk.java
++++ b/src/main/java/org/bukkit/craftbukkit/CraftChunk.java
+@@ -191,7 +191,12 @@ public class CraftChunk implements Chunk {
+     @Override
+     public boolean isSlimeChunk() {
+         // 987234911L is taken from Slime when seeing if a slime can spawn in a chunk
+-        return this.level.paperConfig().entities.spawning.allChunksAreSlimeChunks || WorldgenRandom.seedSlimeChunk(this.getX(), this.getZ(), this.getWorld().getSeed(), level.spigotConfig.slimeSeed).nextInt(10) == 0; // Paper
++        // Leaf start - Matter - Secure Seed
++        boolean isSlimeChunk = me.sucixr.kitin.config.KitinConfig.useSecureSeed
++            ? level.getChunk(this.getX(), this.getZ()).isSlimeChunk()
++            : WorldgenRandom.seedSlimeChunk(this.getX(), this.getZ(), this.getWorld().getSeed(), level.spigotConfig.slimeSeed).nextInt(10) == 0; // Paper
++        return this.level.paperConfig().entities.spawning.allChunksAreSlimeChunks || isSlimeChunk;
++        // Leaf end - Matter - Secure Seed
+     }
+ 
+     @Override
+diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
+index 9d0dc8815842a0583b212891680bd0c6461c30b9..524ec0b6b654ec34b511accfd31071fa19bc57f8 100644
+--- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
++++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
+@@ -1260,7 +1260,11 @@ public final class CraftServer implements Server {
+             .orElse(null);
+         RegistryAccess contextRegistryAccess = registryAccess;
+         if (worldGenSettings == null) {
+-            WorldOptions worldOptions = new WorldOptions(creator.seed(), creator.generateStructures(), creator.bonusChest());
++            // Leaf start - Matter - Secure Seed
++            WorldOptions worldOptions = me.sucixr.kitin.config.KitinConfig.useSecureSeed
++                    ? new WorldOptions(creator.seed(), su.plo.matter.Globals.createRandomWorldSeed(), creator.generateStructures(), false)
++                    : new WorldOptions(creator.seed(), creator.generateStructures(), creator.bonusChest());
++            // Leaf end - Matter - Secure Seed
+ 
+             String flatGenSettings = creator.generatorSettings();
+             if (flatGenSettings.isEmpty()) {

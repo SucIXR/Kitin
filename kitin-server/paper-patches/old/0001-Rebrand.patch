@@ -1,6 +1,6 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: SucIXR <sasasa123456@foxmail.com>
-Date: Mon, 27 Jul 2026 18:13:10 +0800
+Date: Sat, 20 Dec 2025 18:15:24 +0800
 Subject: [PATCH] Rebrand
 
 
@@ -32,7 +32,7 @@ index 08745a35b1ce8cc56d970472088de3cd17b9e43a..b6f3e759315415452e8679956c01886e
                  metrics.addCustomChart(new Metrics.DrilldownPie("java_version", () -> {
                      Map<String, Map<String, Integer>> map = new HashMap<>();
 diff --git a/src/main/java/com/destroystokyo/paper/PaperVersionFetcher.java b/src/main/java/com/destroystokyo/paper/PaperVersionFetcher.java
-index 30815c8970b1f1c88a3c7bb5fd36efd915f1687d..df85f108833cbd64631c5a3b50267fe4aacffefb 100644
+index 4d2936f6818c38e2844cba78ffad339e93ff29ab..913f63b255db6a7c94c55c28a8bb938d68cea3be 100644
 --- a/src/main/java/com/destroystokyo/paper/PaperVersionFetcher.java
 +++ b/src/main/java/com/destroystokyo/paper/PaperVersionFetcher.java
 @@ -40,8 +40,8 @@ public class PaperVersionFetcher implements VersionFetcher {

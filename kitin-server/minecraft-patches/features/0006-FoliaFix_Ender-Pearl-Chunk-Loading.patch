@@ -5,10 +5,10 @@ Subject: [PATCH] FoliaFix_Ender-Pearl-Chunk-Loading
 
 
 diff --git a/net/minecraft/server/level/ServerPlayer.java b/net/minecraft/server/level/ServerPlayer.java
-index 63a021a47ca928d7ee3ab0089b6799d594d035ef..e7ac42475927a6588366df7030fe6c9318079478 100644
+index cc9b535f0ea457eecf019375403f18bf967ba900..dc1502d6017a25a8185b74fe7f82459168883a89 100644
 --- a/net/minecraft/server/level/ServerPlayer.java
 +++ b/net/minecraft/server/level/ServerPlayer.java
-@@ -778,6 +778,10 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+@@ -768,6 +768,10 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
      }
  
      private void saveEnderPearls(final ValueOutput playerOutput) {
@@ -19,7 +19,7 @@ index 63a021a47ca928d7ee3ab0089b6799d594d035ef..e7ac42475927a6588366df7030fe6c93
          if (!this.enderPearls.isEmpty()) {
              ValueOutput.ValueOutputList pearlsOutput = playerOutput.childrenList("ender_pearls");
  
-@@ -791,7 +795,7 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+@@ -781,7 +785,7 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
                      pearlTag.store("ender_pearl_dimension", Level.RESOURCE_KEY_CODEC, enderPearl.level().dimension());
                  }
              }
@@ -29,10 +29,10 @@ index 63a021a47ca928d7ee3ab0089b6799d594d035ef..e7ac42475927a6588366df7030fe6c93
  
      public void loadAndSpawnEnderPearls(final ValueInput playerInput) {
 diff --git a/net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.java b/net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.java
-index 8dc8c6cfc01be3787142a117ef2b98f5294a8cef..adc38f851c249fcb485655389f10aaa70e7d4953 100644
+index d0dba5cc351903fb762e231a95f302479794185f..045d5538bde5d71eaf959ee67c96b00862875207 100644
 --- a/net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.java
 +++ b/net/minecraft/world/entity/projectile/throwableitemprojectile/ThrownEnderpearl.java
-@@ -174,9 +174,17 @@ public class ThrownEnderpearl extends ThrowableItemProjectile {
+@@ -176,9 +176,17 @@ public class ThrownEnderpearl extends ThrowableItemProjectile {
                  if (!ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(this)) {
                      throw new IllegalStateException("Must be on tick thread for ticking entity: " + this);
                  }
@@ -51,7 +51,7 @@ index 8dc8c6cfc01be3787142a117ef2b98f5294a8cef..adc38f851c249fcb485655389f10aaa7
                  }
                  this.discard(org.bukkit.event.entity.EntityRemoveEvent.Cause.HIT);
                  return;
-@@ -258,11 +266,21 @@ public class ThrownEnderpearl extends ThrowableItemProjectile {
+@@ -260,11 +268,21 @@ public class ThrownEnderpearl extends ThrowableItemProjectile {
      @Override
      public void tick() {
          if (this.level() instanceof ServerLevel serverLevel) {
@@ -74,7 +74,7 @@ index 8dc8c6cfc01be3787142a117ef2b98f5294a8cef..adc38f851c249fcb485655389f10aaa7
                  && !serverPlayer.wonGame
                  && serverPlayer.level().getGameRules().get(GameRules.ENDER_PEARLS_VANISH_ON_DEATH)) {
                  this.discard(org.bukkit.event.entity.EntityRemoveEvent.Cause.DESPAWN); // CraftBukkit - add Bukkit remove cause
-@@ -277,9 +295,17 @@ public class ThrownEnderpearl extends ThrowableItemProjectile {
+@@ -279,9 +297,17 @@ public class ThrownEnderpearl extends ThrowableItemProjectile {
                              || var7 != SectionPos.blockToSectionCoord(currentPos.getX())
                              || previousChunkZ != SectionPos.blockToSectionCoord(currentPos.getZ())
                      )
@@ -95,7 +95,7 @@ index 8dc8c6cfc01be3787142a117ef2b98f5294a8cef..adc38f851c249fcb485655389f10aaa7
              }
          } else {
              super.tick();
-@@ -327,6 +353,12 @@ public class ThrownEnderpearl extends ThrowableItemProjectile {
+@@ -329,6 +355,12 @@ public class ThrownEnderpearl extends ThrowableItemProjectile {
      public void onRemoval(final Entity.RemovalReason reason) {
          if (reason != Entity.RemovalReason.UNLOADED_WITH_PLAYER) {
              this.deregisterFromCurrentOwner();

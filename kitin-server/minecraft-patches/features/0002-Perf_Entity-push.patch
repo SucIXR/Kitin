@@ -5,10 +5,10 @@ Subject: [PATCH] Perf_Entity-push
 
 
 diff --git a/net/minecraft/world/entity/Entity.java b/net/minecraft/world/entity/Entity.java
-index 13f23918b6a9db52742a01bf16c69389a1c16dc9..ec4d3f6cbf659090da515f6db89478e1aa1cd77b 100644
+index 07310ae30817fc88227355739074615969b48184..c3b6b6531593b8e57d898884f14822bfcd381da6 100644
 --- a/net/minecraft/world/entity/Entity.java
 +++ b/net/minecraft/world/entity/Entity.java
-@@ -2334,6 +2334,14 @@ public abstract class Entity
+@@ -2421,6 +2421,14 @@ public abstract class Entity
          if (!this.isPassengerOfSameVehicle(entity)) {
              if (!entity.noPhysics && !this.noPhysics) {
                  if (this.level.paperConfig().collisions.onlyPlayersCollide && !(entity instanceof ServerPlayer || this instanceof ServerPlayer)) return; // Paper - Collision option for requiring a player participant
