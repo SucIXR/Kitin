@@ -1,4 +1,4 @@
-package me.sucixr.kitin.listener;
+package dev.coderfrish.lirael.listener;
 
 import io.netty.buffer.Unpooled;
 import me.sucixr.kitin.network.packets.fabric.FabricRecipeSyncPayload;
