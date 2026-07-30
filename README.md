@@ -45,4 +45,4 @@ cd Kitin
 ./gradlew applyAllPatches
 
 # 3. 编译核心
-./gradlew createMojmapPaperclipJar
+./gradlew createPaperclipJar
