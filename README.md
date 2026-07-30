@@ -8,15 +8,14 @@
 [![Folia-Based](https://img.shields.io/badge/Based%20on-Folia-brightgreen.svg)](https://github.com/PaperMC/Folia)
 [![Downloads](https://img.shields.io/github/downloads/SucIXR/Kitin/total?color=blue&label=Downloads)](https://github.com/SucIXR/Kitin/releases)
 
-**Kitin** 是一个针对 **IXRMC** 以及部分服务器进行特调的Folia分支，针对生存服务器，提供更加卓越的网络质量与网络体验，并针对性提供微优化，以及修复被Folia破坏的Paper特性
+**Kitin** 是一个针对 **IXRMC** 以及部分服务器进行特调的Folia分支，针对生存服务器，旨在提供更加卓越的网络质量与网络体验，并对生存生电进行微优化，以及修复被破坏的特性
 
 ---
 
 ## ✨ 核心特色 (Features)
 
-* **网络优化**: 针对网络层面进行了细致优化，这使得本核心比其他核心带宽占用量更低，网络也更稳定
-* **特性修复**: 尝试将Folia破坏的特性恢复到Paper端水平，支持定位条、珍珠加载器、刷沙机等
-* **极致轻量**: 对Folia仅进行“蜻蜓点水”式的修改，保留原始风味
+* **网络优化**: 针对生存、生电进行了细致的网络优化，这使得本核心比其他核心带宽占用量更低
+* **特性修复**: 支持定位条、珍珠加载器、刷沙机等
 
 ---
 
@@ -45,4 +44,4 @@ cd Kitin
 ./gradlew applyAllPatches
 
 # 3. 编译核心
-./gradlew createMojmapPaperclipJar
+./gradlew createPaperclipJar
