@@ -5,7 +5,7 @@ Subject: [PATCH] Perf_VillagerSmartHibernation
 
 
 diff --git a/net/minecraft/world/entity/npc/villager/Villager.java b/net/minecraft/world/entity/npc/villager/Villager.java
-index f649c46cc9a34e646f8da3244866c6e011d30aa3..eff2023fd6470e7017418c4c1b3661f4375189e9 100644
+index 0869ecb4b7fe07efa33d521bef2f525955bd3c30..1543984ce22ac6d87513cb8218730d59c3cc6952 100644
 --- a/net/minecraft/world/entity/npc/villager/Villager.java
 +++ b/net/minecraft/world/entity/npc/villager/Villager.java
 @@ -171,6 +171,7 @@ public class Villager extends AbstractVillager implements VillagerDataHolder, Re

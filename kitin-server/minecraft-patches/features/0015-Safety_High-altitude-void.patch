@@ -5,7 +5,7 @@ Subject: [PATCH] Safety_High-altitude-void
 
 
 diff --git a/net/minecraft/world/entity/Entity.java b/net/minecraft/world/entity/Entity.java
-index c3b6b6531593b8e57d898884f14822bfcd381da6..9fdc1f7320136aa303d4c1cd68ad01d8709a4b59 100644
+index fd2936e1e5c3dabf11b8c4f42e323299566dee7a..fe92aac5bc692b07f1f0a18954dbdd1e1bfedbf6 100644
 --- a/net/minecraft/world/entity/Entity.java
 +++ b/net/minecraft/world/entity/Entity.java
 @@ -221,6 +221,7 @@ public abstract class Entity
@@ -16,7 +16,7 @@ index c3b6b6531593b8e57d898884f14822bfcd381da6..9fdc1f7320136aa303d4c1cd68ad01d8
      public static final String TAG_ID = "id";
      public static final String TAG_UUID = "UUID";
      public static final String TAG_PASSENGERS = "Passengers";
-@@ -967,6 +968,30 @@ public abstract class Entity
+@@ -968,6 +969,30 @@ public abstract class Entity
  
      public void checkBelowWorld() {
          if (!this.level.getWorld().isVoidDamageEnabled()) return; // Paper - check if void damage is enabled on the world

@@ -5,7 +5,7 @@ Subject: [PATCH] Network_ChunkLazyLoading
 
 
 diff --git a/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java b/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
-index 120b54334774d41fd1d42c97ddbb7a7c2e9c39f7..809fba0c2fd88aa4150c8cb25cd8ef9c49c6564f 100644
+index 8dc428c5508ef6ebea772638db1a607fc914c7eb..24270bccbdab7b9a75fc9d929e55f2f7bbe96769 100644
 --- a/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
 +++ b/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
 @@ -919,6 +919,13 @@ public final class RegionizedPlayerChunkLoader {

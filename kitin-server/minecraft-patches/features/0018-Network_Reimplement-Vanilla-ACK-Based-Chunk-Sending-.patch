@@ -5,7 +5,7 @@ Subject: [PATCH] Network_Reimplement-Vanilla-ACK-Based-Chunk-Sending-System
 
 
 diff --git a/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java b/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
-index bf002fcdb27a579f622d2836f908fe9238505f4a..3de72a3d31f45ea119404ef17ae006109f768378 100644
+index 0c74253b32d7333a9bb77892717ea9de1052da1a..b6a742923221896528b26bca7cf809196655ed22 100644
 --- a/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
 +++ b/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
 @@ -452,9 +452,18 @@ public final class RegionizedPlayerChunkLoader {
@@ -75,10 +75,10 @@ index bf002fcdb27a579f622d2836f908fe9238505f4a..3de72a3d31f45ea119404ef17ae00610
  
          void add() {
 diff --git a/net/minecraft/server/network/ServerGamePacketListenerImpl.java b/net/minecraft/server/network/ServerGamePacketListenerImpl.java
-index 1b8a5a2800ddb86d5c1fd304e2dbdcf8caad6503..4862f77e051978f02de846c851726505cb684ea0 100644
+index 2f18aba58cda2622d59fc37571c53e0a0f6f5047..94f1bbdb50329476931503292e98df9c64a88da2 100644
 --- a/net/minecraft/server/network/ServerGamePacketListenerImpl.java
 +++ b/net/minecraft/server/network/ServerGamePacketListenerImpl.java
-@@ -3808,6 +3808,12 @@ public class ServerGamePacketListenerImpl
+@@ -3809,6 +3809,12 @@ public class ServerGamePacketListenerImpl
      public void handleChunkBatchReceived(final ServerboundChunkBatchReceivedPacket packet) {
          PacketUtils.ensureRunningOnSameThread(packet, this, this.player.level());
          this.chunkSender.onChunkBatchReceivedByClient(packet.desiredChunksPerTick());

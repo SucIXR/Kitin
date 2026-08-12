@@ -5,7 +5,7 @@ Subject: [PATCH] Network_globalMaxChunkSendRate
 
 
 diff --git a/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java b/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
-index 7daeaa1915625b8c8a465996768552283763d1da..bf002fcdb27a579f622d2836f908fe9238505f4a 100644
+index 1a0bdead3ffb7c280c10fcd3f74464554164942d..0c74253b32d7333a9bb77892717ea9de1052da1a 100644
 --- a/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
 +++ b/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
 @@ -303,16 +303,54 @@ public final class RegionizedPlayerChunkLoader {
@@ -78,7 +78,7 @@ index 7daeaa1915625b8c8a465996768552283763d1da..bf002fcdb27a579f622d2836f908fe92
                  final int pendingSendX = CoordinateUtils.getChunkX(pendingSend);
                  final int pendingSendZ = CoordinateUtils.getChunkZ(pendingSend);
 diff --git a/net/minecraft/server/players/PlayerList.java b/net/minecraft/server/players/PlayerList.java
-index e7579a9873362317dd82b63306cf650af9472574..c56a3ebb3049b56dbe98cfff2684a91d8788bfdf 100644
+index 259eb7574841b1b885093b534440f8a40db4e8e2..20deba8eadf2fa4581703b88786ed674db32e663 100644
 --- a/net/minecraft/server/players/PlayerList.java
 +++ b/net/minecraft/server/players/PlayerList.java
 @@ -580,6 +580,10 @@ public abstract class PlayerList {

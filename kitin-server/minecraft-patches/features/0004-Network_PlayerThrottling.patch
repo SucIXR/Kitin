@@ -5,7 +5,7 @@ Subject: [PATCH] Network_PlayerThrottling
 
 
 diff --git a/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java b/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
-index 809fba0c2fd88aa4150c8cb25cd8ef9c49c6564f..7daeaa1915625b8c8a465996768552283763d1da 100644
+index 24270bccbdab7b9a75fc9d929e55f2f7bbe96769..1a0bdead3ffb7c280c10fcd3f74464554164942d 100644
 --- a/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
 +++ b/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
 @@ -595,7 +595,15 @@ public final class RegionizedPlayerChunkLoader {
@@ -26,10 +26,10 @@ index 809fba0c2fd88aa4150c8cb25cd8ef9c49c6564f..7daeaa1915625b8c8a46599676855228
  
          private long getMaxChunkLoads() {
 diff --git a/net/minecraft/server/level/ChunkMap.java b/net/minecraft/server/level/ChunkMap.java
-index 163999d50213e0167eb09f0eae883388849f28fa..b4457d9bd55dad8042d59233dc89913571f53940 100644
+index e9307ef10502856378d7831fb7800dd77230130c..8206a3eca5152f8545af80c7305c97c2b13d25d2 100644
 --- a/net/minecraft/server/level/ChunkMap.java
 +++ b/net/minecraft/server/level/ChunkMap.java
-@@ -1348,6 +1348,14 @@ public class ChunkMap extends SimpleRegionStorage implements ChunkHolder.PlayerP
+@@ -1372,6 +1372,14 @@ public class ChunkMap extends SimpleRegionStorage implements ChunkHolder.PlayerP
                  // Paper end - remove allocation of Vec3D here
                  int playerViewDistance = ChunkMap.this.getPlayerViewDistance(player);
                  double visibleRange = Math.min(this.getEffectiveRange(), playerViewDistance * 16);
