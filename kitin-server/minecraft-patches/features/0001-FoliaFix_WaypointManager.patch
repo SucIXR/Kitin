@@ -5,7 +5,7 @@ Subject: [PATCH] FoliaFix_WaypointManager
 
 
 diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
-index c6434ff2e5c211887c2e98c8462a49e0e1cb5b21..b6a6cef84f173587742de8b659e039c4a1ddf911 100644
+index 35ab432bbd59aba80a6eaca1769e6aa82c8a7e46..1cd4ea0d7a95e919889f346e9a6919dedc87f505 100644
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
 @@ -684,7 +684,7 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
@@ -18,7 +18,7 @@ index c6434ff2e5c211887c2e98c8462a49e0e1cb5b21..b6a6cef84f173587742de8b659e039c4
          //this.updateSkyBrightness(); // Folia - region threading - delay until first tick
          // Paper start - rewrite chunk system
 diff --git a/net/minecraft/server/level/ServerPlayer.java b/net/minecraft/server/level/ServerPlayer.java
-index 57f93d978fe48fdf6e77b7bfb9f1de060e1a8524..cc9b535f0ea457eecf019375403f18bf967ba900 100644
+index 16f49ae6736c475207f31392307e280ec06edbc3..f5cf41a91fb11fd936f47207213786dac24ec382 100644
 --- a/net/minecraft/server/level/ServerPlayer.java
 +++ b/net/minecraft/server/level/ServerPlayer.java
 @@ -877,6 +877,9 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc

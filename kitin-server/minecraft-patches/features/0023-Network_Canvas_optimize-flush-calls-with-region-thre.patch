@@ -5,10 +5,10 @@ Subject: [PATCH] Network_Canvas_optimize-flush-calls-with-region-threading
 
 
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index 6f13870a1b463049dd37cf1c65d0bdecfc35b5c4..1b69f76f92c2a4d8ae2cac930f2073327ffddcfb 100644
+index be15a671e0b39b455cd5983f4b90f8f3022a2ebc..bccadcdbc30ff7a55577fc3491804406810a95de 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
-@@ -1740,7 +1740,31 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1739,7 +1739,31 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          // Folia end - region threading
          //this.tickCount++; // Folia - region threading
          //this.tickRateManager.tick(); // Folia - region threading
@@ -42,7 +42,7 @@ index 6f13870a1b463049dd37cf1c65d0bdecfc35b5c4..1b69f76f92c2a4d8ae2cac930f207332
              this.lastServerStatus = nano;
              this.status = this.buildServerStatus();
 diff --git a/net/minecraft/server/level/ServerPlayer.java b/net/minecraft/server/level/ServerPlayer.java
-index 8b382a13e4a4f95f8ebd4788f5db92d6ffda1e87..f3b26a0866ca9e157d6ab649b175f0c37bf1c822 100644
+index 59ef0e479914de4e9c9d04129ed2c601c0a2c0c6..87a3bb72a15961c1a2162bfad3aa1560c082fd8b 100644
 --- a/net/minecraft/server/level/ServerPlayer.java
 +++ b/net/minecraft/server/level/ServerPlayer.java
 @@ -1830,6 +1830,9 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc

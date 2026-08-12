@@ -5,7 +5,7 @@ Subject: [PATCH] Network_Multi-Port-Listening
 
 
 diff --git a/net/minecraft/server/network/ServerConnectionListener.java b/net/minecraft/server/network/ServerConnectionListener.java
-index b0e1153d74e6b17b807670667c9bae6b02bd37f3..05c4494a1996fa37037beb15e71bfa738c5aabd8 100644
+index 57a0ace96ba2258ebf0d73529c61cf6572a5caf2..5691e2b6b51d025c9e04dfc0475dd492d8800a93 100644
 --- a/net/minecraft/server/network/ServerConnectionListener.java
 +++ b/net/minecraft/server/network/ServerConnectionListener.java
 @@ -72,11 +72,28 @@ public class ServerConnectionListener {

@@ -46,10 +46,10 @@ public class KitinTickStatistics implements TickStatistics {
         this.regionSupplier = new WeakReferenceExpiringSupplier<>(() -> getRegions(server), 5, TimeUnit.MILLISECONDS);
     }
 
-//    @Override
-//    public int gameTargetTps() {
-//        return 20;
-//    } Kitin off
+    @Override
+    public int gameTargetTps() {
+        return 20;
+    }
 
     @Override
     public double tps5Sec() {

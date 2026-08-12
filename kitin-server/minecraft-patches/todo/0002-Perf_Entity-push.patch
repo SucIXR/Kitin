@@ -1,17 +1,17 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: SucIXR <sasasa123456@foxmail.com>
-Date: Wed, 12 Aug 2026 13:33:43 +0800
+Date: Fri, 24 Jul 2026 10:58:09 +0800
 Subject: [PATCH] Perf_Entity-push
 
 
 diff --git a/net/minecraft/world/entity/Entity.java b/net/minecraft/world/entity/Entity.java
-index 75dabd3e7b6077b5ae8ee30048786442742b93f9..fd2936e1e5c3dabf11b8c4f42e323299566dee7a 100644
+index 07310ae30817fc88227355739074615969b48184..c3b6b6531593b8e57d898884f14822bfcd381da6 100644
 --- a/net/minecraft/world/entity/Entity.java
 +++ b/net/minecraft/world/entity/Entity.java
-@@ -2427,6 +2427,14 @@ public abstract class Entity
-                     !new io.papermc.paper.event.entity.EntityCollideWithEntityEvent(this.getBukkitEntity(), entity.getBukkitEntity()).callEvent()) return;
-                 // Paper end - Add EntityCollideWithEntity Event
- 
+@@ -2421,6 +2421,14 @@ public abstract class Entity
+         if (!this.isPassengerOfSameVehicle(entity)) {
+             if (!entity.noPhysics && !this.noPhysics) {
+                 if (this.level.paperConfig().collisions.onlyPlayersCollide && !(entity instanceof ServerPlayer || this instanceof ServerPlayer)) return; // Paper - Collision option for requiring a player participant
 +                //Kitin start
 +                if (me.sucixr.kitin.config.KitinConfig.useSimplerEntityPush) {
 +                    if (me.sucixr.kitin.performance.physics.SocialBubbleEngine.getInstance().shouldSkipHardCollision(this,entity)) {
